@@ -1,22 +1,16 @@
-{  
-  "name": "PrizmBet - Криптобукмекер",  
-  "short_name": "PrizmBet",  
-  "description": "Ставки на спорт с криптовалютой PRIZM",  
-  "start_url": "/index.html",  
-  "display": "standalone",  
-  "background_color": "#ffffff",  
-  "theme_color": "#1a1a1a",  
-  "orientation": "portrait-primary",  
-  "icons": [  
-    {  
-      "src": "/prizmbet-logo.gif",  
-      "sizes": "192x192",  
-      "type": "image/gif"  
-    },  
-    {  
-      "src": "/prizmbet-logo.gif",  
-      "sizes": "512x512",  
-      "type": "image/gif"  
-    }  
-  ]  
-} 
+{
+  "name": "PrizmBet - Crypto Betting",
+  "short_name": "PrizmBet",
+  "description": "Betting with PRIZM cryptocurrency",
+  "start_url": "/index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1a1a1a",
+  "icons": [
+    {
+      "src": "/prizmbet-logo.gif",
+      "sizes": "192x192",
+      "type": "image/gif"
+    }
+  ]
+}
