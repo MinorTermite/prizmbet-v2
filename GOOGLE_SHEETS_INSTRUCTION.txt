@@ -1,0 +1,18 @@
+# GOOGLE ТАБЛИЦЫ - НАСТРОЙКА  
+  
+Для загрузки матчей в Google Таблицы с ссылками:  
+  
+1. Создайте сервисный аккаунт Google Cloud:  
+   - https://console.cloud.google.com/  
+   - Включите Google Sheets API и Google Drive API  
+   - Создайте Service Account  
+   - Скачайте credentials.json  
+  
+2. Положите credentials.json в папку проекта  
+  
+3. Поделитесь Google Таблицей с email сервисного аккаунта:  
+   - Откройте таблицу  
+   - Нажмите "Поделиться"  
+   - Добавьте email вида: prizmbet@prizmbet.iam.gserviceaccount.com  
+  
+4. Структура таблицы:  

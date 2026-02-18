@@ -1,0 +1,20 @@
+{
+  "name": "prizmbet",
+  "version": "2.0.0",
+  "description": "PRIZMBET - Криптобукмекер на монетах PRIZM",
+  "scripts": {
+    "build": "echo 'Static site - no build needed'",
+    "start": "python3 -m http.server 8000",
+    "parse": "python3 auto_parser.py"
+  },
+  "keywords": [
+    "betting",
+    "prizm",
+    "crypto",
+    "bookmaker"
+  ],
+  "author": "PRIZMBET",
+  "license": "UNLICENSED",
+  "dependencies": {},
+  "devDependencies": {}
+}

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+    <meta name="theme-color" content="#06060e">
+    <meta name="description" content="PRIZMBET — Матчи от Fonbet. Проверка коэффициентов">
+    <title>PRIZMBET — Fonbet</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        :root {
+            --bg-primary:#06060e; --bg-secondary:#0a0a16; --bg-tertiary:#0e0e1a;
+            --bg-card:rgba(14,14,28,0.7);
+            --accent:#f59e0b; --accent-bright:#fbbf24; --accent-glow:rgba(245,158,11,0.25);
+            --accent-soft:rgba(245,158,11,0.08);
+            --green:#10b981; --green-bright:#34d399;
+            --border:rgba(245,158,11,0.1); --border-hover:rgba(245,158,11,0.25);
+            --text-primary:#f1f0f5; --text-secondary:rgba(241,240,245,0.6); --text-tertiary:rgba(241,240,245,0.35);
+            --radius-xl:20px; --radius-lg:14px; --radius-md:10px; --radius-pill:100px;
+            --shadow-md:0 8px 32px rgba(0,0,0,0.4);
+        }
+        html { scroll-behavior:smooth; }
+        body { font-family:'Outfit',-apple-system,sans-serif; background:var(--bg-primary); color:var(--text-primary); line-height:1.55; overflow-x:hidden; min-height:100vh; -webkit-font-smoothing:antialiased; }
+        .bg-canvas { position:fixed; inset:0; z-index:-1; overflow:hidden; }
+        .bg-canvas::before { content:''; position:absolute; width:200%; height:200%; top:-50%; left:-50%; background: radial-gradient(ellipse 800px 800px at 25% 15%, rgba(245,158,11,0.12), transparent 70%), radial-gradient(ellipse 600px 600px at 75% 25%, rgba(239,68,68,0.06), transparent 70%); animation: bgDrift 30s ease-in-out infinite; }
+        @keyframes bgDrift { 0%,100% { transform:translate(0,0) scale(1); } 33% { transform:translate(2%,-3%) scale(1.02); } 66% { transform:translate(-3%,2%) scale(0.98); } }
+        .container { max-width:920px; margin:0 auto; padding:12px; position:relative; z-index:1; }
+        .header { text-align:center; padding:40px 0 28px; }
+        .brand-name { font-size:clamp(1.8rem,6vw,2.8rem); font-weight:900; letter-spacing:4px; text-transform:uppercase; background:linear-gradient(135deg,#fff 0%,var(--accent-bright) 50%,#ef4444 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .tagline { font-size:0.85rem; font-weight:400; color:var(--text-tertiary); letter-spacing:3px; text-transform:uppercase; margin-top:6px; }
+        .back-link { display:inline-flex; align-items:center; gap:7px; padding:11px 24px; border-radius:var(--radius-pill); font-family:'Outfit',sans-serif; font-size:0.88rem; font-weight:600; border:1px solid var(--border); background:var(--bg-card); color:var(--text-primary); backdrop-filter:blur(16px); text-decoration:none; transition:all 0.3s; margin-top:18px; }
+        .back-link:hover { border-color:var(--border-hover); transform:translateY(-2px); box-shadow:var(--shadow-md); }
+        .section { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-xl); padding:20px 16px; margin-bottom:14px; backdrop-filter:blur(16px); animation:cardReveal 0.5s ease both; position:relative; overflow:hidden; }
+        .section::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent 5%,var(--accent-bright) 50%,transparent 95%); opacity:0.15; }
+        @keyframes cardReveal { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+        .section-title { font-size:1.05rem; font-weight:700; margin-bottom:14px; display:flex; align-items:center; gap:10px; }
+        .match-card { background:var(--bg-tertiary); border:1px solid var(--border); border-radius:var(--radius-lg); padding:16px; margin-bottom:10px; transition:all 0.3s; }
+        .match-card:last-child { margin-bottom:0; }
+        .match-card:hover { border-color:var(--border-hover); transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.3); }
+        .match-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; gap:8px; flex-wrap:wrap; }
+        .match-id { font-family:'JetBrains Mono',monospace; background:linear-gradient(135deg,var(--accent),#d97706); padding:4px 12px; border-radius:var(--radius-pill); font-size:0.72rem; font-weight:700; white-space:nowrap; box-shadow:0 2px 8px var(--accent-glow); }
+        .match-time { font-size:0.8rem; color:var(--text-secondary); font-weight:500; }
+        .match-teams { font-size:1.02rem; font-weight:600; margin:8px 0 12px; }
+        .match-teams .vs { color:var(--text-tertiary); font-weight:400; margin:0 2px; }
+        .odds-container { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; }
+        .odds-section-title { grid-column:1/-1; font-size:0.68rem; color:var(--text-tertiary); text-align:center; padding:4px 0 2px; text-transform:uppercase; letter-spacing:1.5px; font-weight:600; }
+        .odd-item { background:rgba(0,0,0,0.25); border:1px solid var(--border); border-radius:var(--radius-md); padding:10px 4px; text-align:center; transition:all 0.25s; }
+        .odd-item:hover { border-color:rgba(245,158,11,0.4); transform:translateY(-2px); }
+        .odd-item--na { background:rgba(0,0,0,0.12); border:1px solid rgba(255,255,255,0.05); border-radius:var(--radius-md); padding:10px 4px; text-align:center; opacity:0.4; }
+        .odd-label { font-size:0.68rem; color:var(--text-tertiary); font-weight:600; text-transform:uppercase; }
+        .odd-value { font-family:'JetBrains Mono',monospace; font-size:0.95rem; font-weight:700; color:var(--green-bright); margin-top:2px; }
+        .verify-link { display:inline-flex; align-items:center; gap:4px; padding:5px 14px; border-radius:var(--radius-pill); font-size:0.75rem; font-weight:600; text-decoration:none; color:var(--accent-bright); background:var(--accent-soft); border:1px solid rgba(245,158,11,0.2); transition:all 0.25s; }
+        .verify-link:hover { background:rgba(245,158,11,0.2); border-color:var(--accent); transform:translateY(-1px); }
+        .loading { display:inline-block; width:20px; height:20px; border:2px solid rgba(255,255,255,0.1); border-radius:50%; border-top-color:var(--accent); animation:spin 0.7s linear infinite; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+        .stats-bar { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:18px 0; }
+        .stat-card { background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius-lg); padding:18px 10px; text-align:center; backdrop-filter:blur(16px); }
+        .stat-number { font-size:1.8rem; font-weight:800; font-family:'JetBrains Mono',monospace; background:linear-gradient(135deg,#fff,var(--accent-bright)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .stat-label { font-size:0.72rem; color:var(--text-tertiary); margin-top:4px; font-weight:500; text-transform:uppercase; letter-spacing:1px; }
+        .empty-state { text-align:center; padding:60px 20px; }
+        .empty-state p { color:var(--text-secondary); font-size:1rem; margin-bottom:12px; }
+        .empty-state small { color:var(--text-tertiary); font-size:0.85rem; }
+        footer { text-align:center; padding:32px 12px; color:var(--text-tertiary); font-size:0.82rem; }
+        .footer-brand { font-weight:700; font-size:0.88rem; letter-spacing:2px; text-transform:uppercase; background:linear-gradient(135deg,var(--text-secondary),var(--accent-bright)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        @media (max-width:480px) { .match-teams { font-size:0.92rem; } .odd-value { font-size:0.85rem; } }
+    </style>
+</head>
+<body>
+    <div class="bg-canvas"></div>
+    <div class="container">
+        <header class="header">
+            <h1 class="brand-name">🟠 PRIZMBET &times; Fonbet</h1>
+            <p class="tagline">Матчи с коэффициентами Fonbet.ru</p>
+            <a href="index.html" class="back-link">← Назад к общей линии</a>
+        </header>
+        <div class="stats-bar">
+            <div class="stat-card"><div class="stat-number" id="totalMatches">0</div><div class="stat-label">Матчей</div></div>
+            <div class="stat-card"><div class="stat-number" id="totalLeagues">0</div><div class="stat-label">Лиг</div></div>
+            <div class="stat-card"><div class="stat-number" id="avgOdds">0.00</div><div class="stat-label">Ср. коэф.</div></div>
+        </div>
+        <div id="content">
+            <div style="text-align:center;padding:48px 16px;">
+                <div class="loading" style="width:40px;height:40px;margin:0 auto;"></div>
+                <p style="color:var(--text-tertiary);margin-top:16px;font-weight:500;">Загрузка матчей Fonbet...</p>
+            </div>
+        </div>
+        <footer>
+            <div class="footer-brand">PRIZMBET 2026 &times; Fonbet</div>
+            <div style="margin-top:6px;color:var(--text-tertiary);">Данные: <a href="https://fonbet.ru" target="_blank" rel="noopener" style="color:var(--accent-bright);">fonbet.ru</a></div>
+        </footer>
+    </div>
+    <script>
+        function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+        async function loadData() {
+            let data = null;
+            try { const r = await fetch('matches.json?t=' + Date.now()); if (r.ok) data = await r.json(); } catch(e) {}
+            if (!data?.matches?.length) {
+                document.getElementById('content').innerHTML = '<div class="section"><p style="text-align:center;color:var(--text-secondary);">Не удалось загрузить данные</p></div>';
+                return;
+            }
+            const fonbetMatches = data.matches.filter(m =>
+                (m.source || '').toLowerCase() === 'fonbet' ||
+                (m.match_url || '').includes('fonbet')
+            );
+            if (!fonbetMatches.length) {
+                document.getElementById('content').innerHTML = `<div class="section"><div class="empty-state"><p>Матчей от Fonbet пока нет</p><small>Парсер Fonbet будет активирован в следующих обновлениях. Сейчас все матчи идут из Winline.</small></div></div>`;
+                return;
+            }
+            renderMatches(fonbetMatches);
+        }
+
+        function renderMatches(matches) {
+            document.getElementById('totalMatches').textContent = matches.length;
+            document.getElementById('totalLeagues').textContent = new Set(matches.map(m => m.league)).size;
+            const avg = matches.reduce((s,m) => s + ((parseFloat(m.p1)||0)+(parseFloat(m.p2)||0))/2, 0) / Math.max(matches.length,1);
+            document.getElementById('avgOdds').textContent = avg.toFixed(2);
+            const content = document.getElementById('content'); content.innerHTML = '';
+            const leagues = {};
+            matches.forEach(m => { (leagues[m.league] = leagues[m.league] || []).push(m); });
+            for (const [league, lmatches] of Object.entries(leagues)) {
+                const section = document.createElement('div'); section.className = 'section';
+                section.innerHTML = `<h2 class="section-title">${escapeHtml(league)}</h2>`;
+                lmatches.forEach(match => {
+                    const card = document.createElement('div'); card.className = 'match-card';
+                    const t1 = escapeHtml(match.team1||''); const t2 = escapeHtml(match.team2||'');
+                    const eid = escapeHtml(match.id||'');
+                    const matchUrl = match.match_url || '#';
+                    function odd(l,v) {
+                        const u = !v || v==='—' || v==='-' || v==='0.00';
+                        return u ? `<div class="odd-item--na"><div class="odd-label">${l}</div><div class="odd-value">—</div></div>`
+                                 : `<div class="odd-item"><div class="odd-label">${l}</div><div class="odd-value">${escapeHtml(v)}</div></div>`;
+                    }
+                    card.innerHTML = `
+                        <div class="match-header">
+                            <span class="match-id">#${eid}</span>
+                            ${matchUrl !== '#' ? `<a href="${escapeHtml(matchUrl)}" target="_blank" rel="noopener" class="verify-link">🔍 Проверить на Fonbet</a>` : ''}
+                        </div>
+                        <div class="match-time">${escapeHtml(match.date||'')} ${escapeHtml(match.time||'')}</div>
+                        <div class="match-teams">${t1} <span class="vs">—</span> ${t2}</div>
+                        <div class="odds-container">
+                            <div class="odds-section-title">Основные</div>
+                            ${odd('П1',match.p1)}${odd('X',match.x)}${odd('П2',match.p2)}
+                            <div class="odds-section-title">Двойной шанс</div>
+                            ${odd('1X',match.p1x)}${odd('12',match.p12)}${odd('X2',match.px2)}
+                        </div>`;
+                    section.appendChild(card);
+                });
+                content.appendChild(section);
+            }
+        }
+        window.addEventListener('load', loadData);
+    </script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+# Python  
+__pycache__/  
+*.py[cod]  
+.env  
+.env.local  
+credentials.json  
+service_account.json  
+*.log  
+logs/  
+.pytest_cache/  
+.coverage  
+node_modules/ 
