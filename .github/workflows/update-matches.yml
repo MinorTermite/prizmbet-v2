@@ -36,6 +36,8 @@ jobs:
       - name: Generate matches.json for GitHub Pages
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+          ODDS_API_IO_KEY: ${{ secrets.ODDS_API_IO_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
           UPSTASH_REDIS_URL: ${{ secrets.UPSTASH_REDIS_URL }}

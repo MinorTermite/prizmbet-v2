@@ -1,8 +1,13 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-The Odds API v4 Parser with Totals and Spreads support
-Official API: https://the-odds-api.com/liveapi/guides/v4/
+The Odds API v4 Parser with Totals and Spreads support.
+
+Supports two providers with the same API shape:
+  - the-odds-api.com  (env: ODDS_API_KEY)
+  - odds-api.io       (env: ODDS_API_IO_KEY)
+
+If both keys are set, both sources are fetched and combined.
 """
 
 import os
@@ -12,8 +17,13 @@ from datetime import datetime
 from typing import List, Dict, Optional
 from backend.parsers.base_parser import BaseParser
 
+# Primary: the-odds-api.com
 API_KEY = os.getenv("ODDS_API_KEY", "")
 BASE_URL = "https://api.the-odds-api.com/v4"
+
+# Secondary: odds-api.io (same v4 path structure)
+API_IO_KEY = os.getenv("ODDS_API_IO_KEY", "")
+BASE_IO_URL = "https://odds-api.io/v4"
 
 SPORTS_MAP = {
     "soccer_uefa_champions_league": ("football", "Лига чемпионов УЕФА"),
@@ -24,57 +34,77 @@ SPORTS_MAP = {
 }
 
 class OddsAPIParser(BaseParser):
-    """The Odds API v4 Parser"""
-    
+    """The Odds API v4 Parser — supports the-odds-api.com and odds-api.io"""
+
     def __init__(self):
         super().__init__("OddsAPI", BASE_URL)
-    
+
     async def parse(self) -> List[Dict]:
-        """Parse matches from The Odds API"""
-        all_matches = []
-        
-        for sport_key, (sport_type, league_name) in SPORTS_MAP.items():
-            matches = await self.fetch_sport_odds(sport_key, sport_type, league_name)
-            all_matches.extend(matches)
-        
+        """Parse matches from configured Odds API providers."""
+        all_matches: List[Dict] = []
+        seen_ids: set = set()
+
+        sources = []
+        if API_KEY:
+            sources.append((BASE_URL, API_KEY, "the-odds-api.com"))
+        if API_IO_KEY:
+            sources.append((BASE_IO_URL, API_IO_KEY, "odds-api.io"))
+
+        if not sources:
+            print("[OddsAPI] No API key configured (ODDS_API_KEY or ODDS_API_IO_KEY) — skipping")
+            return []
+
+        for base_url, api_key, label in sources:
+            for sport_key, (sport_type, league_name) in SPORTS_MAP.items():
+                matches = await self.fetch_sport_odds(
+                    sport_key, sport_type, league_name, base_url, api_key, label
+                )
+                for m in matches:
+                    uid = m.get("external_id", "")
+                    if uid and uid not in seen_ids:
+                        seen_ids.add(uid)
+                        all_matches.append(m)
+
         return all_matches
-    
-    async def fetch_sport_odds(self, sport_key: str, sport_type: str, league_name: str) -> List[Dict]:
-        """Fetch odds for specific sport"""
+
+    async def fetch_sport_odds(self, sport_key: str, sport_type: str, league_name: str,
+                               base_url: str = BASE_URL, api_key: str = API_KEY,
+                               label: str = "the-odds-api.com") -> List[Dict]:
+        """Fetch odds for a specific sport from the given endpoint."""
         await self.init_session()
-        url = f"{BASE_URL}/sports/{sport_key}/odds"
+        url = f"{base_url}/sports/{sport_key}/odds"
         params = {
-            "apiKey": API_KEY,
+            "apiKey": api_key,
             "regions": "eu,us",
             "markets": "h2h,totals,spreads",
             "oddsFormat": "decimal",
             "dateFormat": "iso",
         }
-        
+
         try:
             async with self.session.get(url, params=params) as response:
                 if response.status != 200:
-                    print(f"[ERROR] The Odds API returned {response.status}")
+                    print(f"[ERROR] {label} returned {response.status} for {sport_key}")
                     return []
-                
+
                 # Check API quota
                 remaining = response.headers.get("x-requests-remaining", "?")
-                print(f"  [QUOTA] {sport_key}: Remaining {remaining}")
-                
+                print(f"  [QUOTA] {label} / {sport_key}: Remaining {remaining}")
+
                 data = await response.json()
                 matches = []
-                
+
                 for event in data:
                     match = self.parse_event(event, sport_type, league_name)
                     if match:
                         matches.append(match)
-                
+
                 return matches
-        
+
         except Exception as e:
             print(f"[ERROR] {sport_key}: {e}")
             return []
-    
+
     def parse_event(self, event: Dict, sport_type: str, league_name: str) -> Optional[Dict]:
         """Parse single event"""
         event_id = event.get("id", "")

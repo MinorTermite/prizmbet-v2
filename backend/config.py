@@ -20,7 +20,10 @@ class Config:
     TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN', '')
     TELEGRAM_CHAT_ID = os.getenv('TELEGRAM_CHAT_ID', '')
     
-    # Parser Settings
+    # API Keys — parsers
+    ODDS_API_KEY = os.getenv('ODDS_API_KEY', '')           # the-odds-api.com
+    API_FOOTBALL_KEY = os.getenv('API_FOOTBALL_KEY', '')   # api-football.com (RapidAPI)
+    ODDS_API_IO_KEY = os.getenv('ODDS_API_IO_KEY', '')     # odds-api.io
     PROXY_ENABLED = os.getenv('PROXY_ENABLED', 'false').lower() == 'true'
     RATE_LIMIT_REQUESTS = int(os.getenv('RATE_LIMIT_REQUESTS', '10'))
     RATE_LIMIT_WINDOW = int(os.getenv('RATE_LIMIT_WINDOW', '60'))

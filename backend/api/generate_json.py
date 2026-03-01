@@ -36,6 +36,8 @@ def _fmt_odd(value) -> str:
 
 def _bookmaker_from_id(external_id: str) -> str:
     eid = (external_id or "").lower()
+    if eid.startswith("apifootball_"):
+        return "ApiFootball"
     if eid.startswith("odds_"):
         return "OddsAPI"
     if eid.startswith("1xbet_live"):   # must come before the generic 1xbet_ check
@@ -96,12 +98,14 @@ async def collect_all_matches() -> List[Dict[str, Any]]:
     from backend.parsers.xbet_parser import XBetParser
     from backend.parsers.leonbets_parser import LeonbetsParser
     from backend.parsers.pinnacle_parser import PinnacleParser
+    from backend.parsers.api_football_parser import ApiFootballParser
 
     parsers = [
         OddsAPIParser(),
         XBetParser(),
         LeonbetsParser(),
         PinnacleParser(),
+        ApiFootballParser(),
     ]
 
     results = await asyncio.gather(
@@ -110,7 +114,7 @@ async def collect_all_matches() -> List[Dict[str, Any]]:
     )
 
     all_matches: List[Dict[str, Any]] = []
-    names = ["OddsAPI", "1xBet", "Leonbets", "Pinnacle"]
+    names = ["OddsAPI", "1xBet", "Leonbets", "Pinnacle", "ApiFootball"]
     for name, result in zip(names, results):
         if isinstance(result, Exception):
             print(f"[generate_json] {name} error: {result}")
