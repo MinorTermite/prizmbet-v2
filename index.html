@@ -1038,20 +1038,30 @@
             transform: translateY(-1px);
             filter: brightness(1.2);
         }
-        .bk-badge--winline {
-            background: rgba(0, 128, 55, 0.15);
-            border: 1px solid rgba(0, 128, 55, 0.4);
-            color: #34d399;
-        }
-        .bk-badge--marathon {
+        .bk-badge--oddsapi {
             background: rgba(0, 100, 200, 0.15);
             border: 1px solid rgba(0, 100, 200, 0.4);
             color: #60a5fa;
         }
-        .bk-badge--fonbet {
-            background: rgba(255, 165, 0, 0.15);
-            border: 1px solid rgba(255, 165, 0, 0.4);
+        .bk-badge--1xbet {
+            background: rgba(0, 128, 55, 0.15);
+            border: 1px solid rgba(0, 128, 55, 0.4);
+            color: #34d399;
+        }
+        .bk-badge--leonbets {
+            background: rgba(234, 179, 8, 0.15);
+            border: 1px solid rgba(234, 179, 8, 0.4);
             color: #fbbf24;
+        }
+        .bk-badge--pinnacle {
+            background: rgba(220, 38, 38, 0.15);
+            border: 1px solid rgba(220, 38, 38, 0.4);
+            color: #f87171;
+        }
+        .bk-badge--apifootball {
+            background: rgba(6, 182, 212, 0.15);
+            border: 1px solid rgba(6, 182, 212, 0.4);
+            color: #22d3ee;
         }
         .match-link {
             display: inline-flex;
@@ -1101,12 +1111,18 @@
             transform: translateY(-2px);
             box-shadow: var(--shadow-md);
         }
-        .bk-nav-link--winline { border-color: rgba(0, 128, 55, 0.3); }
-        .bk-nav-link--winline:hover { border-color: #34d399; box-shadow: 0 4px 20px rgba(0, 128, 55, 0.2); }
-        .bk-nav-link--marathon { border-color: rgba(0, 100, 200, 0.3); }
-        .bk-nav-link--marathon:hover { border-color: #60a5fa; box-shadow: 0 4px 20px rgba(0, 100, 200, 0.2); }
-        .bk-nav-link--fonbet { border-color: rgba(255, 165, 0, 0.3); }
-        .bk-nav-link--fonbet:hover { border-color: #fbbf24; box-shadow: 0 4px 20px rgba(255, 165, 0, 0.2); }
+        .bk-nav-link--all { border-color: rgba(139, 92, 246, 0.3); }
+        .bk-nav-link--all:hover, .bk-nav-link--all.active { border-color: #a78bfa; box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3); background: rgba(139, 92, 246, 0.15); }
+        .bk-nav-link--oddsapi { border-color: rgba(0, 100, 200, 0.3); }
+        .bk-nav-link--oddsapi:hover, .bk-nav-link--oddsapi.active { border-color: #60a5fa; box-shadow: 0 4px 20px rgba(0, 100, 200, 0.2); background: rgba(0, 100, 200, 0.1); }
+        .bk-nav-link--1xbet { border-color: rgba(0, 128, 55, 0.3); }
+        .bk-nav-link--1xbet:hover, .bk-nav-link--1xbet.active { border-color: #34d399; box-shadow: 0 4px 20px rgba(0, 128, 55, 0.2); background: rgba(0, 128, 55, 0.1); }
+        .bk-nav-link--leonbets { border-color: rgba(234, 179, 8, 0.3); }
+        .bk-nav-link--leonbets:hover, .bk-nav-link--leonbets.active { border-color: #fbbf24; box-shadow: 0 4px 20px rgba(234, 179, 8, 0.2); background: rgba(234, 179, 8, 0.1); }
+        .bk-nav-link--pinnacle { border-color: rgba(220, 38, 38, 0.3); }
+        .bk-nav-link--pinnacle:hover, .bk-nav-link--pinnacle.active { border-color: #f87171; box-shadow: 0 4px 20px rgba(220, 38, 38, 0.2); background: rgba(220, 38, 38, 0.1); }
+        .bk-nav-link--apifootball { border-color: rgba(6, 182, 212, 0.3); }
+        .bk-nav-link--apifootball:hover, .bk-nav-link--apifootball.active { border-color: #22d3ee; box-shadow: 0 4px 20px rgba(6, 182, 212, 0.2); background: rgba(6, 182, 212, 0.1); }
 
         /* ===== RESPONSIVE ===== */
         @media (min-width: 768px) {
@@ -1207,9 +1223,12 @@
 
         <!-- БК НАВИГАЦИЯ -->
         <nav class="bk-nav">
-            <a href="winline.html" class="bk-nav-link bk-nav-link--winline">🟢 Winline</a>
-            <a href="marathon.html" class="bk-nav-link bk-nav-link--marathon">🔵 Marathonbet</a>
-            <a href="fonbet.html" class="bk-nav-link bk-nav-link--fonbet">🟠 Fonbet</a>
+            <button class="bk-nav-link bk-nav-link--all active" data-source="all">📊 Все</button>
+            <button class="bk-nav-link bk-nav-link--oddsapi" data-source="OddsAPI">🔵 OddsAPI</button>
+            <button class="bk-nav-link bk-nav-link--1xbet" data-source="1xBet">🟢 1xBet</button>
+            <button class="bk-nav-link bk-nav-link--leonbets" data-source="Leonbets">🟡 Leonbets</button>
+            <button class="bk-nav-link bk-nav-link--pinnacle" data-source="Pinnacle">🔴 Pinnacle</button>
+            <button class="bk-nav-link bk-nav-link--apifootball" data-source="ApiFootball">⚽ ApiFootball</button>
         </nav>
 
         <!-- STATS -->
@@ -1334,6 +1353,7 @@
         // ===== Filters state =====
         let currentSportFilter = 'all';
         let currentGameFilter = 'all';
+        let currentSourceFilter = 'all';
         let currentSort = 'time';
 
         function getMatchSport(m) {
@@ -1502,6 +1522,11 @@
                 const game = getMatchGame(m);
                 if (currentSportFilter !== 'all' && sport !== currentSportFilter) return false;
                 if (currentGameFilter !== 'all' && game !== currentGameFilter) return false;
+                if (currentSourceFilter !== 'all') {
+                    const src = (m.source || '').toLowerCase();
+                    const filter = currentSourceFilter.toLowerCase();
+                    if (!src.startsWith(filter)) return false;
+                }
                 if (popularOnly) {
                     const combined = ((game || '') + ' ' + (m.league || '')).toLowerCase();
                     if (!/премьер|лига чемп|лига европы|россия|nba|кхл|нхл|dota|cs2|valorant|atp|wta|ufc|евролига|бундеслига|серия a|ла лига|лига 1/.test(combined)) return false;
@@ -1551,6 +1576,14 @@
                     document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     currentSportFilter = btn.dataset.sport || 'all';
+                    if (window.__ALL_MATCHES__) renderMatches(window.__ALL_MATCHES__);
+                });
+            });
+            document.querySelectorAll('.bk-nav-link').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.bk-nav-link').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    currentSourceFilter = btn.dataset.source || 'all';
                     if (window.__ALL_MATCHES__) renderMatches(window.__ALL_MATCHES__);
                 });
             });
@@ -1645,19 +1678,13 @@
                     const source = (match.source || '').toLowerCase();
                     let bkBadge = '';
                     let verifyLink = '';
+                    if (source.includes('oddsapi')) bkBadge = `<span class="bk-badge bk-badge--oddsapi">OddsAPI</span>`;
+                    else if (source.includes('1xbet')) bkBadge = `<span class="bk-badge bk-badge--1xbet">1xBet</span>`;
+                    else if (source.includes('leonbets')) bkBadge = `<span class="bk-badge bk-badge--leonbets">Leonbets</span>`;
+                    else if (source.includes('pinnacle')) bkBadge = `<span class="bk-badge bk-badge--pinnacle">Pinnacle</span>`;
+                    else if (source.includes('apifootball')) bkBadge = `<span class="bk-badge bk-badge--apifootball">ApiFootball</span>`;
                     if (matchUrl) {
-                        if (matchUrl.includes('winline')) {
-                            bkBadge = `<span class="bk-badge bk-badge--winline">Winline</span>`;
-                        } else if (matchUrl.includes('marathon')) {
-                            bkBadge = `<span class="bk-badge bk-badge--marathon">Marathon</span>`;
-                        } else if (matchUrl.includes('fonbet')) {
-                            bkBadge = `<span class="bk-badge bk-badge--fonbet">Fonbet</span>`;
-                        }
                         verifyLink = `<a href="${escapeHtml(matchUrl)}" target="_blank" rel="noopener" class="match-link" title="Проверить коэффициент на сайте БК">🔍 Проверить</a>`;
-                    } else if (source === 'winline' && eid) {
-                        const wUrl = 'https://winline.ru/stavki/event/' + eid;
-                        bkBadge = `<span class="bk-badge bk-badge--winline">Winline</span>`;
-                        verifyLink = `<a href="${wUrl}" target="_blank" rel="noopener" class="match-link" title="Проверить коэффициент на Winline">🔍 Проверить</a>`;
                     }
 
                     card.id = `match-${eid}`;
