@@ -7,6 +7,7 @@ from backend.utils.rate_limiter import rate_limiter, ua_rotator
 from backend.utils.telegram import telegram
 from backend.db.supabase_client import db
 from backend.utils.redis_client import cache
+from backend.utils.team_mapping import team_normalizer
 
 class BaseParser:
     """Base class for all parsers"""
@@ -61,7 +62,10 @@ class BaseParser:
         
         saved = 0
         for match in self.matches:
-            cache_key = f"match:{self.name}:{match.get('home_team')}:{match.get('away_team')}"
+            match["home_team"] = team_normalizer.normalize(match.get("home_team", ""))
+            match["away_team"] = team_normalizer.normalize(match.get("away_team", ""))
+            date_str = str(match.get('match_time') or '')[:10]  # YYYY-MM-DD
+            cache_key = f"match:{self.name}:{date_str}:{match.get('home_team')}:{match.get('away_team')}"
             cached = await cache.get(cache_key)
             
             if not cached:
@@ -93,7 +97,11 @@ class BaseParser:
             
         except Exception as e:
             print(f"{self.name} failed: {e}")
-            await telegram.send_alert(f"Parser Error: {self.name}", str(e))
+            await telegram.send_alert_throttled(
+                f"Parser Error: {self.name}", str(e),
+                cooldown_key=f"parser_error:{self.name}",
+                cooldown_seconds=1800
+            )
             return 0
         
         finally:

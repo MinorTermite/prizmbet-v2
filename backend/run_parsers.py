@@ -13,37 +13,38 @@ async def run_all_parsers():
     db.init()
     await cache.connect()
 
-    from backend.parsers.odds_api_parser import OddsAPIParser
-    from backend.parsers.xbet_parser import XBetParser
-    from backend.parsers.leonbets_parser import LeonbetsParser
-    from backend.parsers.pinnacle_parser import PinnacleParser
-    from backend.parsers.api_football_parser import ApiFootballParser
+    try:
+        from backend.parsers.odds_api_parser import OddsAPIParser
+        from backend.parsers.xbet_parser import XBetParser
+        from backend.parsers.leonbets_parser import LeonbetsParser
+        from backend.parsers.pinnacle_parser import PinnacleParser
+        from backend.parsers.api_football_parser import ApiFootballParser
 
-    parsers = [
-        OddsAPIParser(),
-        XBetParser(),
-        LeonbetsParser(),
-        PinnacleParser(),
-        ApiFootballParser(),
-    ]
+        parsers = [
+            OddsAPIParser(),
+            XBetParser(),
+            LeonbetsParser(),
+            PinnacleParser(),
+            ApiFootballParser(),
+        ]
 
-    tasks = [parser.run() for parser in parsers]
-    results = await asyncio.gather(*tasks, return_exceptions=True)
+        tasks = [parser.run() for parser in parsers]
+        results = await asyncio.gather(*tasks, return_exceptions=True)
 
-    total_matches = sum(r for r in results if isinstance(r, int))
-    print(f"\nTotal matches parsed: {total_matches}")
+        total_matches = sum(r for r in results if isinstance(r, int))
+        print(f"\nTotal matches parsed: {total_matches}")
 
-    # Collect already-parsed matches from all parsers (avoids re-running the API calls).
-    # BaseParser.__init__ always sets self.matches = [], so getattr is a safe fallback.
-    all_matches = [m for parser in parsers for m in getattr(parser, "matches", [])]
-    if all_matches:
-        try:
-            from backend.api.generate_json import generate_from_raw
-            await generate_from_raw(all_matches)
-        except Exception as e:
-            print(f"[run_parsers] generate_json failed: {type(e).__name__}: {e}")
-
-    await cache.close()
+        # Collect already-parsed matches from all parsers (avoids re-running the API calls).
+        # BaseParser.__init__ always sets self.matches = [], so getattr is a safe fallback.
+        all_matches = [m for parser in parsers for m in getattr(parser, "matches", [])]
+        if all_matches:
+            try:
+                from backend.api.generate_json import generate_from_raw
+                await generate_from_raw(all_matches)
+            except Exception as e:
+                print(f"[run_parsers] generate_json failed: {type(e).__name__}: {e}")
+    finally:
+        await cache.close()
 
 if __name__ == "__main__":
     asyncio.run(run_all_parsers())
