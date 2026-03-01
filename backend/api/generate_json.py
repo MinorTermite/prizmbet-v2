@@ -56,7 +56,7 @@ def _bookmaker_from_id(external_id: str) -> str:
     eid = (external_id or "").lower()
     if eid.startswith("apifootball_"):
         return "ApiFootball"
-    if eid.startswith("odds_"):
+    if eid.startswith("odds_") or eid.startswith("oddsio_"):
         return "OddsAPI"
     if eid.startswith("1xbet_live"):   # must come before the generic 1xbet_ check
         return "1xBet Live"
@@ -131,7 +131,7 @@ def _write_json(matches: List[Dict[str, Any]]) -> int:
     with open(out, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)
 
-    print(f"[generate_json] Wrote {len(matches)} matches → {out}")
+    print(f"[generate_json] Wrote {len(matches)} matches -> {out}")
     return len(matches)
 
 

@@ -1,0 +1,17 @@
+{
+    "name": "PRIZMBET",
+    "short_name": "PRIZMBET",
+    "description": "Ставки на монетах PRIZM - Ставки на спорт",
+    "start_url": ".",
+    "display": "standalone",
+    "background_color": "#06060e",
+    "theme_color": "#06060e",
+    "icons": [
+        {
+            "src": "prizmbet-logo.webp",
+            "sizes": "192x192 512x512",
+            "type": "image/webp",
+            "purpose": "any maskable"
+        }
+    ]
+}

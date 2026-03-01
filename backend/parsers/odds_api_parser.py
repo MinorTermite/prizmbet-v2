@@ -1,214 +1,325 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-The Odds API v4 Parser with Totals and Spreads support.
+Odds API Parser -- supports two providers:
 
-Supports two providers with the same API shape:
-  - the-odds-api.com  (env: ODDS_API_KEY)
-  - odds-api.io       (env: ODDS_API_IO_KEY)
+  1. the-odds-api.com  (ODDS_API_KEY)
+     Events include inline bookmakers/odds -- one request per sport.
 
-If both keys are set, both sources are fetched and combined.
+  2. odds-api.io       (ODDS_API_IO_KEY)
+     Events and odds are separate endpoints.
+     GET /v3/events?sport=...&status=pending  -> list of upcoming events
+     GET /v3/odds?eventId=...&bookmakers=...  -> odds per event
 """
 
+import asyncio
 import os
-import aiohttp
-import json
 from datetime import datetime
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 from backend.parsers.base_parser import BaseParser
 
-# Primary: the-odds-api.com
-API_KEY = os.getenv("ODDS_API_KEY", "")
-BASE_URL = "https://api.the-odds-api.com/v4"
+# Provider 1: the-odds-api.com
+API_KEY      = os.getenv("ODDS_API_KEY", "")
+BASE_URL     = "https://api.the-odds-api.com/v4"
 
-# Secondary: odds-api.io (same v4 path structure)
-API_IO_KEY = os.getenv("ODDS_API_IO_KEY", "")
-BASE_IO_URL = "https://odds-api.io/v4"
+# Provider 2: odds-api.io
+API_IO_KEY   = os.getenv("ODDS_API_IO_KEY", "")
+BASE_IO_URL  = "https://api.odds-api.io/v3"
+IO_BOOKMAKER = "1xbet"  # bookmaker available on free plan
 
-SPORTS_MAP = {
-    "soccer_uefa_champions_league": ("football", "Лига чемпионов УЕФА"),
-    "soccer_epl": ("football", "Англия. Премьер-лига"),
-    "soccer_spain_la_liga": ("football", "Испания. Ла Лига"),
-    "basketball_nba": ("basket", "NBA"),
-    "icehockey_nhl": ("hockey", "НХЛ"),
+# Sports to fetch from the-odds-api.com
+ODDS_API_SPORTS: Dict[str, Tuple[str, str]] = {
+    "soccer_uefa_champions_league": ("football", "Liga Chempionov UEFA"),
+    "soccer_epl":                   ("football", "Angliya. Premier-liga"),
+    "soccer_spain_la_liga":         ("football", "Ispaniya. La Liga"),
+    "soccer_germany_bundesliga":    ("football", "Germaniya. Bundesliga"),
+    "soccer_italy_serie_a":         ("football", "Italiya. Seriya A"),
+    "basketball_nba":               ("basket",   "NBA"),
+    "icehockey_nhl":                ("hockey",   "NHL"),
 }
 
+# Top-league slug keywords for odds-api.io filtering
+IO_TOP_SLUGS = [
+    "premier-league", "la-liga", "bundesliga", "serie-a", "ligue-1",
+    "champions-league", "europa-league", "conference-league",
+    "primera-division", "primeira-liga", "super-lig",
+    "ekstraklasa", "russian-premier", "ukraine-premier",
+    "nba", "nhl",
+]
+
+# Sports to fetch from odds-api.io
+IO_SPORTS = ["football", "basketball", "ice-hockey"]
+
+# Max events per sport on odds-api.io (limits per-event requests)
+IO_MAX_EVENTS_PER_SPORT = 60
+
+
 class OddsAPIParser(BaseParser):
-    """The Odds API v4 Parser — supports the-odds-api.com and odds-api.io"""
+    """The Odds API v4 + odds-api.io v3 Parser"""
 
     def __init__(self):
         super().__init__("OddsAPI", BASE_URL)
 
     async def parse(self) -> List[Dict]:
-        """Parse matches from configured Odds API providers."""
         all_matches: List[Dict] = []
-        seen_ids: set = set()
+        seen: set = set()
 
-        sources = []
+        tasks = []
         if API_KEY:
-            sources.append((BASE_URL, API_KEY, "the-odds-api.com"))
+            tasks.append(self._parse_odds_api_com())
         if API_IO_KEY:
-            sources.append((BASE_IO_URL, API_IO_KEY, "odds-api.io"))
+            tasks.append(self._parse_odds_api_io())
 
-        if not sources:
-            print("[OddsAPI] No API key configured (ODDS_API_KEY or ODDS_API_IO_KEY) — skipping")
+        if not tasks:
+            print("[OddsAPI] No API key configured -- skipping")
             return []
 
-        for base_url, api_key, label in sources:
-            for sport_key, (sport_type, league_name) in SPORTS_MAP.items():
-                matches = await self.fetch_sport_odds(
-                    sport_key, sport_type, league_name, base_url, api_key, label
-                )
-                for m in matches:
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+        for r in results:
+            if isinstance(r, Exception):
+                print(f"[OddsAPI] parser error: {r}")
+            elif isinstance(r, list):
+                for m in r:
                     uid = m.get("external_id", "")
-                    if uid and uid not in seen_ids:
-                        seen_ids.add(uid)
+                    if uid and uid not in seen:
+                        seen.add(uid)
                         all_matches.append(m)
 
         return all_matches
 
-    async def fetch_sport_odds(self, sport_key: str, sport_type: str, league_name: str,
-                               base_url: str = BASE_URL, api_key: str = API_KEY,
-                               label: str = "the-odds-api.com") -> List[Dict]:
-        """Fetch odds for a specific sport from the given endpoint."""
+    # Provider 1 -- the-odds-api.com
+
+    async def _parse_odds_api_com(self) -> List[Dict]:
+        matches = []
         await self.init_session()
-        url = f"{base_url}/sports/{sport_key}/odds"
-        params = {
-            "apiKey": api_key,
-            "regions": "eu,us",
-            "markets": "h2h,totals,spreads",
-            "oddsFormat": "decimal",
-            "dateFormat": "iso",
-        }
+        for sport_key, (sport_type, league_name) in ODDS_API_SPORTS.items():
+            url = f"{BASE_URL}/sports/{sport_key}/odds"
+            params = {
+                "apiKey": API_KEY,
+                "regions": "eu,us",
+                "markets": "h2h,totals,spreads",
+                "oddsFormat": "decimal",
+                "dateFormat": "iso",
+            }
+            try:
+                async with self.session.get(url, params=params, proxy=self.proxy) as r:
+                    if r.status != 200:
+                        print(f"[OddsAPI] the-odds-api.com {r.status} for {sport_key}")
+                        continue
+                    remaining = r.headers.get("x-requests-remaining", "?")
+                    print(f"  [QUOTA] the-odds-api.com / {sport_key}: remaining={remaining}")
+                    data = await r.json()
+                    for event in data:
+                        m = self._parse_odds_api_com_event(event, sport_type, league_name)
+                        if m:
+                            matches.append(m)
+            except Exception as e:
+                print(f"[OddsAPI] the-odds-api.com error {sport_key}: {e}")
+        return matches
 
-        try:
-            async with self.session.get(url, params=params, proxy=self.proxy) as response:
-                if response.status != 200:
-                    print(f"[ERROR] {label} returned {response.status} for {sport_key}")
-                    return []
-
-                # Check API quota
-                remaining = response.headers.get("x-requests-remaining", "?")
-                print(f"  [QUOTA] {label} / {sport_key}: Remaining {remaining}")
-
-                data = await response.json()
-                matches = []
-
-                for event in data:
-                    match = self.parse_event(event, sport_type, league_name)
-                    if match:
-                        matches.append(match)
-
-                return matches
-
-        except Exception as e:
-            print(f"[ERROR] {sport_key}: {e}")
-            return []
-
-    def parse_event(self, event: Dict, sport_type: str, league_name: str) -> Optional[Dict]:
-        """Parse single event"""
-        event_id = event.get("id", "")
+    def _parse_odds_api_com_event(self, event: Dict, sport_type: str, league_name: str) -> Optional[Dict]:
+        event_id  = event.get("id", "")
         home_team = event.get("home_team", "")
         away_team = event.get("away_team", "")
-        
-        # Parse commence time
-        commence_time = event.get("commence_time", "")
-        match_time = None
-        if commence_time:
-            try:
-                dt = datetime.fromisoformat(commence_time.replace("Z", "+00:00"))
-                match_time = dt.isoformat()
-            except Exception:
-                pass
-        
-        # Initialize match data
-        match_data = {
-            "external_id": f"odds_{event_id}",
-            "sport": sport_type,
-            "league": league_name,
-            "home_team": home_team,
-            "away_team": away_team,
-            "match_time": match_time,
-            "odds_1": 0.0,
-            "odds_x": 0.0,
-            "odds_2": 0.0,
-            "total_value": None,
-            "total_over": 0.0,
-            "total_under": 0.0,
-            "handicap_1_value": None,
-            "handicap_1": 0.0,
-            "handicap_2_value": None,
-            "handicap_2": 0.0,
+        commence  = event.get("commence_time", "")
+        try:
+            match_time = datetime.fromisoformat(commence.replace("Z", "+00:00")).isoformat()
+        except Exception:
+            match_time = commence
+
+        md: Dict = {
+            "external_id":       f"odds_{event_id}",
+            "sport":             sport_type,
+            "league":            league_name,
+            "home_team":         home_team,
+            "away_team":         away_team,
+            "match_time":        match_time,
+            "is_live":           False,
+            "odds_1":            0.0,
+            "odds_x":            0.0,
+            "odds_2":            0.0,
+            "total_value":       None,
+            "total_over":        0.0,
+            "total_under":       0.0,
+            "handicap_1_value":  None,
+            "handicap_1":        0.0,
+            "handicap_2_value":  None,
+            "handicap_2":        0.0,
         }
-        
+
         bookmakers = event.get("bookmakers", [])
         if not bookmakers:
             return None
-        
-        # Use first bookmaker
-        first_bookie = bookmakers[0]
-        markets = first_bookie.get("markets", [])
-        
-        for market in markets:
-            market_key = market.get("key", "")
+        bk = bookmakers[0]
+        for market in bk.get("markets", []):
+            key      = market.get("key", "")
             outcomes = market.get("outcomes", [])
-            
-            if market_key == "h2h":
-                self.parse_h2h(outcomes, home_team, away_team, match_data, sport_type)
-            elif market_key == "totals":
-                self.parse_totals(outcomes, match_data)
-            elif market_key == "spreads":
-                self.parse_spreads(outcomes, home_team, away_team, match_data)
-        
-        return match_data
-    
-    def parse_h2h(self, outcomes: List[Dict], home_team: str, away_team: str, 
-                  match_data: Dict, sport_type: str):
-        """Parse h2h market"""
-        for outcome in outcomes:
-            name = outcome.get("name", "")
-            price = outcome.get("price", 0)
-            
-            if name == home_team:
-                match_data["odds_1"] = float(price)
-            elif name == away_team:
-                match_data["odds_2"] = float(price)
-            elif name == "Draw":
-                match_data["odds_x"] = float(price)
-        
-        # No draw for tennis/basketball
-        if sport_type in ["tennis", "basket"]:
-            match_data["odds_x"] = 0.0
-    
-    def parse_totals(self, outcomes: List[Dict], match_data: Dict):
-        """Parse totals market"""
-        total_point = None
-        
-        for outcome in outcomes:
-            name = outcome.get("name", "")
-            price = outcome.get("price", 0)
-            point = outcome.get("point", 0)
-            
-            if name == "Over":
-                match_data["total_over"] = float(price)
-                total_point = point
-            elif name == "Under":
-                match_data["total_under"] = float(price)
-                total_point = point
-        
-        if total_point:
-            match_data["total_value"] = float(total_point)
-    
-    def parse_spreads(self, outcomes: List[Dict], home_team: str, away_team: str, match_data: Dict):
-        """Parse spreads market"""
-        for outcome in outcomes:
-            name = outcome.get("name", "")
-            price = outcome.get("price", 0)
-            point = outcome.get("point", 0)
-            
-            if name == home_team:
-                match_data["handicap_1_value"] = float(point)
-                match_data["handicap_1"] = float(price)
-            elif name == away_team:
-                match_data["handicap_2_value"] = float(point)
-                match_data["handicap_2"] = float(price)
+            if key == "h2h":
+                for o in outcomes:
+                    n = o.get("name", "")
+                    p = float(o.get("price", 0) or 0)
+                    if n == home_team:   md["odds_1"] = p
+                    elif n == away_team: md["odds_2"] = p
+                    elif n == "Draw":    md["odds_x"] = p
+                if sport_type in ("tennis", "basket"):
+                    md["odds_x"] = 0.0
+            elif key == "totals":
+                for o in outcomes:
+                    n = o.get("name", "")
+                    p = float(o.get("price", 0) or 0)
+                    pt = o.get("point", 0)
+                    if n == "Over":
+                        md["total_over"]  = p
+                        md["total_value"] = float(pt) if pt else None
+                    elif n == "Under":
+                        md["total_under"] = p
+            elif key == "spreads":
+                for o in outcomes:
+                    n  = o.get("name", "")
+                    p  = float(o.get("price", 0) or 0)
+                    pt = float(o.get("point", 0) or 0)
+                    if n == home_team:
+                        md["handicap_1_value"] = pt
+                        md["handicap_1"]       = p
+                    elif n == away_team:
+                        md["handicap_2_value"] = pt
+                        md["handicap_2"]       = p
+
+        if not md["odds_1"] and not md["odds_2"]:
+            return None
+        return md
+
+    # Provider 2 -- odds-api.io
+
+    async def _parse_odds_api_io(self) -> List[Dict]:
+        await self.init_session()
+        all_matches: List[Dict] = []
+
+        for sport in IO_SPORTS:
+            try:
+                events = await self._io_get_events(sport)
+            except Exception as e:
+                print(f"[OddsAPI.io] events error ({sport}): {e}")
+                continue
+
+            # Filter to top leagues and limit count
+            filtered = [
+                e for e in events
+                if isinstance(e.get("league"), dict)
+                and any(slug in e["league"].get("slug", "") for slug in IO_TOP_SLUGS)
+            ]
+            filtered.sort(key=lambda e: e.get("date", ""))
+            filtered = filtered[:IO_MAX_EVENTS_PER_SPORT]
+
+            print(f"[OddsAPI.io] {sport}: {len(events)} total events, {len(filtered)} top-league selected")
+
+            # Fetch odds concurrently
+            odds_tasks = [self._io_get_odds(e["id"]) for e in filtered]
+            odds_results = await asyncio.gather(*odds_tasks, return_exceptions=True)
+
+            for event, odds_data in zip(filtered, odds_results):
+                if isinstance(odds_data, Exception) or not odds_data:
+                    continue
+                m = self._parse_io_event(event, odds_data, sport)
+                if m:
+                    all_matches.append(m)
+
+        print(f"[OddsAPI.io] Total matches collected: {len(all_matches)}")
+        return all_matches
+
+    async def _io_get_events(self, sport: str) -> List[Dict]:
+        url = f"{BASE_IO_URL}/events"
+        params = {"apiKey": API_IO_KEY, "sport": sport, "status": "pending"}
+        async with self.session.get(url, params=params, proxy=self.proxy) as r:
+            if r.status != 200:
+                print(f"[OddsAPI.io] events {r.status} for sport={sport}")
+                return []
+            return await r.json()
+
+    async def _io_get_odds(self, event_id: int) -> Optional[Dict]:
+        url = f"{BASE_IO_URL}/odds"
+        params = {"apiKey": API_IO_KEY, "eventId": event_id, "bookmakers": IO_BOOKMAKER}
+        try:
+            async with self.session.get(url, params=params, proxy=self.proxy) as r:
+                if r.status != 200:
+                    return None
+                return await r.json()
+        except Exception:
+            return None
+
+    def _parse_io_event(self, event: Dict, odds_resp: Dict, sport: str) -> Optional[Dict]:
+        home_team = event.get("home", "")
+        away_team = event.get("away", "")
+        league    = event.get("league", {}) or {}
+        event_id  = event.get("id", "")
+
+        sport_map = {"football": "football", "basketball": "basket", "ice-hockey": "hockey"}
+        sport_type  = sport_map.get(sport, sport)
+        league_name = league.get("name", league.get("slug", ""))
+
+        date_str = event.get("date", "")
+        try:
+            match_time = datetime.fromisoformat(date_str.replace("Z", "+00:00")).isoformat()
+        except Exception:
+            match_time = date_str
+
+        md: Dict = {
+            "external_id":       f"oddsio_{event_id}",
+            "sport":             sport_type,
+            "league":            league_name,
+            "home_team":         home_team,
+            "away_team":         away_team,
+            "match_time":        match_time,
+            "is_live":           event.get("status") == "live",
+            "odds_1":            0.0,
+            "odds_x":            0.0,
+            "odds_2":            0.0,
+            "total_value":       None,
+            "total_over":        0.0,
+            "total_under":       0.0,
+            "handicap_1_value":  None,
+            "handicap_1":        0.0,
+            "handicap_2_value":  None,
+            "handicap_2":        0.0,
+        }
+
+        bookmakers = odds_resp.get("bookmakers", {})
+        for bk_name, markets in bookmakers.items():
+            if not isinstance(markets, list):
+                continue
+            for market in markets:
+                mname  = market.get("name", "")
+                odds_l = market.get("odds", [])
+                if not odds_l:
+                    continue
+                o = odds_l[0]
+
+                if mname == "ML":  # Match Line = 1X2
+                    md["odds_1"] = float(o.get("home", 0) or 0)
+                    md["odds_x"] = float(o.get("draw", 0) or 0)
+                    md["odds_2"] = float(o.get("away", 0) or 0)
+                    if sport_type in ("tennis", "basket"):
+                        md["odds_x"] = 0.0
+
+                elif mname in ("Total", "Over/Under", "O/U"):
+                    try:
+                        md["total_value"] = float(o.get("total", o.get("line", 0)) or 0) or None
+                        md["total_over"]  = float(o.get("over",  o.get("home", 0)) or 0)
+                        md["total_under"] = float(o.get("under", o.get("away", 0)) or 0)
+                    except (TypeError, ValueError):
+                        pass
+
+                elif mname == "Spread":
+                    try:
+                        md["handicap_1_value"] = float(o.get("hdp", 0) or 0)
+                        md["handicap_1"]       = float(o.get("home", 0) or 0)
+                        md["handicap_2_value"] = -float(o.get("hdp", 0) or 0)
+                        md["handicap_2"]       = float(o.get("away", 0) or 0)
+                    except (TypeError, ValueError):
+                        pass
+
+            break  # use first bookmaker only
+
+        if not md["odds_1"] and not md["odds_2"]:
+            return None
+        return md

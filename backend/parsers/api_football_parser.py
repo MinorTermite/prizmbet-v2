@@ -57,21 +57,28 @@ class ApiFootballParser(BaseParser):
             print(f"[ApiFootball] Request error {path}: {e}")
             return None
 
-    async def _fetch_fixtures(self, league_id: int) -> List[dict]:
-        """Fetch upcoming fixtures for a league over the next DAYS_AHEAD days."""
+    async def _fetch_fixtures_by_date(self) -> List[dict]:
+        """Fetch fixtures for the next DAYS_AHEAD days via date param (free-plan compatible).
+        Filters results client-side to LEAGUES of interest.
+        """
         today = datetime.now(tz=timezone.utc)
-        end = today + timedelta(days=DAYS_AHEAD)
-        # European leagues run Aug–May: in Jan–Jul the current season started the prior year
-        season = today.year if today.month >= 8 else today.year - 1
-        params = {
-            "league": league_id,
-            "season": season,
-            "from": today.strftime("%Y-%m-%d"),
-            "to": end.strftime("%Y-%m-%d"),
-            "status": "NS",  # Not Started
-        }
-        data = await self._get("/fixtures", params)
-        return (data or {}).get("response", [])
+        all_fixtures: List[dict] = []
+        league_ids = set(LEAGUES.keys())
+
+        for offset in range(DAYS_AHEAD + 1):
+            date_str = (today + timedelta(days=offset)).strftime("%Y-%m-%d")
+            data = await self._get("/fixtures", {"date": date_str})
+            for fix in (data or {}).get("response", []):
+                if fix.get("league", {}).get("id") in league_ids:
+                    all_fixtures.append(fix)
+
+        # Also grab live fixtures
+        live_data = await self._get("/fixtures", {"live": "all"})
+        for fix in (live_data or {}).get("response", []):
+            if fix.get("league", {}).get("id") in league_ids:
+                all_fixtures.append(fix)
+
+        return all_fixtures
 
     async def _fetch_odds(self, fixture_id: int) -> Optional[dict]:
         """Fetch pre-match odds for a fixture."""
@@ -122,57 +129,64 @@ class ApiFootballParser(BaseParser):
             print("[ApiFootball] API_FOOTBALL_KEY not configured — skipping")
             return []
 
+        # Fetch all fixtures via date-based query (free-plan compatible)
+        fixtures = await self._fetch_fixtures_by_date()
+        print(f"[ApiFootball] fetched {len(fixtures)} fixtures for target leagues")
+
         all_matches: List[Dict] = []
+        seen_ids: set = set()
 
-        for league_id, (sport_type, league_name) in LEAGUES.items():
-            fixtures = await self._fetch_fixtures(league_id)
-            for fixture in fixtures:
-                f = fixture.get("fixture", {})
-                teams = fixture.get("teams", {})
-                fixture_id = f.get("id")
-                if not fixture_id:
-                    continue
+        for fixture in fixtures:
+            f          = fixture.get("fixture", {})
+            teams      = fixture.get("teams", {})
+            league_obj = fixture.get("league", {})
+            fixture_id = f.get("id")
+            if not fixture_id or fixture_id in seen_ids:
+                continue
+            seen_ids.add(fixture_id)
 
-                home = teams.get("home", {}).get("name", "")
-                away = teams.get("away", {}).get("name", "")
-                date_str = f.get("date", "")
+            league_id   = league_obj.get("id")
+            sport_type, league_name = LEAGUES.get(league_id, ("football", league_obj.get("name", "")))
+            home        = teams.get("home", {}).get("name", "")
+            away        = teams.get("away", {}).get("name", "")
+            date_str    = f.get("date", "")
+            status_long = f.get("status", {}).get("long", "")
+            is_live     = status_long in ("First Half", "Second Half", "Halftime",
+                                          "Extra Time", "Break Time", "Penalty In Progress")
 
-                try:
-                    match_time = datetime.fromisoformat(
-                        date_str.replace("Z", "+00:00")
-                    ).isoformat()
-                except Exception:
-                    match_time = date_str
+            try:
+                match_time = datetime.fromisoformat(
+                    date_str.replace("Z", "+00:00")
+                ).isoformat()
+            except Exception:
+                match_time = date_str
 
-                match_data = {
-                    "external_id": f"apifootball_{fixture_id}",
-                    "sport": sport_type,
-                    "league": league_name,
-                    "home_team": home,
-                    "away_team": away,
-                    "match_time": match_time,
-                    "match_url": f"https://www.api-football.com/fixture/{fixture_id}",
-                    "odds_1": 0.0,
-                    "odds_x": 0.0,
-                    "odds_2": 0.0,
-                    "total_value": None,
-                    "total_over": 0.0,
-                    "total_under": 0.0,
-                    "handicap_1_value": None,
-                    "handicap_1": 0.0,
-                    "handicap_2_value": None,
-                    "handicap_2": 0.0,
-                    "is_live": False,
-                }
+            match_data = {
+                "external_id":       f"apifootball_{fixture_id}",
+                "sport":             sport_type,
+                "league":            league_name,
+                "home_team":         home,
+                "away_team":         away,
+                "match_time":        match_time,
+                "match_url":         f"https://www.api-football.com/fixture/{fixture_id}",
+                "is_live":           is_live,
+                "odds_1":            0.0,
+                "odds_x":            0.0,
+                "odds_2":            0.0,
+                "total_value":       None,
+                "total_over":        0.0,
+                "total_under":       0.0,
+                "handicap_1_value":  None,
+                "handicap_1":        0.0,
+                "handicap_2_value":  None,
+                "handicap_2":        0.0,
+            }
 
-                odds_resp = await self._fetch_odds(fixture_id)
-                if odds_resp:
-                    self._parse_odds(odds_resp, match_data)
+            odds_resp = await self._fetch_odds(fixture_id)
+            if odds_resp:
+                self._parse_odds(odds_resp, match_data)
 
-                if match_data["odds_1"] > 0 or match_data["odds_2"] > 0:
-                    all_matches.append(match_data)
+            all_matches.append(match_data)
 
-            added = sum(1 for m in all_matches if m.get("league") == league_name)
-            print(f"[ApiFootball] {league_name}: {len(fixtures)} fetched, {added} with odds")
-
+        print(f"[ApiFootball] {len(all_matches)} matches processed")
         return all_matches

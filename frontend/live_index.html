@@ -7,11 +7,11 @@
     <meta name="theme-color" content="#06060e">
     <link rel="manifest" href="manifest.json">
     <meta name="description" content="PRIZMBET - Ставки на монетах PRIZM. Футбол, хоккей, баскетбол и киберспорт">
-    <title>PRIZMBET</title>
+    <title>PRIZMBET LIVE</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;900&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@600;700&display=swap"
         rel="stylesheet">
 
     <style>
@@ -25,56 +25,56 @@
         }
 
         :root {
-            /* Ultra-modern Crypto / Cyberpunk palette */
-            --bg-primary: #030305;
-            --bg-secondary: #08080c;
-            --bg-tertiary: #101018;
-            --bg-card: rgba(8, 8, 12, 0.65);
-            --bg-card-hover: rgba(12, 12, 20, 0.8);
-            --bg-elevated: rgba(15, 15, 25, 0.85);
+            /* Core palette — deep midnight with electric accents */
+            --bg-primary: #06060e;
+            --bg-secondary: #0a0a16;
+            --bg-tertiary: #0e0e1a;
+            --bg-card: rgba(14, 14, 28, 0.7);
+            --bg-card-hover: rgba(20, 20, 40, 0.8);
+            --bg-elevated: rgba(18, 18, 36, 0.85);
 
-            /* Accent — neon cyan */
-            --accent: #00f0ff;
-            --accent-bright: #70ffff;
-            --accent-glow: rgba(0, 240, 255, 0.35);
-            --accent-soft: rgba(0, 240, 255, 0.08);
+            /* Accent — electric violet shifting to warm gold */
+            --accent: #8b5cf6;
+            --accent-bright: #a78bfa;
+            --accent-glow: rgba(139, 92, 246, 0.25);
+            --accent-soft: rgba(139, 92, 246, 0.08);
 
             /* Semantic */
-            --green: #39ff14;
-            --green-bright: #5eff33;
-            --green-glow: rgba(57, 255, 20, 0.2);
-            --red: #ff003c;
-            --red-glow: rgba(255, 0, 60, 0.2);
-            --amber: #fcec00;
-            --amber-glow: rgba(252, 236, 0, 0.15);
-            --blue: #0066ff;
-            --blue-glow: rgba(0, 102, 255, 0.2);
-            --cyan: #00f0ff;
-            --cyan-glow: rgba(0, 240, 255, 0.25);
-            --pink: #ff00e5;
+            --green: #10b981;
+            --green-bright: #34d399;
+            --green-glow: rgba(16, 185, 129, 0.15);
+            --red: #ef4444;
+            --red-glow: rgba(239, 68, 68, 0.15);
+            --amber: #f59e0b;
+            --amber-glow: rgba(245, 158, 11, 0.12);
+            --blue: #3b82f6;
+            --blue-glow: rgba(59, 130, 246, 0.12);
+            --cyan: #06b6d4;
+            --cyan-glow: rgba(6, 182, 212, 0.12);
+            --pink: #ec4899;
 
             /* Surface & border */
-            --border: rgba(0, 240, 255, 0.15);
-            --border-hover: rgba(0, 240, 255, 0.4);
-            --border-bright: rgba(0, 240, 255, 0.7);
+            --border: rgba(139, 92, 246, 0.1);
+            --border-hover: rgba(139, 92, 246, 0.25);
+            --border-bright: rgba(139, 92, 246, 0.4);
 
             /* Text */
-            --text-primary: #ffffff;
-            --text-secondary: rgba(255, 255, 255, 0.65);
-            --text-tertiary: rgba(255, 255, 255, 0.4);
+            --text-primary: #f1f0f5;
+            --text-secondary: rgba(241, 240, 245, 0.6);
+            --text-tertiary: rgba(241, 240, 245, 0.35);
 
             /* Spacing & radius */
-            --radius-xl: 16px;
-            --radius-lg: 12px;
-            --radius-md: 8px;
-            --radius-sm: 4px;
+            --radius-xl: 20px;
+            --radius-lg: 14px;
+            --radius-md: 10px;
+            --radius-sm: 8px;
             --radius-pill: 100px;
 
             /* Shadows */
-            --shadow-sm: 0 4px 12px rgba(0, 0, 0, 0.5);
-            --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.7);
-            --shadow-lg: 0 16px 48px rgba(0, 0, 0, 0.9);
-            --shadow-glow: 0 0 30px var(--accent-glow);
+            --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.3);
+            --shadow-md: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 16px 64px rgba(0, 0, 0, 0.5);
+            --shadow-glow: 0 0 40px var(--accent-glow);
         }
 
         html {
@@ -95,191 +95,49 @@
             -moz-osx-font-smoothing: grayscale;
         }
 
-        /* ===== PREMIUM ANIMATED BACKGROUND ===== */
+        /* ===== ANIMATED BACKGROUND ===== */
         .bg-canvas {
             position: fixed;
             inset: 0;
             z-index: -1;
-            background-color: var(--bg-primary);
             overflow: hidden;
+            background: var(--bg-primary);
         }
 
-        /* Subtle Grain/Noise Blur */
+        .bg-aurora {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            background:
+                radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.18), transparent 45%),
+                radial-gradient(circle at 85% 30%, rgba(6, 182, 212, 0.15), transparent 45%),
+                radial-gradient(circle at 50% 80%, rgba(16, 185, 129, 0.12), transparent 45%),
+                radial-gradient(circle at 50% 50%, rgba(236, 72, 153, 0.1), transparent 55%);
+            filter: blur(80px);
+            animation: auroraDrift 25s infinite alternate ease-in-out;
+        }
+
+        @keyframes auroraDrift {
+            0% {
+                transform: translateY(0) scale(1) rotate(0deg);
+            }
+
+            100% {
+                transform: translateY(-5%) scale(1.05) rotate(5deg);
+            }
+        }
+
+        /* Subtle grain */
         .bg-canvas::after {
             content: '';
             position: absolute;
             inset: 0;
-            background: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+            background: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+            opacity: 0.6;
             pointer-events: none;
-            z-index: 1;
         }
-
-        .glow-orb {
-            position: absolute;
-            border-radius: 50%;
-            filter: blur(80px);
-            opacity: 0.55;
-            animation: floatOrb 20s infinite alternate cubic-bezier(0.4, 0, 0.2, 1);
-            will-change: transform;
-        }
-
-        .orb-1 {
-            width: 55vw; height: 55vw;
-            background: rgba(139, 92, 246, 0.35); /* Deep Violet */
-            top: -10%; left: -10%;
-            animation-duration: 25s;
-        }
-        .orb-2 {
-            width: 45vw; height: 45vw;
-            background: rgba(0, 240, 255, 0.3); /* Neon Cyan */
-            bottom: -5%; right: -10%;
-            animation-delay: -5s;
-            animation-duration: 22s;
-        }
-        .orb-3 {
-            width: 40vw; height: 40vw;
-            background: rgba(255, 0, 229, 0.15); /* Tech Pink */
-            top: 40%; left: 50%;
-            animation-delay: -10s;
-            animation-duration: 28s;
-        }
-        .orb-4 {
-            width: 60vw; height: 60vw;
-            background: rgba(0, 102, 255, 0.25); /* Deep Blue */
-            bottom: 20%; left: -20%;
-            animation-delay: -15s;
-            animation-duration: 26s;
-        }
-
-        @keyframes floatOrb {
-            0% { transform: translate(0, 0) scale(1); }
-            33% { transform: translate(8vw, -8vh) scale(1.1); }
-            66% { transform: translate(-5vw, 12vh) scale(0.9); }
-            100% { transform: translate(12vw, 5vh) scale(1.15); }
-        }
-
-        /* ===== PARALLAX PARTICLES ===== */
-        .particles-container {
-            position: absolute;
-            inset: -5%;
-            width: 110%;
-            height: 110%;
-            pointer-events: none;
-            z-index: 0;
-        }
-        
-        .parallax-layer {
-            position: absolute;
-            inset: 0;
-            width: 100%;
-            height: 100%;
-            will-change: transform;
-        }
-
-        .particle {
-            position: absolute;
-            background: #fff;
-            border-radius: 50%;
-            box-shadow: 0 0 10px var(--accent-bright), 0 0 20px var(--cyan-glow);
-            animation: twinkle 4s infinite alternate ease-in-out;
-            will-change: transform, opacity;
-        }
-
-        @keyframes twinkle {
-            0% { transform: scale(1) translateY(0); opacity: 0.2; }
-            100% { transform: scale(1.5) translateY(-15px); opacity: 0.9; }
-        }
-
-        /* ===== MY BETS MODAL ===== */
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(6, 6, 14, 0.8);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            z-index: 10000;
-            display: none;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        .modal-overlay.show {
-            display: flex;
-            opacity: 1;
-        }
-        .modal-content {
-            background: var(--bg-card);
-            border: 1px solid var(--border-bright);
-            border-radius: var(--radius-xl);
-            width: 100%;
-            max-width: 500px;
-            padding: 24px;
-            box-shadow: var(--shadow-lg), 0 0 40px var(--accent-glow);
-            transform: translateY(20px);
-            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            max-height: 85vh;
-            display: flex;
-            flex-direction: column;
-        }
-        .modal-overlay.show .modal-content {
-            transform: translateY(0);
-        }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .modal-title {
-            font-size: 1.5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, #fff, var(--accent-bright));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .modal-close {
-            background: rgba(255,255,255,0.1);
-            border: none;
-            color: #fff;
-            width: 32px; height: 32px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 1.2rem;
-            transition: 0.2s;
-        }
-        .modal-close:hover { background: rgba(239, 68, 68, 0.5); transform: rotate(90deg); }
-        .wallet-input {
-            width: 100%;
-            padding: 14px 20px;
-            border-radius: var(--radius-pill);
-            border: 1px solid var(--border);
-            background: rgba(0,0,0,0.4);
-            color: #fff;
-            font-size: 1rem;
-            outline: none;
-            margin-bottom: 16px;
-            transition: 0.3s;
-        }
-        .wallet-input:focus { border-color: var(--accent); box-shadow: 0 0 15px var(--accent-glow); }
-        .bets-list {
-            overflow-y: auto;
-            flex: 1;
-            padding-right: 8px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .bet-item {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.08);
-            border-radius: var(--radius-lg);
-            padding: 14px;
-        }
-        .bet-status-win { border-left: 4px solid var(--green); background: var(--green-glow); }
-        .bet-status-loss { border-left: 4px solid var(--red); background: var(--red-glow); }
-        .bet-status-pending { border-left: 4px solid var(--amber); }
 
         /* ===== CUSTOM SCROLLBARS ===== */
         ::-webkit-scrollbar {
@@ -525,69 +383,6 @@
             box-shadow: 0 4px 20px rgba(0, 136, 204, 0.25);
         }
 
-        /* ===== TELEGRAM BOT BANNER ===== */
-        .tg-bot-banner {
-            display: flex;
-            align-items: center;
-            gap: 14px;
-            padding: 13px 18px;
-            background: linear-gradient(135deg, rgba(0, 136, 204, 0.14), rgba(0, 172, 237, 0.07));
-            border: 1px solid rgba(0, 136, 204, 0.28);
-            border-radius: var(--radius-lg);
-            text-decoration: none;
-            color: var(--text-primary);
-            margin: 0 0 14px 0;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            position: relative;
-            overflow: hidden;
-        }
-        .tg-bot-banner::before {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(135deg, rgba(0, 136, 204, 0.06), transparent);
-            opacity: 0;
-            transition: opacity 0.3s;
-        }
-        .tg-bot-banner:hover::before { opacity: 1; }
-        .tg-bot-banner:hover {
-            border-color: rgba(0, 136, 204, 0.5);
-            transform: translateY(-1px);
-            box-shadow: 0 6px 24px rgba(0, 136, 204, 0.18);
-        }
-        .tg-bot-banner:active { transform: translateY(0) scale(0.99); }
-        .tg-bot-icon {
-            font-size: 1.7rem;
-            flex-shrink: 0;
-            filter: drop-shadow(0 0 8px rgba(0,136,204,0.4));
-        }
-        .tg-bot-text {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-        .tg-bot-text strong {
-            font-size: 0.88rem;
-            font-weight: 700;
-            color: #fff;
-            letter-spacing: 0.3px;
-        }
-        .tg-bot-text span {
-            font-size: 0.76rem;
-            color: rgba(0, 172, 237, 0.85);
-            font-weight: 500;
-        }
-        .tg-bot-arrow {
-            font-size: 1.1rem;
-            color: rgba(0, 136, 204, 0.75);
-            flex-shrink: 0;
-            transition: transform 0.2s;
-        }
-        .tg-bot-banner:hover .tg-bot-arrow { transform: translateX(4px); }
-
         /* ===== STATS ===== */
         .stats-bar {
             display: grid;
@@ -634,7 +429,7 @@
         .stat-number {
             font-size: 1.8rem;
             font-weight: 800;
-            font-family: 'Share Tech Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             background: linear-gradient(135deg, #fff, var(--accent-bright));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -656,63 +451,29 @@
             border: 1px solid var(--border);
             border-radius: var(--radius-xl);
             padding: 16px;
+            margin-bottom: 18px;
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            margin-bottom: 16px;
-            overflow-x: auto;
             position: relative;
             z-index: 10;
-        }
-
-        .tabs-wrap {
-            position: relative;
-            margin-bottom: 16px;
-        }
-
-        .tabs-wrap::after {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: 0;
-            bottom: 8px;
-            width: 48px;
-            background: linear-gradient(to right, transparent, var(--bg-card));
-            pointer-events: none;
-            border-radius: 0 12px 12px 0;
-            transition: opacity 0.3s;
-        }
-
-        .tabs-wrap.scrolled-end::after {
-            opacity: 0;
         }
 
         .tabs {
             display: flex;
             gap: 8px;
+            margin-bottom: 16px;
             overflow-x: auto;
             padding-bottom: 8px;
-            padding-right: 48px;
+            /* For scrollbar space */
+            -webkit-overflow-scrolling: touch;
             scrollbar-width: none;
-            -ms-overflow-style: none;
+            /* Firefox */
         }
 
         .tabs::-webkit-scrollbar {
             display: none;
+            /* Chrome/Safari */
         }
-
-        @keyframes tabsSwipeHint {
-            0%   { transform: translateX(0); }
-            30%  { transform: translateX(-28px); }
-            60%  { transform: translateX(0); }
-            80%  { transform: translateX(-12px); }
-            100% { transform: translateX(0); }
-        }
-
-        .tabs.swipe-hint {
-            animation: tabsSwipeHint 0.9s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-        }
-
-        /* Chrome/Safari */
 
         .tab {
             flex: 0 0 auto;
@@ -1001,8 +762,7 @@
             box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.02);
             transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
             position: relative;
-            /* overflow: hidden убрано — оно скрывало кнопку избранного на мобильных */
-            overflow: visible;
+            overflow: hidden;
         }
 
         .match-card:last-child {
@@ -1039,20 +799,10 @@
             align-items: center;
             margin-bottom: 10px;
             gap: 8px;
-            min-width: 0;
-        }
-
-        /* Обёртка кнопок (Проверить + избранное) — никогда не сжимается */
-        .match-actions {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-            margin-left: auto;
-            flex-shrink: 0;
         }
 
         .match-id {
-            font-family: 'Share Tech Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             background: linear-gradient(135deg, var(--accent), #7c3aed);
             padding: 4px 12px;
             border-radius: var(--radius-pill);
@@ -1099,29 +849,6 @@
             line-height: 1;
         }
 
-        .match-link {
-            display: inline-flex;
-            align-items: center;
-            background: rgba(139, 92, 246, 0.1);
-            color: var(--accent-bright);
-            padding: 4px 10px;
-            border-radius: var(--radius-pill);
-            text-decoration: none;
-            font-size: 0.75rem;
-            font-weight: 600;
-            transition: all 0.2s;
-            position: relative;
-            z-index: 10;
-            border: 1px solid rgba(139, 92, 246, 0.3);
-        }
-
-        .match-link:hover {
-            background: rgba(139, 92, 246, 0.2);
-            color: #fff;
-            transform: scale(1.05);
-            box-shadow: 0 0 10px var(--accent-glow);
-        }
-
         .share-btn:hover {
             color: var(--accent-bright);
             transform: scale(1.2);
@@ -1132,41 +859,22 @@
         }
 
         .favorite-btn {
-            background: rgba(255,255,255,0.06);
-            border: 1px solid rgba(255,255,255,0.12);
-            border-radius: 8px;
+            background: transparent;
+            border: none;
             cursor: pointer;
-            font-size: 1.1rem;
-            padding: 5px 8px;
-            min-width: 36px;
-            min-height: 32px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-            color: rgba(241,240,245,0.7);
-            line-height: 1;
-            flex-shrink: 0;
+            font-size: 1.15rem;
+            padding: 4px;
+            transition: all 0.25s;
+            filter: grayscale(100%) brightness(0.5);
         }
 
         .favorite-btn:hover {
-            background: rgba(245,158,11,0.15);
-            border-color: var(--amber);
-            color: var(--amber);
+            transform: scale(1.2);
+            filter: grayscale(50%) brightness(0.8);
         }
 
         .favorite-btn.active {
-            background: rgba(245,158,11,0.18);
-            border-color: var(--amber);
-            color: var(--amber);
-            filter: drop-shadow(0 0 6px rgba(245,158,11,0.5));
-            animation: starPulse 0.35s ease-out;
-        }
-
-        @keyframes starPulse {
-            0%   { transform: scale(0.75); }
-            55%  { transform: scale(1.25); }
-            100% { transform: scale(1); }
+            filter: grayscale(0%) brightness(1);
         }
 
 
@@ -1180,7 +888,7 @@
         }
 
         .countdown {
-            font-family: 'Share Tech Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 0.72rem;
             font-weight: 600;
             color: var(--green);
@@ -1281,15 +989,6 @@
             box-shadow: none;
         }
 
-        /* Анимация изменения коэффициента (зелёная вспышка = обновление) */
-        @keyframes oddFlash {
-            0%   { color: var(--amber); text-shadow: 0 0 12px rgba(245,158,11,0.8); }
-            100% { color: var(--green-bright); text-shadow: 0 0 10px rgba(16,185,129,0.4); }
-        }
-        .odd-value.odd-changed {
-            animation: oddFlash 0.8s ease-out forwards;
-        }
-
         .odd-label {
             font-size: 0.7rem;
             color: rgba(241, 240, 245, 0.5);
@@ -1299,7 +998,7 @@
         }
 
         .odd-value {
-            font-family: 'Share Tech Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 1.05rem;
             font-weight: 800;
             color: var(--green-bright);
@@ -1374,7 +1073,7 @@
         }
 
         .wallet-address {
-            font-family: 'Share Tech Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             color: var(--green-bright);
             letter-spacing: 0.5px;
             font-size: 0.88rem;
@@ -1557,16 +1256,33 @@
         .bk-badge {
             display: inline-flex;
             align-items: center;
-            justify-content: center;
-            width: 24px;
-            height: 24px;
-            background: rgba(0, 240, 255, 0.1);
-            border: 1px solid rgba(0, 240, 255, 0.4);
-            color: var(--cyan);
-            border-radius: 50%;
-            font-size: 0.9rem;
+            gap: 4px;
+            padding: 3px 10px;
+            border-radius: var(--radius-pill);
+            font-size: 0.68rem;
             font-weight: 700;
-            box-shadow: 0 0 10px var(--cyan-glow);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            text-decoration: none;
+            transition: all 0.25s;
+            cursor: pointer;
+        }
+
+        .bk-badge:hover {
+            transform: translateY(-1px);
+            filter: brightness(1.2);
+        }
+
+        .bk-badge--winline {
+            background: rgba(0, 128, 55, 0.15);
+            border: 1px solid rgba(0, 128, 55, 0.4);
+            color: #34d399;
+        }
+
+        .bk-badge--marathon {
+            background: rgba(0, 100, 200, 0.15);
+            border: 1px solid rgba(0, 100, 200, 0.4);
+            color: #60a5fa;
         }
 
         .match-link {
@@ -1682,13 +1398,7 @@
             }
 
             .header-actions {
-                gap: 5px;
-            }
-
-            .header-actions .btn-icon {
-                width: 32px;
-                height: 32px;
-                font-size: 1rem;
+                gap: 8px;
             }
 
             .btn {
@@ -1703,20 +1413,6 @@
 
             .brand-name {
                 letter-spacing: 4px;
-            }
-
-                /* На мобильном скрываем текст "Проверить", оставляем только иконку */
-            .match-link .link-text { display: none; }
-            .match-link { padding: 5px 7px; font-size: 0.85rem; }
-
-            /* Кнопку share скрываем на мобильном — экономим место */
-            .share-btn { display: none; }
-
-            /* Звездочка крупнее на мобильном */
-            .favorite-btn {
-                font-size: 1.25rem;
-                min-width: 40px;
-                min-height: 36px;
             }
         }
 
@@ -1846,7 +1542,7 @@
         }
 
         .bet-slip-coef {
-            font-family: 'Share Tech Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 1.2rem;
             font-weight: 800;
             color: var(--green-bright);
@@ -1882,7 +1578,7 @@
             font-weight: 600;
             outline: none;
             transition: border-color 0.2s;
-            font-family: 'Share Tech Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
         }
 
         .bet-input:focus {
@@ -1900,7 +1596,7 @@
         }
 
         .bet-payout {
-            font-family: 'Share Tech Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-size: 1.3rem;
             font-weight: 800;
             color: var(--green-bright);
@@ -1975,7 +1671,7 @@
 
         .history-item-payout {
             color: var(--green-bright);
-            font-family: 'Share Tech Mono', monospace;
+            font-family: 'JetBrains Mono', monospace;
             font-weight: bold;
             font-size: 0.9rem;
         }
@@ -1984,34 +1680,8 @@
 
 <body>
     <div class="scroll-progress" id="scrollProgress"></div>
-
-    <!-- ===== MY BETS MODAL ===== -->
-    <div class="modal-overlay" id="myBetsModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">Мои ставки 🔥</h2>
-                <button class="modal-close" onclick="toggleMyBets()">✕</button>
-            </div>
-            <input type="text" id="walletInput" class="wallet-input" placeholder="Введите ваш PRIZM адрес или Telegram ID..." onkeypress="if(event.key === 'Enter') checkMyBets()">
-            <button class="btn btn-primary" style="width:100%; justify-content:center; margin-bottom: 16px;" onclick="checkMyBets()">Поиск ставок</button>
-            <div class="bets-list" id="betsListContainer">
-                <div style="text-align:center; color: var(--text-tertiary); margin-top: 20px;">
-                    Введите адрес кошелька PRIZM, с которого вы совершали перевод, чтобы увидеть историю ставок.
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- ===== PREMIUM ANIMATED BACKGROUND ===== -->
     <div class="bg-canvas">
-        <div class="glow-orb orb-1"></div>
-        <div class="glow-orb orb-2"></div>
-        <div class="glow-orb orb-3"></div>
-        <div class="glow-orb orb-4"></div>
-
-        <!-- PARALLAX PARTICLES -->
-        <div class="particles-container" id="parallaxContainer">
-            <!-- Layers will be generated by JS -->
-        </div>
+        <div class="bg-aurora"></div>
     </div>
 
     <div class="container">
@@ -2030,9 +1700,8 @@
             <h1 class="brand-name">PRIZMBET</h1>
             <p class="tagline">Ставки на PRIZM</p>
             <div class="header-actions">
-                <button id="notifBtn" class="btn-icon" onclick="requestNotificationPermission()" title="Уведомления об избранных">🔔</button>
-                <a href="https://t.me/PrizmBet2bot" target="_blank" rel="noopener" class="btn-icon"
-                    title="Telegram Bot @PrizmBet2bot">🤖</a>
+                <a href="https://t.me/+PMrQ9Nbzu08wYmI0" target="_blank" rel="noopener" class="btn-icon"
+                    title="Telegram">✈️</a>
                 <button class="btn-icon" onclick="openHistory()" title="История">📜</button>
                 <button class="btn-icon" onclick="refreshData()" title="Обновить">↻</button>
             </div>
@@ -2054,31 +1723,18 @@
             </div>
         </div>
 
-        <!-- TELEGRAM BOT BANNER -->
-        <a href="https://t.me/PrizmBet2bot" target="_blank" rel="noopener" class="tg-bot-banner">
-            <span class="tg-bot-icon">🤖</span>
-            <div class="tg-bot-text">
-                <strong>Telegram-бот</strong>
-                <span>Уведомления о ставках • Правила • Статистика</span>
-            </div>
-            <span class="tg-bot-arrow">→</span>
-        </a>
-
         <!-- FILTERS -->
         <div class="filters-bar">
-            <div class="tabs-wrap" id="tabsWrap">
-            <div class="tabs" id="tabsRow">
-                <button class="tab" data-sport="all">Все</button>
-                <button class="tab active" data-sport="football">⚽ Футбол</button>
+            <div class="tabs">
+                <button class="tab active" data-sport="all">Все</button>
+                <button class="tab" data-sport="football">⚽ Футбол</button>
                 <button class="tab" data-sport="hockey">🏒 Хоккей</button>
-                <button class="tab" data-sport="basket"> Баскетбол</button>
+                <button class="tab" data-sport="basket">🏀 Баскетбол</button>
                 <button class="tab" data-sport="tennis">🎾 Теннис</button>
-                <button class="tab" data-sport="tabletennis"> Наст. теннис</button>
-                <button class="tab" data-sport="volleyball"> Волейбол</button>
+                <button class="tab" data-sport="tabletennis">🏓 Наст. теннис</button>
+                <button class="tab" data-sport="volleyball">🏐 Волейбол</button>
                 <button class="tab" data-sport="mma">🥊 MMA</button>
                 <button class="tab" data-sport="esports">🎮 Киберспорт</button>
-                <button class="tab" data-sport="favs">⭐ Избранное</button>
-            </div>
             </div>
             <div class="filters">
                 <select id="gameFilter" class="select">
@@ -2100,17 +1756,15 @@
                 style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;">
                 <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                     <span class="sort-label">Сортировка:</span>
-                    <button class="sort-btn active" data-sort="none">По умолч.</button>
-                    <button class="sort-btn" data-sort="time">По времени</button>
+                    <button class="sort-btn active" data-sort="time">По времени</button>
                     <button class="sort-btn" data-sort="odds">По коэф.</button>
                     <button class="sort-btn" data-sort="league">По лигам</button>
                 </div>
                 <div id="lastUpdate" class="update-info" style="margin: 0; display: inline-block;">
-                    <span class="loading"></span> Загрузка...
+                    <span class="loading"></span> Загрузка линии...
                 </div>
             </div>
         </div>
-
         <!-- ПРАВИЛА -->
         <div class="section">
             <h2 class="section-title">📋 Правила PRIZMBET</h2>
@@ -2136,7 +1790,7 @@
                 <div class="wallet-address" id="walletAddress">PRIZM-4N7T-L2A7-RQZA-5BETW</div>
             </div>
             <button class="btn btn-primary" onclick="copyWallet()">📋 Копировать адрес</button>
-            <p class="wallet-note">Укажите ID события и тип ставки в комментарии к переводу</p>
+            <p class="wallet-note">Укажите ID события и тип ставки в комментарии к переходу</p>
         </div>
 
         <!-- МАТЧИ -->
@@ -2165,7 +1819,8 @@
         </div>
 
         <footer style="padding: 24px 16px; text-align: center;">
-            <div class="footer-brand" style="font-size: 1rem; margin-bottom: 10px;">2026 &copy; PrizmBet</div>
+            <div class="footer-brand" style="font-size: 1rem; margin-bottom: 10px;">2026 &copy; PrizmBet
+            </div>
             <p
                 style="color: var(--text-tertiary); font-size: 0.75rem; line-height: 1.4; max-width: 600px; margin: 0 auto;">
                 Букмекер, осуществляющий игровую деятельность с децентрализованной криптовалютой Prizm. Настоящий сайт
@@ -2230,7 +1885,6 @@
 
     <!-- Общая логика API и кэширования -->
     <script src="api.js"></script>
-    <script src="tests.js"></script>
 
     <script>
         // ===== PWA Service Worker Registration =====
@@ -2250,162 +1904,20 @@
             try { const f = localStorage.getItem('prizmbet_favorites'); return f ? JSON.parse(f) : []; }
             catch { return []; }
         }
+
         function saveFavorites(favorites) {
             try { localStorage.setItem('prizmbet_favorites', JSON.stringify(favorites)); } catch { }
         }
 
-        // Сохраняем детали матчей избранного (команды, лига) для уведомлений
-        function getFavDetails() {
-            try { const d = localStorage.getItem('prizmbet_fav_details'); return d ? JSON.parse(d) : {}; }
-            catch { return {}; }
-        }
-        function saveFavDetails(details) {
-            try { localStorage.setItem('prizmbet_fav_details', JSON.stringify(details)); } catch { }
-        }
-
         function toggleFavorite(matchId) {
             let favorites = getFavorites();
-            let details = getFavDetails();
             if (favorites.includes(matchId)) {
                 favorites = favorites.filter(id => id !== matchId);
-                delete details[matchId];
-                showToast('Убрано из избранного');
             } else {
                 favorites.push(matchId);
-                // Сохраняем детали матча для будущих уведомлений
-                const match = (window.__ALL_MATCHES__ || []).find(m => m.id === matchId);
-                if (match) {
-                    details[matchId] = { team1: match.team1, team2: match.team2, league: match.league };
-                }
-                showToast('⭐ Добавлено в избранное');
             }
             saveFavorites(favorites);
-            saveFavDetails(details);
             if (window.__ALL_MATCHES__) renderMatches(window.__ALL_MATCHES__);
-        }
-
-        // ===== Уведомления об избранных матчах =====
-        function updateNotifBell() {
-            const btn = document.getElementById('notifBtn');
-            if (!btn) return;
-            if (!('Notification' in window)) { btn.style.opacity = '0.3'; return; }
-            if (Notification.permission === 'granted') {
-                btn.textContent = '🔔';
-                btn.title = 'Уведомления включены';
-                btn.style.opacity = '1';
-            } else if (Notification.permission === 'denied') {
-                btn.textContent = '🔕';
-                btn.title = 'Уведомления заблокированы — разрешите в настройках браузера';
-                btn.style.opacity = '0.5';
-            } else {
-                btn.textContent = '🔔';
-                btn.title = 'Нажмите, чтобы включить уведомления';
-                btn.style.opacity = '0.6';
-            }
-        }
-
-        function requestNotificationPermission() {
-            if (!('Notification' in window)) {
-                showToast('Уведомления не поддерживаются в этом браузере');
-                return;
-            }
-            if (Notification.permission === 'granted') {
-                showToast('🔔 Уведомления уже включены!');
-                return;
-            }
-            if (Notification.permission === 'denied') {
-                // Показываем модалку с инструкцией как разблокировать
-                const msg = document.createElement('div');
-                msg.style.cssText = 'position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#1a1a2e;border:1px solid rgba(139,92,246,0.5);border-radius:16px;padding:24px;z-index:9999;max-width:320px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.7)';
-                msg.innerHTML = `
-                    <div style="font-size:2rem;margin-bottom:12px">🔕</div>
-                    <div style="font-weight:700;margin-bottom:8px;color:#fff">Уведомления заблокированы</div>
-                    <div style="color:#aaa;font-size:0.85rem;margin-bottom:16px;line-height:1.5">
-                        Chrome: нажми 🔒 в адресной строке → <b>Уведомления</b> → <b>Разрешить</b>
-                    </div>
-                    <button onclick="this.closest('div[style]').remove()" style="background:rgba(139,92,246,0.3);border:1px solid rgba(139,92,246,0.5);color:#fff;padding:8px 24px;border-radius:8px;cursor:pointer;font-size:0.9rem">Понятно</button>
-                `;
-                document.body.appendChild(msg);
-                msg.addEventListener('click', e => { if (e.target === msg) msg.remove(); });
-                return;
-            }
-            // permission === 'default' — запрашиваем у браузера
-            Notification.requestPermission().then(result => {
-                updateNotifBell();
-                if (result === 'granted') {
-                    showToast('🔔 Уведомления включены!');
-                    if (navigator.vibrate) navigator.vibrate(100);
-                    // Показываем тестовое уведомление
-                    new Notification('PRIZMBET', {
-                        body: 'Уведомления включены! Теперь вы будете получать обновления.',
-                        icon: 'prizmbet-logo.webp'
-                    });
-                } else {
-                    showToast('Уведомления отклонены');
-                }
-            });
-        }
-
-        function playNotificationSound() {
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const now = ctx.currentTime;
-                [880, 1100].forEach((freq, i) => {
-                    const osc = ctx.createOscillator();
-                    const gain = ctx.createGain();
-                    osc.connect(gain);
-                    gain.connect(ctx.destination);
-                    osc.frequency.value = freq;
-                    osc.type = 'sine';
-                    gain.gain.setValueAtTime(0.35, now + i * 0.28);
-                    gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.28 + 0.25);
-                    osc.start(now + i * 0.28);
-                    osc.stop(now + i * 0.28 + 0.25);
-                });
-            } catch (e) { /* silent fail */ }
-        }
-
-        function checkFinishedFavorites(allMatches) {
-            const favorites = getFavorites();
-            if (!favorites.length) return;
-            const details = getFavDetails();
-            const activeIds = new Set((allMatches || []).map(m => m.id));
-            const notifiedKey = 'prizmbet_notified_v2';
-            let notified = [];
-            try { notified = JSON.parse(localStorage.getItem(notifiedKey) || '[]'); } catch { }
-
-            favorites.forEach(favId => {
-                if (!activeIds.has(favId) && !notified.includes(favId)) {
-                    const d = details[favId] || {};
-                    const team1 = d.team1 || '?';
-                    const team2 = d.team2 || '?';
-                    const league = d.league || '';
-
-                    // Показываем toast всегда
-                    showToast(`✅ Матч завершён: ${team1} — ${team2}`);
-
-                    // Push-уведомление если разрешено
-                    if ('Notification' in window && Notification.permission === 'granted') {
-                        try {
-                            const n = new Notification('✅ Матч завершён — PRIZMBET', {
-                                body: `${team1} — ${team2}\n${league}`,
-                                icon: '/betprizm/prizmbet-logo.webp',
-                                tag: `fin-${favId}`,
-                                requireInteraction: false,
-                            });
-                            n.onclick = () => { window.focus(); n.close(); };
-                        } catch (e) { /* silent */ }
-                    }
-
-                    // Звук + вибрация
-                    playNotificationSound();
-                    if (navigator.vibrate) navigator.vibrate([200, 80, 200, 80, 350]);
-
-                    notified.push(favId);
-                }
-            });
-
-            try { localStorage.setItem(notifiedKey, JSON.stringify(notified)); } catch { }
         }
 
         // ===== Scroll progress =====
@@ -2417,46 +1929,10 @@
             }
         });
 
-        // ===== Tabs swipe hint =====
-        (function initTabsHint() {
-            const tabs = document.getElementById('tabsRow');
-            const wrap = document.getElementById('tabsWrap');
-            if (!tabs || !wrap) return;
-
-            // Hide fade when scrolled to end
-            tabs.addEventListener('scroll', () => {
-                const atEnd = tabs.scrollLeft + tabs.clientWidth >= tabs.scrollWidth - 8;
-                wrap.classList.toggle('scrolled-end', atEnd);
-            }, { passive: true });
-
-            // Swipe hint animation on first load (mobile only, once per session)
-            const hintKey = 'prizm_tabs_hint_shown';
-            if (!sessionStorage.getItem(hintKey)) {
-                sessionStorage.setItem(hintKey, '1');
-                setTimeout(() => {
-                    // Scroll tabs to show there's more, then back
-                    const scrollTo = (target, dur) => {
-                        const start = tabs.scrollLeft;
-                        const diff = target - start;
-                        const t0 = performance.now();
-                        const step = now => {
-                            const p = Math.min((now - t0) / dur, 1);
-                            const ease = p < 0.5 ? 2*p*p : -1+(4-2*p)*p;
-                            tabs.scrollLeft = start + diff * ease;
-                            if (p < 1) requestAnimationFrame(step);
-                        };
-                        requestAnimationFrame(step);
-                    };
-                    scrollTo(80, 500);
-                    setTimeout(() => scrollTo(0, 400), 700);
-                }, 800);
-            }
-        })();
-
         // ===== Filters state =====
-        let currentSportFilter = 'football';
+        let currentSportFilter = 'all';
         let currentGameFilter = 'all';
-        let currentSort = 'none';
+        let currentSort = 'time';
 
         function getMatchSport(m) {
             return (m.sport || '').toLowerCase() || inferSport(m);
@@ -2653,8 +2129,6 @@
 
         function filterMatches(matches, filters) {
             let filtered = matches.filter(isValidMatch);
-            // Убираем live-матчи: показываем только предстоящие
-            filtered = filtered.filter(m => !isMatchLive(m));
             filtered = filtered.filter(m => {
                 const sport = getMatchSport(m);
                 const game = getMatchGame(m);
@@ -2666,9 +2140,7 @@
                         if (/(dota|cs2|valorant)/.test(combined)) return false;
                     }
                 }
-                if (filters.favOnly || filters.sport === 'favs') {
-                    if (!filters.favs.includes(m.id)) return false;
-                }
+                if (filters.favOnly && !filters.favs.includes(m.id)) return false;
                 if (filters.q) {
                     const blob = ((m.id || '') + ' ' + (m.league || '') + ' ' + (m.team1 || '') + ' ' + (m.team2 || '') + ' ' + game).toLowerCase();
                     if (!blob.includes(filters.q)) return false;
@@ -2680,6 +2152,7 @@
 
         // Топ-лиги (приоритет - меньше число = выше приоритет)
         const LEAGUE_PRIORITY = {
+            // Футбол - топ-лиги
             'лига чемпионов уэфа': 1, 'champions league': 1, 'лч': 1,
             'лига европы уэфа': 2, 'europa league': 2, 'ле': 2,
             'лига конференций': 3, 'conference league': 3, 'лк': 3,
@@ -2696,16 +2169,28 @@
             'аргентина. примера': 20,
             'бразилия. серия a': 21,
             'сша. mls': 22, 'mls': 22,
-            'кхл': 30, 'нхл': 31, 'nhl': 31,
-            'nba': 40, 'нба': 40, 'евролига': 41, 'euroleague': 41,
-            'dota 2': 50, 'cs2': 51, 'counter-strike': 51, 'valorant': 52, 'league of legends': 53,
-            'atp': 60, 'wta': 61,
+            // Хоккей
+            'кхл': 30,
+            'нхл': 31, 'nhl': 31,
+            // Баскетбол
+            'nba': 40, 'нба': 40,
+            'евролига': 41, 'euroleague': 41,
+            // Киберспорт
+            'dota 2': 50,
+            'cs2': 51, 'counter-strike': 51,
+            'valorant': 52,
+            'league of legends': 53,
+            // Теннис
+            'atp': 60,
+            'wta': 61,
+            // MMA
             'ufc': 70,
         };
 
         function getLeaguePriority(match) {
             const league = (match.league || '').toLowerCase();
             const sport = getMatchSport(match);
+
             let sportPriority = 0;
             if (sport === 'football') sportPriority = 0;
             else if (sport === 'hockey') sportPriority = 100;
@@ -2715,6 +2200,7 @@
             else if (sport === 'mma') sportPriority = 500;
             else if (sport === 'esports') sportPriority = 800;
             else sportPriority = 900;
+
             for (const [key, priority] of Object.entries(LEAGUE_PRIORITY)) {
                 if (league.includes(key)) return sportPriority + priority;
             }
@@ -2725,21 +2211,45 @@
             const sorted = [...matches];
             if (sortType === 'time') {
                 sorted.sort((a, b) => {
+                    // Сначала сортируем по приоритету лиги (топ-лиги выше)
+                    const priorityA = getLeaguePriority(a);
+                    const priorityB = getLeaguePriority(b);
+                    if (priorityA !== priorityB) return priorityA - priorityB;
+
+                    // Потом по дате/времени
                     const dateA = parseMatchDateTime(a);
                     const dateB = parseMatchDateTime(b);
                     if (!dateA && !dateB) return 0;
                     if (!dateA) return 1;
                     if (!dateB) return -1;
+
+                    // Ближайшие матчи (в пределах 7 дней) показываем раньше
+                    const now = new Date();
+                    const weekFromNow = now.getTime() + 7 * 24 * 60 * 60 * 1000;
+                    const isNearA = dateA.getTime() < weekFromNow;
+                    const isNearB = dateB.getTime() < weekFromNow;
+                    if (isNearA && !isNearB) return -1;
+                    if (!isNearA && isNearB) return 1;
+
                     return dateA - dateB;
                 });
             } else if (sortType === 'odds') {
                 sorted.sort((a, b) => {
+                    // Сначала по приоритету лиги
+                    const priorityA = getLeaguePriority(a);
+                    const priorityB = getLeaguePriority(b);
+                    if (priorityA !== priorityB) return priorityA - priorityB;
+
+                    // Потом по коэффициентам
                     const avgA = (parseFloat(a.p1 || 0) + parseFloat(a.p2 || 0)) / 2;
                     const avgB = (parseFloat(b.p1 || 0) + parseFloat(b.p2 || 0)) / 2;
                     return avgB - avgA;
                 });
             } else if (sortType === 'league') {
                 sorted.sort((a, b) => {
+                    const priorityA = getLeaguePriority(a);
+                    const priorityB = getLeaguePriority(b);
+                    if (priorityA !== priorityB) return priorityA - priorityB;
                     return (a.league || '').localeCompare(b.league || '', 'ru');
                 });
             }
@@ -2785,171 +2295,8 @@
             });
         }
 
-        // ── Создание DOM-карточки матча ────────────────────────────
-        function createMatchCard(match, favorites) {
-            const eid = match.id || '';
-            const isFav = favorites.includes(match.id);
-            const t1 = escapeHtml(match.team1 || '');
-            const t2 = escapeHtml(match.team2 || '');
-            const teams = `${t1} vs ${t2}`;
-            const countdown = getCountdownText(match);
-            const matchUrl = match.match_url || match.match_url_marathon || '';
-            let sourceIcon = '';
-            if (matchUrl || eid) {
-                sourceIcon = `<span class="bk-badge" title="Источник">ᐉ</span>`;
-            }
-            function oddBtn(label, value) {
-                const raw = value || '';
-                const unavail = !raw || raw === '—' || raw === '-' || raw === '0.00';
-                const val = escapeHtml(unavail ? '—' : raw);
-                const dt = escapeHtml((match.date || 'Сегодня') + ' ' + (match.time || ''));
-                const lg = escapeHtml(match.league || '');
-                if (unavail) return `<div class="odd-item odd-item--na" data-bet="${label}"><div class="odd-label">${label}</div><div class="odd-value">${val}</div></div>`;
-                return `<div class="odd-item" data-bet="${label}" onclick="openBetSlip('${eid}','${teams.replace(/'/g,"\\'")}','${label}','${val}','${dt}','${lg}')"><div class="odd-label">${label}</div><div class="odd-value">${val}</div></div>`;
-            }
-            const card = document.createElement('div');
-            card.id = `match-${eid}`;
-            card.className = 'match-card' + (isFav ? ' favorited' : '');
-            card.innerHTML = `
-                <div class="match-header">
-                    <a class="match-id" href="#match-${eid}" onclick="shareMatch('${eid}','${teams.replace(/'/g,"\\'")}','${escapeHtml((match.date||'Сегодня')+' '+(match.time||''))}');return false;" title="Скопировать ссылку на матч">#${eid}</a>
-                    ${sourceIcon}
-                    <div class="match-actions">
-                        <button class="share-btn" onclick="shareMatch('${eid}','${teams.replace(/'/g,"\\'")}','${escapeHtml((match.date||'Сегодня')+' '+(match.time||''))}')" title="Поделиться матчем">🔗</button>
-                        <button class="favorite-btn ${isFav?'active':''}" onclick="toggleFavorite('${eid}')" title="${isFav?'Убрать из избранного':'В избранное'}">★</button>
-                    </div>
-                </div>
-                <div class="match-time">${escapeHtml(match.date||'Сегодня')} ${escapeHtml(match.time||'')}${countdown?`<span class="countdown">${countdown}</span>`:''}</div>
-                <div class="match-teams">${t1} <span class="vs">—</span> ${t2}</div>
-                <div class="odds-container">
-                    <div class="odds-section-title">Основные</div>
-                    ${oddBtn('П1',match.p1)}${oddBtn('X',match.x)}${oddBtn('П2',match.p2)}
-                    ${(match.sport||'')==='football'?`<div class="odds-section-title">Двойной шанс</div>${oddBtn('1X',match.p1x)}${oddBtn('12',match.p12)}${oddBtn('X2',match.px2)}`:''}
-                </div>`;
-            return card;
-        }
-
-        // ── Обновление коэффициентов на месте (без перестройки DOM) ──
-        function patchCardOdds(card, match, favorites) {
-            const eid = match.id || '';
-            const isFav = favorites.includes(match.id);
-            if (isFav) card.classList.add('favorited'); else card.classList.remove('favorited');
-            const favBtn = card.querySelector('.favorite-btn');
-            if (favBtn) { favBtn.classList.toggle('active', isFav); favBtn.title = isFav ? 'Убрать из избранного' : 'В избранное'; }
-            const oddMap = { 'П1': match.p1, 'X': match.x, 'П2': match.p2, '1X': match.p1x, '12': match.p12, 'X2': match.px2 };
-            card.querySelectorAll('[data-bet]').forEach(btn => {
-                const betType = btn.getAttribute('data-bet');
-                const newRaw = oddMap[betType] || '';
-                const unavail = !newRaw || newRaw === '—' || newRaw === '-' || newRaw === '0.00';
-                const newVal = unavail ? '—' : newRaw;
-                const valEl = btn.querySelector('.odd-value');
-                if (!valEl) return;
-                if (valEl.textContent !== newVal) {
-                    valEl.textContent = newVal;
-                    // Вспышка — коэффициент изменился
-                    valEl.classList.remove('odd-changed');
-                    void valEl.offsetWidth; // reflow для перезапуска анимации
-                    valEl.classList.add('odd-changed');
-                    setTimeout(() => valEl.classList.remove('odd-changed'), 900);
-                }
-                // Обновляем onclick если значение изменилось
-                if (!unavail) {
-                    const t1 = escapeHtml(match.team1 || '');
-                    const t2 = escapeHtml(match.team2 || '');
-                    const teams = `${t1} vs ${t2}`;
-                    const dt = escapeHtml((match.date || 'Сегодня') + ' ' + (match.time || ''));
-                    const lg = escapeHtml(match.league || '');
-                    btn.onclick = () => openBetSlip(eid, teams, betType, newVal, dt, lg);
-                    btn.className = 'odd-item';
-                } else {
-                    btn.onclick = null;
-                    btn.className = 'odd-item odd-item--na';
-                }
-            });
-        }
-
-        // ===== MY BETS LOGIC =====
-        function toggleMyBets() {
-            const modal = document.getElementById('myBetsModal');
-            if (modal.classList.contains('show')) {
-                modal.classList.remove('show');
-                setTimeout(() => modal.style.display = 'none', 300);
-            } else {
-                modal.style.display = 'flex';
-                // Trigger reflow
-                void modal.offsetWidth;
-                modal.classList.add('show');
-                document.getElementById('walletInput').focus();
-            }
-        }
-
-        async function checkMyBets() {
-            const val = document.getElementById('walletInput').value.trim();
-            const container = document.getElementById('betsListContainer');
-            if (!val) {
-                container.innerHTML = '<div style="text-align:center; color: var(--red);">Введите адрес кошелька или Telegram ID</div>';
-                return;
-            }
-            container.innerHTML = '<div style="text-align:center; color: var(--accent);"><span class="loading"></span> Загрузка...</div>';
-            
-            try {
-                // Fetch bets.json (cache busted)
-                const r = await fetch('bets.json?t=' + Date.now());
-                if (!r.ok) throw new Error('Network error');
-                const data = await r.json();
-                const bets = Array.isArray(data) ? data : (data.bets || []);
-                
-                // Filter bets by sender (PRIZM address) or tg_id
-                const myBets = bets.filter(b => 
-                    (b.sender && b.sender.toUpperCase() === val.toUpperCase()) || 
-                    (b.tg_id && b.tg_id === val)
-                );
-
-                if (myBets.length === 0) {
-                    container.innerHTML = '<div style="text-align:center; color: var(--text-secondary); margin-top:20px;">Ставки не найдены 🥺</div>';
-                    return;
-                }
-
-                // Render bets (reversed for newest first)
-                let html = '';
-                [...myBets].reverse().forEach(b => {
-                    const statusClass = b.status === 'win' ? 'bet-status-win' : (b.status === 'loss' ? 'bet-status-loss' : 'bet-status-pending');
-                    const statusIcon = b.status === 'win' ? '✅ Выигрыш' : (b.status === 'loss' ? '❌ Проигрыш' : '⏳ В игре');
-                    
-                    html += `
-                        <div class="bet-item ${statusClass}">
-                            <div style="display:flex; justify-content:space-between; margin-bottom: 6px;">
-                                <strong style="color:#fff;">${escapeHtml(b.team1)} vs ${escapeHtml(b.team2)}</strong>
-                                <span style="font-size:0.8rem; font-weight:600;">${statusIcon}</span>
-                            </div>
-                            <div style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.6;">
-                                Исход: <strong style="color:var(--accent-bright);">${escapeHtml(b.bet_type)}</strong> @ ${b.coef}<br>
-                                Ставка: <strong style="color:#fff;">${b.amount} PRIZM</strong><br>
-                                Выплата: <strong style="color: ${b.status === 'win' ? 'var(--green-bright)' : '#fff'};">${b.payout} PRIZM</strong><br>
-                                <em>${escapeHtml(b.time || '')}</em>
-                            </div>
-                        </div>
-                    `;
-                });
-                container.innerHTML = html;
-
-            } catch (e) {
-                container.innerHTML = '<div style="text-align:center; color: var(--red); margin-top:20px;">Ошибка загрузки базы ставок. Возможно, их пока нет.</div>';
-                console.error(e);
-            }
-        }
-
-        // Close modal on click outside
-        document.getElementById('myBetsModal').addEventListener('click', (e) => {
-            if (e.target.id === 'myBetsModal') toggleMyBets();
-        });
-
-        // ── Главная функция рендера — умный in-place update ──────
         function renderMatches(allMatches) {
-            window.__LAST_ALL_MATCHES__ = window.__ALL_MATCHES__;
             window.__ALL_MATCHES__ = allMatches;
-            checkFinishedFavorites(allMatches);
-
             const state = getFilterState();
             let filtered = filterMatches(allMatches, state);
             filtered = sortMatches(filtered, state.sort);
@@ -2958,72 +2305,107 @@
 
             const favorites = state.favs;
             const content = document.getElementById('content');
+            const tempDiv = document.createElement('div');
 
             if (!filtered.length) {
-                content.innerHTML = '<div class="section"><p style="text-align:center;color:var(--text-tertiary);font-weight:500;">Матчи не найдены. Измените фильтры.</p></div>';
+                tempDiv.innerHTML = '<div class="section"><p style="text-align:center;color:var(--text-tertiary);font-weight:500;">Матчи не найдены. Измените фильтры.</p></div>';
+                if (content.innerHTML !== tempDiv.innerHTML) content.innerHTML = tempDiv.innerHTML;
                 return;
             }
 
-            // Сохраняем позицию скролла ДО любых изменений
-            const scrollY = window.scrollY || window.pageYOffset || 0;
-
             const leagues = {};
-            filtered.forEach(m => { (leagues[m.league] = leagues[m.league] || []).push(m); });
-
-            // Убираем спиннер и прочие не-секции (например, начальный div "Загрузка линии...")
-            content.querySelectorAll(':scope > :not(.section)').forEach(el => el.remove());
-
-            // Карта уже отрисованных карточек
-            const existingCards = {};
-            content.querySelectorAll('.match-card[id]').forEach(c => {
-                existingCards[c.id.replace('match-', '')] = c;
-            });
-
-            // Карта существующих секций
-            const existingSections = {};
-            content.querySelectorAll('.section').forEach(sec => {
-                const h2 = sec.querySelector('.section-title');
-                if (h2) existingSections[h2.textContent] = sec;
-            });
-
-            const newIds = new Set(filtered.map(m => m.id));
-
-            // Удаляем карточки матчей, которых нет в новой выборке
-            Object.keys(existingCards).forEach(mid => {
-                if (!newIds.has(mid)) { existingCards[mid].remove(); delete existingCards[mid]; }
+            filtered.forEach(m => {
+                (leagues[m.league] = leagues[m.league] || []).push(m);
             });
 
             let sectionIndex = 0;
+            const fragment = document.createDocumentFragment();
             for (const [league, matches] of Object.entries(leagues)) {
-                let section = existingSections[league];
-                if (!section) {
-                    section = document.createElement('div');
-                    section.className = 'section';
-                    section.style.animationDelay = `${sectionIndex * 0.05}s`;
-                    section.innerHTML = `<h2 class="section-title">${escapeHtml(league)}</h2>`;
-                    content.appendChild(section);
-                }
+                const section = document.createElement('div');
+                section.className = 'section';
+                section.style.animationDelay = `${sectionIndex * 0.05}s`;
+                section.innerHTML = `<h2 class="section-title">${escapeHtml(league)}</h2>`;
+
                 matches.forEach(match => {
-                    const existingCard = existingCards[match.id];
-                    if (existingCard) {
-                        // Обновляем на месте — коэффициенты и избранное
-                        patchCardOdds(existingCard, match, favorites);
-                        if (existingCard.parentElement !== section) section.appendChild(existingCard);
-                    } else {
-                        section.appendChild(createMatchCard(match, favorites));
+                    const card = document.createElement('div');
+                    card.className = 'match-card';
+                    if (favorites.includes(match.id)) card.classList.add('favorited');
+
+                    const t1 = escapeHtml(match.team1 || '');
+                    const t2 = escapeHtml(match.team2 || '');
+                    const teams = `${t1} vs ${t2}`;
+                    const eid = escapeHtml(match.id || '');
+                    const isFavorite = favorites.includes(match.id);
+                    const countdown = getCountdownText(match);
+
+                    function oddBtn(label, value) {
+                        const raw = value || '';
+                        const val = escapeHtml(raw);
+                        const dt = escapeHtml((match.date || 'Сегодня') + ' ' + (match.time || ''));
+                        const lg = escapeHtml(match.league || '');
+                        if (val === '0.00' || val === '—') {
+                            return `<div class="odd-item odd-item--na">
+                                <div class="odd-label">${label}</div>
+                                <div class="odd-value">—</div>
+                            </div>`;
+                        }
+                        return `<div class="odd-item" onclick="openBetSlip('${eid}','${teams.replace(/'/g, "\\'")}','${label}','${val}','${dt}','${lg}')">
+                            <div class="odd-label">${label}</div>
+                            <div class="odd-value">${val}</div>
+                        </div>`;
                     }
+
+                    // Определяем БК-источник и ссылку для проверки
+                    const matchUrl = match.match_url || match.match_url_marathon || '';
+                    const source = (match.source || '').toLowerCase();
+                    let bkBadge = '';
+                    let verifyLink = '';
+
+                    if (matchUrl) {
+                        bkBadge = `<span class="bk-badge bk-badge--marathon">Marathon</span>`;
+                        verifyLink = `<a href="${escapeHtml(matchUrl)}" target="_blank" rel="noopener" class="match-link" title="Проверить коэффициент на Marathon">🔍 Проверить</a>`;
+                    } else if (eid) {
+                        const mUrl = 'https://www.marathonbet.ru/su/betting/' + eid;
+                        bkBadge = `<span class="bk-badge bk-badge--marathon">Marathon</span>`;
+                        verifyLink = `<a href="${mUrl}" target="_blank" rel="noopener" class="match-link" title="Проверить коэффициент на Marathon">🔍 Проверить</a>`;
+                    }
+                    card.id = `match-${eid}`;
+                    card.innerHTML = `
+                        <div class="match-header">
+                            <a class="match-id" href="#match-${eid}" onclick="shareMatch('${eid}','${teams.replace(/'/g, "\\'")}','${escapeHtml((match.date || 'Сегодня') + ' ' + (match.time || ''))}'); return false;" title="Скопировать ссылку на матч">#${eid}</a>
+                            ${bkBadge}
+                            <div style="display:flex;align-items:center;gap:4px;margin-left:auto;">
+                                ${verifyLink}
+                                <button class="share-btn" onclick="shareMatch('${eid}','${teams.replace(/'/g, "\\'")}','${escapeHtml((match.date || 'Сегодня') + ' ' + (match.time || ''))}')" title="Поделиться матчем">🔗</button>
+                                <button class="favorite-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite('${eid}')">
+                                    ${isFavorite ? '⭐' : '☆'}
+                                </button>
+                            </div>
+                        </div>
+                        <div class="match-time">
+                            ${escapeHtml(match.date || 'Сегодня')} ${escapeHtml(match.time || '')}
+                            ${countdown ? `<span class="countdown">${countdown}</span>` : ''}
+                        </div>
+                        <div class="match-teams">${t1} <span class="vs">—</span> ${t2}</div>
+                        <div class="odds-container">
+                            <div class="odds-section-title">Основные</div>
+                            ${oddBtn('П1', match.p1)}
+                            ${oddBtn('X', match.x)}
+                            ${oddBtn('П2', match.p2)}
+                            <div class="odds-section-title">Двойной шанс</div>
+                            ${oddBtn('1X', match.p1x)}
+                            ${oddBtn('12', match.p12)}
+                            ${oddBtn('X2', match.px2)}
+                        </div>
+                        `;
+                    section.appendChild(card);
                 });
+                fragment.appendChild(section);
                 sectionIndex++;
             }
-
-            // Убираем секции без карточек
-            content.querySelectorAll('.section').forEach(sec => {
-                if (sec.querySelectorAll('.match-card').length === 0) sec.remove();
-            });
-
-            // Восстанавливаем скролл — страница не прыгает при обновлении
-            if (scrollY > 0) {
-                requestAnimationFrame(() => { window.scrollTo(0, scrollY); });
+            tempDiv.appendChild(fragment);
+            if (content.innerHTML !== tempDiv.innerHTML) {
+                content.innerHTML = tempDiv.innerHTML;
             }
         }
 
@@ -3084,8 +2466,8 @@
 
         function copyBetSlipData() {
             if (!currentBet) return;
-            const amt = document.getElementById('bsInput').value.trim() || '0';
-            const msg = `${currentBet.teams}, ${currentBet.betType} @ ${currentBet.coef}\nСтавка: ${amt} PRIZM\nID: ${currentBet.id}`;
+            const amt = document.getElementById('bsInput').value.trim();
+            const msg = `${currentBet.teams} ${currentBet.datetime} ${currentBet.betType} ${currentBet.coef}`;
 
             navigator.clipboard.writeText(msg).then(() => {
                 // Сохраняем в локальную историю
@@ -3180,68 +2562,7 @@
         document.addEventListener('visibilitychange', () => { if (!document.hidden) loadData(); });
         setInterval(() => { if (window.__ALL_MATCHES__) renderMatches(window.__ALL_MATCHES__); }, 60000);
 
-        // ===== ANTIGRAVITY PARALLAX PARTICLES =====
-        function initParallax() {
-            const container = document.getElementById('parallaxContainer');
-            if (!container) return;
-            
-            // Create 3 layers of particles
-            const layerSpeeds = [0.03, 0.07, 0.12];
-            const layers = [];
-            
-            layerSpeeds.forEach((speed, index) => {
-                const layer = document.createElement('div');
-                layer.className = 'parallax-layer';
-                layer.dataset.speed = speed;
-                
-                // Add particles to each layer
-                const numParticles = 20 + (index * 15);
-                for(let i=0; i<numParticles; i++) {
-                    const p = document.createElement('div');
-                    p.className = 'particle';
-                    p.style.left = Math.random() * 100 + 'vw';
-                    p.style.top = Math.random() * 100 + 'vh';
-                    const size = Math.random() * 3 + (index === 2 ? 2 : 1);
-                    p.style.width = size + 'px';
-                    p.style.height = size + 'px';
-                    p.style.animationDelay = (Math.random() * 5) + 's';
-                    p.style.opacity = Math.random() * 0.5 + 0.1;
-                    layer.appendChild(p);
-                }
-                layers.push(layer);
-                container.appendChild(layer);
-            });
-
-            // Smooth mouse move parallax effect using requestAnimationFrame
-            let targetX = 0, targetY = 0;
-            let currentX = 0, currentY = 0;
-
-            document.addEventListener('mousemove', (e) => {
-                const cx = window.innerWidth / 2;
-                const cy = window.innerHeight / 2;
-                targetX = e.clientX - cx;
-                targetY = e.clientY - cy;
-            });
-
-            function animateParallax() {
-                // Smooth interpolation (lerp)
-                currentX += (targetX - currentX) * 0.1;
-                currentY += (targetY - currentY) * 0.1;
-
-                layers.forEach(layer => {
-                    const speed = parseFloat(layer.dataset.speed);
-                    const x = -(currentX * speed);
-                    const y = -(currentY * speed);
-                    layer.style.transform = `translate3d(${x}px, ${y}px, 0)`;
-                });
-                requestAnimationFrame(animateParallax);
-            }
-            requestAnimationFrame(animateParallax);
-        }
-
         window.addEventListener('load', () => {
-            initParallax();
-            updateNotifBell();
             loadData().then(() => {
                 // После загрузки — проверяем якорь в URL
                 if (window.location.hash && window.location.hash.startsWith('#match-')) {
