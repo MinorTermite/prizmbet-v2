@@ -44,7 +44,7 @@ async def run_health_check():
     print("Running Health Check...")
     
     results = {
-        "github_pages": await check_website("https://minortermite.github.io/betprizm/", "GitHub Pages"),
+        "github_pages": await check_website("https://minortermite.github.io/prizmbet-v2/", "GitHub Pages"),
         "database": await check_database(),
         "cache": await check_cache()
     }

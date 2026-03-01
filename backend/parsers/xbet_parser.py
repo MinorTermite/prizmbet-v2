@@ -9,7 +9,7 @@ Based on: https://github.com/RRakibur06/sportsdata-parser
 
 import gzip
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict, Optional
 from backend.parsers.base_parser import BaseParser
 
@@ -114,7 +114,7 @@ class XBetParser(BaseParser):
         start_time = event.get("S", 0) or event.get("T", 0)
         match_time = None
         if start_time:
-            dt = datetime.fromtimestamp(start_time)
+            dt = datetime.fromtimestamp(start_time, tz=timezone.utc)
             match_time = dt.isoformat()
 
         prefix = "1xbet_live" if is_live else "1xbet"

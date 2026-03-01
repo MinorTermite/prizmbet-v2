@@ -25,6 +25,24 @@ MONTHS_RU = ["янв", "фев", "мар", "апр", "май", "июн",
 OUT_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "matches.json")
 
 
+def _calc_double_chance(odd_a, odd_b) -> str:
+    """Calculate double chance odds from two single odds.
+
+    Uses the combined probability formula: 1 / (1/a + 1/b).
+    Returns the result formatted to 2 decimal places, or "—" when either
+    odd is zero/invalid or a ZeroDivisionError occurs.
+    """
+    try:
+        a = float(odd_a) if odd_a else 0
+        b = float(odd_b) if odd_b else 0
+        if a > 0 and b > 0:
+            result = 1.0 / (1.0/a + 1.0/b)
+            return f"{result:.2f}"
+    except (TypeError, ValueError, ZeroDivisionError):
+        pass
+    return "—"
+
+
 def _fmt_odd(value) -> str:
     """Format an odds float to a display string."""
     try:
@@ -64,6 +82,10 @@ def to_frontend(match: Dict[str, Any]) -> Dict[str, Any]:
         except Exception:
             pass
 
+    odds_1 = match.get("odds_1", 0)
+    odds_x = match.get("odds_x", 0)
+    odds_2 = match.get("odds_2", 0)
+
     return {
         "sport":     match.get("sport", ""),
         "league":    match.get("league", ""),
@@ -73,12 +95,12 @@ def to_frontend(match: Dict[str, Any]) -> Dict[str, Any]:
         "team1":     match.get("home_team", ""),
         "team2":     match.get("away_team", ""),
         "match_url": match.get("match_url", ""),
-        "p1":        _fmt_odd(match.get("odds_1")),
-        "x":         _fmt_odd(match.get("odds_x")),
-        "p2":        _fmt_odd(match.get("odds_2")),
-        "p1x":       "—",
-        "p12":       "—",
-        "px2":       "—",
+        "p1":        _fmt_odd(odds_1),
+        "x":         _fmt_odd(odds_x),
+        "p2":        _fmt_odd(odds_2),
+        "p1x":       _calc_double_chance(odds_1, odds_x),
+        "p12":       _calc_double_chance(odds_1, odds_2),
+        "px2":       _calc_double_chance(odds_x, odds_2),
         "source":    _bookmaker_from_id(match.get("external_id", "")),
         # Extra fields kept for potential future use
         "total_value":      match.get("total_value"),
@@ -94,6 +116,9 @@ def to_frontend(match: Dict[str, Any]) -> Dict[str, Any]:
 
 def _write_json(matches: List[Dict[str, Any]]) -> int:
     """Serialize converted matches to frontend/matches.json and return count."""
+    if not matches:
+        print("[generate_json] WARNING: No matches collected — keeping existing matches.json intact")
+        return 0
     payload = {
         "last_update": datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
         "source": "multi-parser",
