@@ -142,6 +142,17 @@ async def collect_all_matches() -> List[Dict[str, Any]]:
     from backend.parsers.leonbets_parser import LeonbetsParser
     from backend.parsers.pinnacle_parser import PinnacleParser
     from backend.parsers.api_football_parser import ApiFootballParser
+    from backend.utils.proxy_manager import proxy_manager
+    from backend.config import config
+
+    # Pre-fetch proxies if enabled
+    if config.PROXY_ENABLED:
+        await proxy_manager.init()
+        proxy = proxy_manager.get_proxy()
+        if proxy:
+            print(f"[generate_json] Using proxy: {proxy}")
+        elif not config.PROXY_URL:
+            print("[generate_json] WARNING: Proxy enabled but no working proxies found")
 
     parsers = [
         OddsAPIParser(),
