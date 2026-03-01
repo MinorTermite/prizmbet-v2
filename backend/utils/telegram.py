@@ -31,6 +31,23 @@ class TelegramBot:
         """Send alert message"""
         formatted = f"<b>{title}</b>\n\n{message}"
         await self.send_message(formatted)
+
+    async def send_alert_throttled(
+        self,
+        title: str,
+        message: str,
+        cooldown_key: str,
+        cooldown_seconds: int = 1800,
+    ):
+        """Send alert, but skip if the same cooldown_key was sent recently."""
+        from backend.utils.redis_client import cache
+
+        redis_key = f"alert_throttle:{cooldown_key}"
+        if await cache.get(redis_key):
+            return False
+        await self.send_alert(title, message)
+        await cache.set(redis_key, "1", expire=cooldown_seconds)
+        return True
     
     async def send_parser_report(self, parser_name: str, matches_count: int, status: str):
         """Send parser execution report"""
