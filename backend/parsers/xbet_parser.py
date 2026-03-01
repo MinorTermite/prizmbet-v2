@@ -64,7 +64,7 @@ class XBetParser(BaseParser):
 
         label = "live" if is_live else "prematch"
         try:
-            async with self.session.get(url, params=params, headers=headers) as response:
+            async with self.session.get(url, params=params, headers=headers, proxy=self.proxy) as response:
                 if response.status != 200:
                     print(f"[ERROR] 1xBet {feed} returned {response.status}")
                     return []

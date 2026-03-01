@@ -66,7 +66,7 @@ class PinnacleParser(BaseParser):
             "Accept": "application/json",
         }
         try:
-            async with self.session.get(url, params=params, headers=headers) as resp:
+            async with self.session.get(url, params=params, headers=headers, proxy=self.proxy) as resp:
                 if resp.status == 401:
                     print("[Pinnacle] 401 Unauthorized — check credentials")
                     return None

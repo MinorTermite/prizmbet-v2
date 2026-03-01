@@ -25,6 +25,7 @@ class Config:
     API_FOOTBALL_KEY = os.getenv('API_FOOTBALL_KEY', '')   # api-football.com (RapidAPI)
     ODDS_API_IO_KEY = os.getenv('ODDS_API_IO_KEY', '')     # odds-api.io
     PROXY_ENABLED = os.getenv('PROXY_ENABLED', 'false').lower() == 'true'
+    PROXY_URL = os.getenv('PROXY_URL', '')
     RATE_LIMIT_REQUESTS = int(os.getenv('RATE_LIMIT_REQUESTS', '10'))
     RATE_LIMIT_WINDOW = int(os.getenv('RATE_LIMIT_WINDOW', '60'))
     

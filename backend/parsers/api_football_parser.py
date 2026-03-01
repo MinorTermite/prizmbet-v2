@@ -48,7 +48,7 @@ class ApiFootballParser(BaseParser):
         await self.init_session()
         url = f"{BASE_URL}{path}"
         try:
-            async with self.session.get(url, headers=self._headers(), params=params) as r:
+            async with self.session.get(url, headers=self._headers(), params=params, proxy=self.proxy) as r:
                 if r.status != 200:
                     print(f"[ApiFootball] HTTP {r.status} for {path}")
                     return None
@@ -75,7 +75,7 @@ class ApiFootballParser(BaseParser):
 
     async def _fetch_odds(self, fixture_id: int) -> Optional[dict]:
         """Fetch pre-match odds for a fixture."""
-        data = await self._get("/odds", {"fixture": fixture_id, "bookmaker": 8})  # bet365
+        data = await self._get("/odds", {"fixture": fixture_id})
         responses = (data or {}).get("response", [])
         if not responses:
             return None

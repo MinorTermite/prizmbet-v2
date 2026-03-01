@@ -40,7 +40,7 @@ class LeonbetsParser(BaseParser):
         }
         
         try:
-            async with self.session.get(url, params=params, headers=headers) as response:
+            async with self.session.get(url, params=params, headers=headers, proxy=self.proxy) as response:
                 if response.status != 200:
                     print(f"[ERROR] Leonbets returned {response.status}")
                     return []

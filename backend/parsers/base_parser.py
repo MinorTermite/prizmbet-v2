@@ -17,13 +17,37 @@ class BaseParser:
         self.base_url = base_url
         self.session = None
         self.matches = []
+        self.proxy = None  # will be set from proxy_manager or config
     
     async def init_session(self):
-        """Initialize HTTP session"""
+        """Initialize HTTP session with optional proxy support."""
         if self.session is None:
+            from backend.utils.proxy_manager import proxy_manager
+            from backend.config import config
+            proxy_url = None
+            if config.PROXY_ENABLED and config.PROXY_URL:
+                proxy_url = config.PROXY_URL
+            elif config.PROXY_ENABLED:
+                await proxy_manager.refresh_if_needed()
+                proxy_url = proxy_manager.get_proxy()
+
+            self.proxy = proxy_url
+
+            connector = None
+            if proxy_url and proxy_url.startswith('socks'):
+                try:
+                    from aiohttp_socks import ProxyConnector
+                    connector = ProxyConnector.from_url(proxy_url)
+                    self.proxy = None  # SOCKS handled by connector, not per-request
+                except ImportError:
+                    print(f"[{self.name}] aiohttp-socks not installed, skipping SOCKS proxy")
+                    proxy_url = None
+                    self.proxy = None
+
             self.session = aiohttp.ClientSession(
                 headers=ua_rotator.get_headers(),
-                timeout=aiohttp.ClientTimeout(total=30)
+                timeout=aiohttp.ClientTimeout(total=30),
+                connector=connector,
             )
     
     async def close_session(self):

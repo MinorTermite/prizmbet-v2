@@ -82,7 +82,7 @@ class OddsAPIParser(BaseParser):
         }
 
         try:
-            async with self.session.get(url, params=params) as response:
+            async with self.session.get(url, params=params, proxy=self.proxy) as response:
                 if response.status != 200:
                     print(f"[ERROR] {label} returned {response.status} for {sport_key}")
                     return []
