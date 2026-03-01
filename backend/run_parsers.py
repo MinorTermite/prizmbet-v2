@@ -13,12 +13,22 @@ async def run_all_parsers():
     db.init()
     await cache.connect()
     
-    # Import and run parsers here
-    # from backend.parsers.marathon_parser import MarathonParser
-    # parser = MarathonParser()
-    # await parser.run()
-    
-    print("Parsers completed")
+    from backend.parsers.odds_api_parser import OddsAPIParser
+    from backend.parsers.xbet_parser import XBetParser
+    from backend.parsers.leonbets_parser import LeonbetsParser
+
+    parsers = [
+        OddsAPIParser(),
+        XBetParser(),
+        LeonbetsParser(),
+    ]
+
+    tasks = [parser.run() for parser in parsers]
+    results = await asyncio.gather(*tasks, return_exceptions=True)
+
+    total_matches = sum(r for r in results if isinstance(r, int))
+    print(f"\nTotal matches parsed: {total_matches}")
+
     await cache.close()
 
 if __name__ == "__main__":
