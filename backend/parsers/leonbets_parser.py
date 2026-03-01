@@ -6,7 +6,7 @@ Based on: https://github.com/Vlad110200/Leon-parser
 """
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Dict, Optional
 from backend.parsers.base_parser import BaseParser
 
@@ -88,7 +88,7 @@ class LeonbetsParser(BaseParser):
         kickoff = event.get("kickoff", 0)
         match_time = None
         if kickoff:
-            dt = datetime.fromtimestamp(kickoff / 1000)
+            dt = datetime.fromtimestamp(kickoff / 1000, tz=timezone.utc)
             match_time = dt.isoformat()
         
         match_data = {
@@ -146,10 +146,11 @@ class LeonbetsParser(BaseParser):
                     param = runner.get("param")
                     
                     if param:
-                        if "1" in runner_name or home_team in runner_name:
+                        rname = runner_name.strip()
+                        if rname == "1" or rname == home_team:
                             match_data["handicap_1_value"] = float(param)
                             match_data["handicap_1"] = float(price)
-                        elif "2" in runner_name or away_team in runner_name:
+                        elif rname == "2" or rname == away_team:
                             match_data["handicap_2_value"] = float(param)
                             match_data["handicap_2"] = float(price)
         

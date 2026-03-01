@@ -35,14 +35,19 @@ class UserAgentRotator:
     """User-Agent rotation"""
     
     def __init__(self):
-        self.ua = UserAgent()
+        try:
+            self.ua = UserAgent()
+        except Exception:
+            self.ua = None
     
     def get_random_ua(self):
         """Get random User-Agent"""
         try:
-            return self.ua.random
-        except:
-            return "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            if self.ua:
+                return self.ua.random
+        except Exception:
+            pass
+        return "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
     
     def get_headers(self):
         """Get headers with random UA"""
