@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """Redis Cache Client (Upstash)"""
-import aioredis
+import redis.asyncio as aioredis
 from backend.config import config
 
 class Cache:

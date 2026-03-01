@@ -164,6 +164,6 @@ async def generate() -> int:
     matches = [to_frontend(m) for m in raw]
     return _write_json(matches)
 
-
 if __name__ == "__main__":
     asyncio.run(generate())
+

@@ -2,6 +2,15 @@
 
 ## Features v2
 
+### New Features
+- ✅ **Totals (Over/Under)** support for all sports
+- ✅ **Handicaps (Spreads)** support for all sports
+- ✅ **The Odds API v4** integration (official aggregator)
+- ✅ **1xBet JSON API** with gzip decompression
+- ✅ **Leonbets JSON API** with dynamic markets parsing
+- ✅ Automatic fallback between parsers
+- ✅ API quota monitoring
+
 ### Scalability & Reliability
 - PostgreSQL (Supabase) - Free DB up to 500MB
 - Redis (Upstash) - 10,000 commands/day

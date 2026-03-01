@@ -17,11 +17,23 @@ CREATE TABLE IF NOT EXISTS matches (
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()  
 );  
   
+-- Add new columns for totals and handicaps
+ALTER TABLE matches 
+ADD COLUMN IF NOT EXISTS total_value DECIMAL(10,2),
+ADD COLUMN IF NOT EXISTS total_over DECIMAL(10,2),
+ADD COLUMN IF NOT EXISTS total_under DECIMAL(10,2),
+ADD COLUMN IF NOT EXISTS handicap_1_value DECIMAL(10,2),
+ADD COLUMN IF NOT EXISTS handicap_1 DECIMAL(10,2),
+ADD COLUMN IF NOT EXISTS handicap_2_value DECIMAL(10,2),
+ADD COLUMN IF NOT EXISTS handicap_2 DECIMAL(10,2);
+
 -- Indexes  
 CREATE INDEX IF NOT EXISTS idx_matches_sport ON matches(sport);  
 CREATE INDEX IF NOT EXISTS idx_matches_league ON matches(league);  
 CREATE INDEX IF NOT EXISTS idx_matches_match_time ON matches(match_time);  
-CREATE INDEX IF NOT EXISTS idx_matches_bookmaker ON matches(bookmaker);  
+CREATE INDEX IF NOT EXISTS idx_matches_bookmaker ON matches(bookmaker);
+CREATE INDEX IF NOT EXISTS idx_matches_total ON matches(total_value);
+CREATE INDEX IF NOT EXISTS idx_matches_handicap ON matches(handicap_1_value, handicap_2_value);  
   
 -- Parser logs table  
 CREATE TABLE IF NOT EXISTS parser_logs (  
