@@ -5,7 +5,7 @@
   "scripts": {
     "build": "echo 'Static site - no build needed'",
     "start": "python3 -m http.server 8000",
-    "parse": "python3 auto_parser.py"
+    "parse": "python3 -m backend.run_parsers"
   },
   "keywords": [
     "betting",
