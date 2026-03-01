@@ -1,27 +1,39 @@
-name: Update Matches
+name: Update Matches & Deploy to GitHub Pages
 
 on:
   schedule:
     - cron: '*/30 * * * *'
   workflow_dispatch:
+  push:
+    branches: [main]
+
+# Required for GitHub Pages deployment
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+# Only one deployment at a time; don't cancel in-progress runs
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
-  update:
+  build:
     runs-on: ubuntu-latest
-    
+
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      
+
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-      
-      - name: Run parsers
+        run: pip install -r requirements.txt
+
+      - name: Generate matches.json for GitHub Pages
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
@@ -32,14 +44,25 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           PINNACLE_LOGIN: ${{ secrets.PINNACLE_LOGIN }}
           PINNACLE_PASSWORD: ${{ secrets.PINNACLE_PASSWORD }}
-        run: |
-          python -m backend.run_parsers
-      
-      - name: Generate JSON
         run: python backend/api/generate_json.py
-      
-      - name: Deploy to Pages
-        uses: peaceiris/actions-gh-pages@v4
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./frontend
+          path: './frontend'
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
