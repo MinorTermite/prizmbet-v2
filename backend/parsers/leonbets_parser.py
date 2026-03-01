@@ -31,7 +31,7 @@ class LeonbetsParser(BaseParser):
         url = f"{BASE_URL}/api-2/betline/events/all"
         params = {
             "ctag": "ru-RU",
-            "flags": "reg,urlv2,mm2,rrc,nodup",
+            "flags": "all",
         }
         
         headers = {

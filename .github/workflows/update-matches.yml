@@ -30,6 +30,8 @@ jobs:
           UPSTASH_REDIS_TOKEN: ${{ secrets.UPSTASH_REDIS_TOKEN }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          PINNACLE_LOGIN: ${{ secrets.PINNACLE_LOGIN }}
+          PINNACLE_PASSWORD: ${{ secrets.PINNACLE_PASSWORD }}
         run: |
           python -m backend.run_parsers
       

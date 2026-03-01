@@ -25,6 +25,10 @@ class Config:
     RATE_LIMIT_REQUESTS = int(os.getenv('RATE_LIMIT_REQUESTS', '10'))
     RATE_LIMIT_WINDOW = int(os.getenv('RATE_LIMIT_WINDOW', '60'))
     
+    # Pinnacle / ps3838 (Basic Auth)
+    PINNACLE_LOGIN = os.getenv('PINNACLE_LOGIN', '')
+    PINNACLE_PASSWORD = os.getenv('PINNACLE_PASSWORD', '')
+
     # GitHub
     GITHUB_TOKEN = os.getenv('GITHUB_TOKEN', '')
 

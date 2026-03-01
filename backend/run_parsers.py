@@ -16,11 +16,13 @@ async def run_all_parsers():
     from backend.parsers.odds_api_parser import OddsAPIParser
     from backend.parsers.xbet_parser import XBetParser
     from backend.parsers.leonbets_parser import LeonbetsParser
+    from backend.parsers.pinnacle_parser import PinnacleParser
 
     parsers = [
         OddsAPIParser(),
         XBetParser(),
         LeonbetsParser(),
+        PinnacleParser(),
     ]
 
     tasks = [parser.run() for parser in parsers]
