@@ -33,7 +33,7 @@ function showStatus(ts, src) {
     const el = document.getElementById('lastUpdate');
     if (!el) return;
     const stale = isDataStale(ts);
-    el.innerHTML = `Обновлено: ${fmtTime(ts)}${src === 'live' ? ' (live)' : ''}${stale ? ' <span style="color:var(--red);">[устаревшие]</span>' : ''}`;
+    el.innerHTML = `Обновлено: ${fmtTime(ts)}${src === 'live' ? ' (live)' : ''}`;
 }
 
 async function loadData() {
