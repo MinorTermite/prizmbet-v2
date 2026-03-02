@@ -2802,6 +2802,8 @@
                     <div class="odds-section-title">Основные</div>
                     ${oddBtn('П1',match.p1)}${oddBtn('X',match.x)}${oddBtn('П2',match.p2)}
                     ${(match.sport||'')==='football'?`<div class="odds-section-title">Двойной шанс</div>${oddBtn('1X',match.p1x)}${oddBtn('12',match.p12)}${oddBtn('X2',match.px2)}`:''}
+                    ${(match.total_over && match.total_over!=='0.00' && match.total_value) ? `<div class="odds-section-title">Тотал (${match.total_value})</div>${oddBtn('ТБ '+match.total_value, match.total_over)}${oddBtn('ТМ '+match.total_value, match.total_under)}` : ''}
+                    ${(match.handicap_1 && match.handicap_1!=='0.00' && match.handicap_1_value) ? `<div class="odds-section-title">Фора</div>${oddBtn('Ф1('+match.handicap_1_value+')', match.handicap_1)}${oddBtn('Ф2('+match.handicap_2_value+')', match.handicap_2)}` : ''}
                 </div>`;
             return card;
         }
@@ -2813,7 +2815,14 @@
             if (isFav) card.classList.add('favorited'); else card.classList.remove('favorited');
             const favBtn = card.querySelector('.favorite-btn');
             if (favBtn) { favBtn.classList.toggle('active', isFav); favBtn.title = isFav ? 'Убрать из избранного' : 'В избранное'; }
-            const oddMap = { 'П1': match.p1, 'X': match.x, 'П2': match.p2, '1X': match.p1x, '12': match.p12, 'X2': match.px2 };
+            const oddMap = { 
+                'П1': match.p1, 'X': match.x, 'П2': match.p2, 
+                '1X': match.p1x, '12': match.p12, 'X2': match.px2,
+                ['ТБ '+match.total_value]: match.total_over,
+                ['ТМ '+match.total_value]: match.total_under,
+                [`Ф1(${match.handicap_1_value})`]: match.handicap_1,
+                [`Ф2(${match.handicap_2_value})`]: match.handicap_2
+            };
             card.querySelectorAll('[data-bet]').forEach(btn => {
                 const betType = btn.getAttribute('data-bet');
                 const newRaw = oddMap[betType] || '';
