@@ -23,24 +23,25 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          pip install aiohttp python-telegram-bot
+          pip install -r requirements.txt
 
-      - name: Run Parsers
-        run: python backend/run_parsers.py
+      - name: Generate matches.json
+        run: python backend/api/generate_json.py
         env:
           API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
-          BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
+          ODDS_API_IO_KEY: ${{ secrets.ODDS_API_IO_KEY }}
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+          PROXY_ENABLED: 'false'
 
-      - name: Commit and push changes
+      - name: Commit and push matches.json
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add frontend/matches.json
-          # Only commit if there are changes
-          git diff-index --quiet HEAD || (git commit -m "chore(data): auto-update matches.json" && git push)
+          git commit -m "chore(data): scheduled match update $(date +'%Y-%m-%d %H:%M UTC')" || echo "No changes to commit"
+          git push || echo "Nothing to push"
