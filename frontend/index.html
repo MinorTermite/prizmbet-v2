@@ -1042,6 +1042,20 @@
             min-width: 0;
         }
 
+        .source-badge {
+            background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.4);
+            color: var(--cyan);
+            padding: 3px 8px;
+            border-radius: var(--radius-sm);
+            font-size: 0.70rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 0 10px var(--cyan-glow);
+            margin-right: auto; /* Push actions to the right */
+        }
+
         /* Обёртка кнопок (Проверить + избранное) — никогда не сжимается */
         .match-actions {
             display: flex;
@@ -2794,9 +2808,13 @@
             const teams = `${t1} vs ${t2}`;
             const countdown = getCountdownText(match);
             const matchUrl = match.match_url || match.match_url_marathon || '';
-            let sourceIcon = '';
-            if (matchUrl || eid) {
-                sourceIcon = `<span class="bk-badge" title="Источник">ᐉ</span>`;
+            const bkSource = escapeHtml(match.source || 'Неизвестно');
+            
+            let sourceBadge = '';
+            if (bkSource !== 'Неизвестно') {
+                sourceBadge = `<span class="source-badge" title="${bkSource}">${bkSource}</span>`;
+            } else if (matchUrl || eid) {
+                sourceBadge = `<span class="bk-badge" title="Источник">ᐉ</span>`;
             }
             function oddBtn(label, value) {
                 const raw = value || '';
@@ -2813,7 +2831,7 @@
             card.innerHTML = `
                 <div class="match-header">
                     <a class="match-id" href="#match-${eid}" onclick="shareMatch('${eid}','${teams.replace(/'/g,"\\'")}','${escapeHtml((match.date||'Сегодня')+' '+(match.time||''))}');return false;" title="Скопировать ссылку на матч">#${eid}</a>
-                    ${sourceIcon}
+                    ${sourceBadge}
                     <div class="match-actions">
                         <button class="share-btn" onclick="shareMatch('${eid}','${teams.replace(/'/g,"\\'")}','${escapeHtml((match.date||'Сегодня')+' '+(match.time||''))}')" title="Поделиться матчем">🔗</button>
                         <button class="favorite-btn ${isFav?'active':''}" onclick="toggleFavorite('${eid}')" title="${isFav?'Убрать из избранного':'В избранное'}">★</button>

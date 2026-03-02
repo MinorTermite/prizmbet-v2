@@ -1,6 +1,13 @@
 # -*- coding: utf-8 -*-
 """Main Parser Runner"""
 import asyncio
+import sys
+import os
+
+_repo_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if _repo_root not in sys.path:
+    sys.path.insert(0, _repo_root)
+
 from backend.db.supabase_client import db
 from backend.utils.redis_client import cache
 
