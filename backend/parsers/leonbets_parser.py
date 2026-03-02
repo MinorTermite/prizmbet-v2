@@ -15,7 +15,7 @@ BASE_URL = "https://leon.ru"
 SPORTS_MAP = {
     "Soccer":      "football",
     "Basketball":  "basket",
-    "Ice Hockey":  "hockey",
+    "IceHockey":   "hockey",
     "Tennis":      "tennis",
     "Volleyball":  "volleyball",
     "Baseball":    "baseball",
