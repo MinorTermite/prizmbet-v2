@@ -51,12 +51,17 @@ def save_config(cfg: dict):
     CONFIG_FILE.write_text(json.dumps(cfg, ensure_ascii=False, indent=2), encoding="utf-8")
 
 def get_notify_ids() -> list[int]:
-    """Вернуть список chat_id для уведомлений: всегда включает ADMIN_ID + сохранённые группы/каналы"""
+    """Вернуть список chat_id для уведомлений: ADMIN_ID + все сохранённые группы/каналы"""
     cfg = load_config()
     ids = [ADMIN_ID]
-    group_id = cfg.get("group_chat_id")
-    if group_id and group_id not in ids:
-        ids.append(group_id)
+    # Поддержка legacy формата (одна группа)
+    legacy = cfg.get("group_chat_id")
+    if legacy and legacy not in ids:
+        ids.append(legacy)
+    # Новый формат — список групп
+    for gid in cfg.get("notify_groups", []):
+        if gid not in ids:
+            ids.append(gid)
     return ids
 
 logging.basicConfig(
@@ -365,39 +370,70 @@ async def cmd_balance(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
 
 
 async def cmd_setgroup(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
-    """Установить группу/канал для уведомлений: /setgroup <chat_id>"""
+    """Добавить группу/канал для уведомлений: /setgroup <chat_id>"""
     if update.effective_user.id != ADMIN_ID:
         return
     if not ctx.args:
         cfg = load_config()
-        current = cfg.get("group_chat_id", "не задан")
+        groups = cfg.get("notify_groups", [])
+        legacy = cfg.get("group_chat_id")
+        all_groups = list(set(([legacy] if legacy else []) + groups))
+        if all_groups:
+            lines = "\n".join([f"• `{g}`" for g in all_groups])
+        else:
+            lines = "_Пусто_"
         await update.message.reply_text(
-            f"📢 *Канал/группа уведомлений*\n\n"
-            f"Текущий: `{current}`\n\n"
-            f"Чтобы задать:\n"
-            f"1. Добавь бота в группу/канал как администратора\n"
-            f"2. Напиши `/chatid` в той группе чтобы узнать ID\n"
-            f"3. Затем: `/setgroup <chat_id>`",
+            f"📢 *Группы уведомлений*\n\n"
+            f"{lines}\n\n"
+            f"*Добавить:* `/setgroup <chat_id>`\n"
+            f"*Удалить:* `/removegroup <chat_id>`\n"
+            f"*Узнать ID:* `/chatid` в нужной группе",
             parse_mode="Markdown"
         )
         return
     try:
         chat_id = int(ctx.args[0])
         cfg = load_config()
-        cfg["group_chat_id"] = chat_id
-        save_config(cfg)
-        await update.message.reply_text(f"✅ Канал/группа уведомлений задан: `{chat_id}`", parse_mode="Markdown")
-        # Тест — отправляем пробное сообщение
-        try:
-            await ctx.bot.send_message(
-                chat_id=chat_id,
-                text="✅ *PRIZMBET* — уведомления подключены!\n\nЯ буду сообщать сюда о новых транзакциях.",
-                parse_mode="Markdown"
-            )
-        except Exception as e:
-            await update.message.reply_text(f"⚠️ Не удалось отправить тест: {e}\nПроверь, добавлен ли бот в группу/канал.")
+        groups = cfg.get("notify_groups", [])
+        if chat_id not in groups:
+            groups.append(chat_id)
+            cfg["notify_groups"] = groups
+            save_config(cfg)
+            await update.message.reply_text(f"✅ Группа `{chat_id}` добавлена в рассылку", parse_mode="Markdown")
+            try:
+                await ctx.bot.send_message(
+                    chat_id=chat_id,
+                    text="✅ *PRIZMBET* — уведомления подключены!\n\nСюда будут приходить уведомления о ставках и выплатах.",
+                    parse_mode="Markdown"
+                )
+            except Exception as e:
+                await update.message.reply_text(f"⚠️ Не удалось отправить тест: {e}\nПроверь, добавлен ли бот в группу.")
+        else:
+            await update.message.reply_text(f"Группа `{chat_id}` уже в списке", parse_mode="Markdown")
     except ValueError:
         await update.message.reply_text("❌ Неверный формат. Пример: `/setgroup -1001234567890`", parse_mode="Markdown")
+
+
+async def cmd_removegroup(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
+    """Удалить группу из рассылки: /removegroup <chat_id>"""
+    if update.effective_user.id != ADMIN_ID:
+        return
+    if not ctx.args:
+        await update.message.reply_text("Использование: `/removegroup <chat_id>`", parse_mode="Markdown")
+        return
+    try:
+        chat_id = int(ctx.args[0])
+        cfg = load_config()
+        groups = cfg.get("notify_groups", [])
+        if chat_id in groups:
+            groups.remove(chat_id)
+            cfg["notify_groups"] = groups
+            save_config(cfg)
+            await update.message.reply_text(f"✅ Группа `{chat_id}` удалена из рассылки", parse_mode="Markdown")
+        else:
+            await update.message.reply_text(f"Группа `{chat_id}` не найдена в списке", parse_mode="Markdown")
+    except ValueError:
+        await update.message.reply_text("❌ Неверный формат", parse_mode="Markdown")
 
 
 async def cmd_chatid(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
@@ -645,6 +681,7 @@ def main():
     app.add_handler(CommandHandler("loss",       cmd_loss))
     app.add_handler(CommandHandler("balance",    cmd_balance))
     app.add_handler(CommandHandler("setgroup",   cmd_setgroup))
+    app.add_handler(CommandHandler("removegroup", cmd_removegroup))
     app.add_handler(CommandHandler("chatid",     cmd_chatid))
     app.add_handler(CallbackQueryHandler(callback_handler))
     
