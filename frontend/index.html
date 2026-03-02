@@ -2050,12 +2050,10 @@
                 <button class="tab" data-sport="all">Все</button>
                 <button class="tab active" data-sport="football">⚽ Футбол</button>
                 <button class="tab" data-sport="hockey">🏒 Хоккей</button>
-                <button class="tab" data-sport="basket"> Баскетбол</button>
+                <button class="tab" data-sport="basket">🏀 Баскетбол</button>
                 <button class="tab" data-sport="tennis">🎾 Теннис</button>
-                <button class="tab" data-sport="tabletennis"> Наст. теннис</button>
-                <button class="tab" data-sport="volleyball"> Волейбол</button>
-                <button class="tab" data-sport="mma">🥊 MMA</button>
-                <button class="tab" data-sport="esports">🎮 Киберспорт</button>
+                <button class="tab" data-sport="volleyball">🏐 Волейбол</button>
+                <button class="tab" data-sport="baseball">⚾ Бейсбол</button>
                 <button class="tab" data-sport="favs">⭐ Избранное</button>
             </div>
             </div>
@@ -2773,8 +2771,9 @@
             const teams = `${t1} vs ${t2}`;
             const countdown = getCountdownText(match);
             const matchUrl = match.match_url || match.match_url_marathon || '';
+            const shortId = String(eid).replace(/^[a-z]+_/i, '').slice(-6);
             const googleQuery = encodeURIComponent(`${match.team1 || ''} ${match.team2 || ''} счёт результат`);
-            const resultLink = `<a class="result-link" href="https://www.google.com/search?q=${googleQuery}" target="_blank" rel="noopener" title="Проверить результат матча">📊 Результат</a>`;
+            const resultLink = `<a class="result-link" href="https://www.google.com/search?q=${googleQuery}" target="_blank" rel="noopener" title="Проверить результат матча">📊 Итог</a>`;
             function oddBtn(label, value) {
                 const raw = value || '';
                 const unavail = !raw || raw === '—' || raw === '-' || raw === '0.00';
@@ -2782,14 +2781,14 @@
                 const dt = escapeHtml((match.date || 'Сегодня') + ' ' + (match.time || ''));
                 const lg = escapeHtml(match.league || '');
                 if (unavail) return `<div class="odd-item odd-item--na" data-bet="${label}"><div class="odd-label">${label}</div><div class="odd-value">${val}</div></div>`;
-                return `<div class="odd-item" data-bet="${label}" onclick="openBetSlip('${eid}','${teams.replace(/'/g,"\\'")}','${label}','${val}','${dt}','${lg}')"><div class="odd-label">${label}</div><div class="odd-value">${val}</div></div>`;
+                return `<div class="odd-item" data-bet="${label}" onclick="openBetSlip('${eid}','${teams.replace(/'/g,"\\'")   }','${label}','${val}','${dt}','${lg}')"><div class="odd-label">${label}</div><div class="odd-value">${val}</div></div>`;
             }
             const card = document.createElement('div');
             card.id = `match-${eid}`;
             card.className = 'match-card' + (isFav ? ' favorited' : '');
             card.innerHTML = `
                 <div class="match-header">
-                    <a class="match-id" href="#match-${eid}" onclick="shareMatch('${eid}','${teams.replace(/'/g,"\\'")}','${escapeHtml((match.date||'Сегодня')+' '+(match.time||''))}');return false;" title="Скопировать ссылку на матч">#${eid}</a>
+                    <a class="match-id" href="#match-${eid}" onclick="shareMatch('${eid}','${teams.replace(/'/g,"\\'") }','${escapeHtml((match.date||'Сегодня')+' '+(match.time||''))}');return false;" title="ID: ${eid}">#${shortId}</a>
                     ${resultLink}
                     <div class="match-actions">
                         <button class="share-btn" onclick="shareMatch('${eid}','${teams.replace(/'/g,"\\'")}','${escapeHtml((match.date||'Сегодня')+' '+(match.time||''))}')" title="Поделиться матчем">🔗</button>
