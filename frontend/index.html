@@ -2054,6 +2054,7 @@
                 <button class="tab" data-sport="tennis">🎾 Теннис</button>
                 <button class="tab" data-sport="volleyball">🏐 Волейбол</button>
                 <button class="tab" data-sport="baseball">⚾ Бейсбол</button>
+                <button class="tab" data-sport="totals">🎯 Тоталы/Форы</button>
                 <button class="tab" data-sport="favs">⭐ Избранное</button>
             </div>
             </div>
@@ -2635,7 +2636,7 @@
             filtered = filtered.filter(m => {
                 const sport = getMatchSport(m);
                 const game = getMatchGame(m);
-                if (filters.sport !== 'all' && sport !== filters.sport) return false;
+                if (filters.sport !== 'all' && filters.sport !== 'favs' && filters.sport !== 'totals' && sport !== filters.sport) return false;
                 if (filters.game !== 'all' && game !== filters.game) return false;
                 if (filters.pop) {
                     const combined = ((game || '') + ' ' + (m.league || '')).toLowerCase();
@@ -2645,6 +2646,11 @@
                 }
                 if (filters.favOnly || filters.sport === 'favs') {
                     if (!filters.favs.includes(m.id)) return false;
+                }
+                if (filters.sport === 'totals') {
+                    const hasTotals = m.total_over && m.total_over !== '0.00' && m.total_value;
+                    const hasHandicap = m.handicap_1 && m.handicap_1 !== '0.00' && m.handicap_1_value;
+                    if (!hasTotals && !hasHandicap) return false;
                 }
                 if (filters.q) {
                     const blob = ((m.id || '') + ' ' + (m.league || '') + ' ' + (m.team1 || '') + ' ' + (m.team2 || '') + ' ' + game).toLowerCase();
