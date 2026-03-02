@@ -10,7 +10,7 @@ import sys
 import json
 import asyncio
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Any
 
 # Allow running as both `python backend/api/generate_json.py` and
@@ -120,7 +120,7 @@ def _write_json(matches: List[Dict[str, Any]]) -> int:
         print("[generate_json] WARNING: No matches collected — keeping existing matches.json intact")
         return 0
     payload = {
-        "last_update": datetime.now(tz=timezone.utc).strftime("%Y-%m-%d %H:%M:%S"),
+        "last_update": datetime.now(tz=timezone(timedelta(hours=3))).strftime("%d.%m.%Y, %H:%M:%S"),
         "source": "multi-parser",
         "total": len(matches),
         "matches": matches,
