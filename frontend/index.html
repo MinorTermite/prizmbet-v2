@@ -626,7 +626,6 @@
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             margin-bottom: 16px;
-            overflow-x: auto;
             position: relative;
             z-index: 10;
         }
@@ -636,35 +635,11 @@
             margin-bottom: 16px;
         }
 
-        .tabs-wrap::after {
-            content: '';
-            position: absolute;
-            right: 0;
-            top: 0;
-            bottom: 8px;
-            width: 48px;
-            background: linear-gradient(to right, transparent, var(--bg-card));
-            pointer-events: none;
-            border-radius: 0 12px 12px 0;
-            transition: opacity 0.3s;
-        }
-
-        .tabs-wrap.scrolled-end::after {
-            opacity: 0;
-        }
-
         .tabs {
             display: flex;
+            flex-wrap: wrap;
             gap: 8px;
-            overflow-x: auto;
             padding-bottom: 8px;
-            padding-right: 48px;
-            scrollbar-width: none;
-            -ms-overflow-style: none;
-        }
-
-        .tabs::-webkit-scrollbar {
-            display: none;
         }
 
         @keyframes tabsSwipeHint {
@@ -694,7 +669,6 @@
             font-size: 0.88rem;
             font-weight: 500;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            white-space: nowrap;
         }
 
         .tab:hover {
