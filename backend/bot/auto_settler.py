@@ -64,6 +64,7 @@ async def check_match_results(bot: Bot = None):
     log.info("Checking for finished matches to settle bets...")
     bets = load_bets()
     updated = False
+    admin_id = os.getenv("ADMIN_ID")
 
     for bet in bets:
         if bet.get("status") == "pending":
@@ -91,18 +92,37 @@ async def check_match_results(bot: Bot = None):
                     updated = True
                     log.info(f"Bet {bet['id']} settled as {bet['status']}")
                     
-                    # Send telegram message
+                    # Notify the player
                     tg_id = bet.get("tg_id")
                     if tg_id and bot:
                         try:
-                            msg = f"⚽ Матч {bet['team1']} - {bet['team2']} завершен ({home}:{away})\n\n"
+                            msg = f"⚽ Матч *{bet['team1']} — {bet['team2']}* завершён ({home}:{away})\n\n"
                             if bet["status"] == "win":
-                                msg += f"🎉 Ваша ставка **{bet['bet_type']}** сыграла!\nВыигрыш **{bet['payout']} PRIZM** выплачивается."
+                                msg += f"🎉 Ваша ставка *{bet['bet_type']}* сыграла!\n"
+                                msg += f"💰 Выигрыш: *{bet['payout']} PZM*\n"
+                                msg += f"⏳ Ожидайте перевод от администратора."
                             else:
-                                msg += f"❌ Ваша ставка **{bet['bet_type']}** не зашла.\nИтоговый счет {home}:{away}."
+                                msg += f"❌ Ставка *{bet['bet_type']}* не сыграла.\nСчёт: {home}:{away}."
                             await bot.send_message(chat_id=tg_id, text=msg, parse_mode='Markdown')
                         except Exception as e:
                             log.error(f"Failed to send notification to {tg_id}: {e}")
+                    
+                    # Notify the ADMIN about winning bets for manual payout
+                    if bet["status"] == "win" and admin_id and bot:
+                        try:
+                            admin_msg = (
+                                f"💸 *ВЫПЛАТА ТРЕБУЕТСЯ*\n\n"
+                                f"Ставка: `{bet['id']}`\n"
+                                f"Игрок: `{bet.get('sender', 'N/A')}`\n"
+                                f"TG: `{tg_id}`\n"
+                                f"Матч: {bet['team1']} — {bet['team2']} ({home}:{away})\n"
+                                f"Тип: {bet['bet_type']} @ {bet['coef']}\n"
+                                f"Сумма ставки: {bet['amount']} PZM\n"
+                                f"*К выплате: {bet['payout']} PZM*"
+                            )
+                            await bot.send_message(chat_id=admin_id, text=admin_msg, parse_mode='Markdown')
+                        except Exception as e:
+                            log.error(f"Failed to notify admin: {e}")
 
     if updated:
         save_bets(bets)
