@@ -13,7 +13,9 @@ PRIZM_NODES = [
 ]
 WALLET = "PRIZM-4N7T-L2A7-RQZA-5BETW"
 import os
+PASSPHRASE = os.getenv("PRIZM_PASSPHRASE", "")  # Приватный ключ (фраза) для расшифровки сообщений
 CACHE_FILE = os.path.join(os.path.dirname(__file__), "prizm_last_tx.json")
+OUT_CACHE_FILE = os.path.join(os.path.dirname(__file__), "prizm_last_out_tx.json")
 NQT = 100_000_000  # 1 PRIZM = 100,000,000 NQT
 
 
@@ -30,11 +32,11 @@ def _get(params: dict, timeout=12) -> dict | None:
     return None
 
 
-def get_transactions(first_index=0, last_index=99) -> list[dict]:
-    """Получить список транзакций на кошелёк PRIZM"""
+def get_transactions(first_index=0, last_index=99, account=None) -> list[dict]:
+    """Получить список транзакций кошелька PRIZM"""
     data = _get({
         "requestType": "getBlockchainTransactions",
-        "account": WALLET,
+        "account": account or WALLET,
         "type": 0,
         "firstIndex": first_index,
         "lastIndex": last_index,
@@ -69,18 +71,44 @@ def get_new_transactions() -> list[dict]:
     return new_txs
 
 
+def decrypt_message(tx: dict) -> str:
+    """
+    Расшифровать зашифрованное сообщение транзакции через PRIZM API readMessage.
+    Требуется PASSPHRASE (приватный ключ кошелька).
+    """
+    if not PASSPHRASE:
+        return ""
+    tx_id = tx.get("transaction", "")
+    if not tx_id:
+        return ""
+    data = _get({
+        "requestType": "readMessage",
+        "transaction": tx_id,
+        "secretPhrase": PASSPHRASE,
+    })
+    if data:
+        return data.get("decryptedMessage", data.get("message", "")).strip()
+    return ""
+
+
 def get_message(tx: dict) -> str:
     """
     Извлечь текстовое сообщение из транзакции.
-    Поддерживает plain text (attachment.message).
-    Зашифрованные сообщения (encryptedMessage) возвращают пустую строку —
-    они не могут быть прочитаны без приватного ключа кошелька.
+    1. Сначала пробуем plain text (attachment.message)
+    2. Если сообщение зашифровано и есть PASSPHRASE — расшифровываем через API
     """
     att = tx.get("attachment") or {}
     msg = att.get("message", "")
     is_text = att.get("messageIsText", True)
     if msg and is_text:
         return str(msg).strip()
+
+    # Пробуем расшифровать
+    if has_encrypted_message(tx):
+        decrypted = decrypt_message(tx)
+        if decrypted:
+            return decrypted
+
     return ""
 
 
@@ -88,6 +116,30 @@ def has_encrypted_message(tx: dict) -> bool:
     """Проверить есть ли зашифрованное сообщение (ставка с шифрованием)"""
     att = tx.get("attachment") or {}
     return "encryptedMessage" in att
+
+
+def get_new_outgoing_transactions() -> list[dict]:
+    """Вернуть новые ИСХОДЯЩИЕ транзакции (отправленные с нашего кошелька)"""
+    last_ts = 0
+    try:
+        with open(OUT_CACHE_FILE) as f:
+            last_ts = json.load(f).get("last_ts", 0)
+    except Exception:
+        pass
+
+    txs = get_transactions()
+    outgoing = [t for t in txs if t.get("senderRS") == WALLET]
+    new_txs = [t for t in outgoing if t.get("timestamp", 0) > last_ts]
+
+    if new_txs:
+        new_last = max(t.get("timestamp", 0) for t in new_txs)
+        try:
+            with open(OUT_CACHE_FILE, "w") as f:
+                json.dump({"last_ts": new_last, "checked": int(time.time())}, f)
+        except Exception:
+            pass
+
+    return new_txs
 
 
 def parse_bet_comment(comment: str) -> dict | None:

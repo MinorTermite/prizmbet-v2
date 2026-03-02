@@ -1010,17 +1010,21 @@
             min-width: 0;
         }
 
-        .source-badge {
-            background: rgba(99, 102, 241, 0.08);
-            border: 1px solid rgba(99, 102, 241, 0.2);
-            color: var(--accent-bright);
+        .result-link {
+            color: var(--text-tertiary);
+            text-decoration: none;
+            font-size: 0.68rem;
+            font-weight: 600;
             padding: 3px 8px;
             border-radius: var(--radius-sm);
-            font-size: 0.65rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-right: auto;
+            border: 1px solid var(--border);
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .result-link:hover {
+            color: var(--accent-bright);
+            border-color: var(--accent);
+            background: var(--accent-soft);
         }
 
         /* Обёртка кнопок (Проверить + избранное) — никогда не сжимается */
@@ -2769,14 +2773,8 @@
             const teams = `${t1} vs ${t2}`;
             const countdown = getCountdownText(match);
             const matchUrl = match.match_url || match.match_url_marathon || '';
-            const bkSource = escapeHtml(match.source || 'Неизвестно');
-            
-            let sourceBadge = '';
-            if (bkSource !== 'Неизвестно') {
-                sourceBadge = `<span class="source-badge" title="${bkSource}">${bkSource}</span>`;
-            } else if (matchUrl || eid) {
-                sourceBadge = `<span class="bk-badge" title="Источник">ᐉ</span>`;
-            }
+            const googleQuery = encodeURIComponent(`${match.team1 || ''} ${match.team2 || ''} счёт результат`);
+            const resultLink = `<a class="result-link" href="https://www.google.com/search?q=${googleQuery}" target="_blank" rel="noopener" title="Проверить результат матча">📊 Результат</a>`;
             function oddBtn(label, value) {
                 const raw = value || '';
                 const unavail = !raw || raw === '—' || raw === '-' || raw === '0.00';
@@ -2792,7 +2790,7 @@
             card.innerHTML = `
                 <div class="match-header">
                     <a class="match-id" href="#match-${eid}" onclick="shareMatch('${eid}','${teams.replace(/'/g,"\\'")}','${escapeHtml((match.date||'Сегодня')+' '+(match.time||''))}');return false;" title="Скопировать ссылку на матч">#${eid}</a>
-                    ${sourceBadge}
+                    ${resultLink}
                     <div class="match-actions">
                         <button class="share-btn" onclick="shareMatch('${eid}','${teams.replace(/'/g,"\\'")}','${escapeHtml((match.date||'Сегодня')+' '+(match.time||''))}')" title="Поделиться матчем">🔗</button>
                         <button class="favorite-btn ${isFav?'active':''}" onclick="toggleFavorite('${eid}')" title="${isFav?'Убрать из избранного':'В избранное'}">★</button>

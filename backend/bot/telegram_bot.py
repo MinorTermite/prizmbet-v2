@@ -561,6 +561,67 @@ async def check_prizm_transactions(bot=None):
         save_bets(bets)
         log.info(f"Saved {added} new bets")
 
+
+# ── Проверка ИСХОДЯЩИХ транзакций (выплаты) ─────────────
+async def check_outgoing_transactions(bot=None):
+    """Отслеживает исходящие переводы с кошелька и уведомляет об оплате ставок"""
+    log.info("Checking outgoing PRIZM transactions...")
+    new_out = prizm_api.get_new_outgoing_transactions()
+    if not new_out:
+        log.info("No new outgoing transactions")
+        return
+
+    bets = load_bets()
+    for tx in new_out:
+        tx_id = tx.get("transaction", "")
+        amount = prizm_api.prizm_amount(tx)
+        recipient = tx.get("recipientRS", "unknown")
+
+        # Попробуем найти выигрышную ставку для этого получателя
+        matched_bet = None
+        for b in bets:
+            if b.get("status") == "win" and b.get("sender") == recipient and not b.get("paid"):
+                if abs(b.get("payout", 0) - amount) < 1:  # с допуском 1 PZM
+                    matched_bet = b
+                    break
+
+        if matched_bet:
+            matched_bet["paid"] = True
+            matched_bet["pay_tx"] = tx_id
+            save_bets(bets)
+            log.info(f"Bet {matched_bet['id']} matched to outgoing TX {tx_id}")
+
+        # Уведомить админа обо всех исходящих
+        if bot:
+            text = (
+                f"📤 *Исходящий перевод*\n\n"
+                f"Получатель: `{recipient}`\n"
+                f"Сумма: `{amount:.2f} PZM`\n"
+                f"TX: `{tx_id[:20]}...`\n"
+            )
+            if matched_bet:
+                text += f"\n✅ *Ставка {matched_bet['id']} выплачена!*"
+                # Уведомить игрока
+                tg_id = matched_bet.get("tg_id")
+                if tg_id:
+                    try:
+                        player_msg = (
+                            f"💰 *Ваш выигрыш выплачен!*\n\n"
+                            f"Матч: *{matched_bet.get('team1','?')} — {matched_bet.get('team2','?')}*\n"
+                            f"Сумма: `{amount:.2f} PZM`\n"
+                            f"TX: `{tx_id[:20]}...`\n\n"
+                            f"Спасибо за игру! 🎰"
+                        )
+                        await bot.send_message(chat_id=int(tg_id), text=player_msg, parse_mode='Markdown')
+                    except Exception as e:
+                        log.error(f"Failed to notify player {tg_id}: {e}")
+
+            for cid in get_notify_ids():
+                try:
+                    await bot.send_message(chat_id=cid, text=text, parse_mode="Markdown")
+                except Exception as e:
+                    log.error(f"Notify {cid} error: {e}")
+
 # ── Запуск ───────────────────────────────────────────────────
 def main():
     if not BOT_TOKEN:
@@ -594,7 +655,12 @@ def main():
     async def _check_tx_job(ctx: ContextTypes.DEFAULT_TYPE):
         await check_prizm_transactions(ctx.bot)
 
+    # Проверка исходящих транзакций (выплат) каждые 5 минут
+    async def _check_outgoing_job(ctx: ContextTypes.DEFAULT_TYPE):
+        await check_outgoing_transactions(ctx.bot)
+
     app.job_queue.run_repeating(_check_tx_job, interval=300, first=30)
+    app.job_queue.run_repeating(_check_outgoing_job, interval=300, first=60)
 
     log.info(f"Bot started | Admin: {ADMIN_ID} | Wallet: {WALLET}")
     log.info(f"Initial notify IDs: {get_notify_ids()}")
