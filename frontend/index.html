@@ -2752,8 +2752,8 @@
             const countdown = getCountdownText(match);
             const matchUrl = match.match_url || match.match_url_marathon || '';
             const shortId = String(eid).replace(/^[a-z]+_/i, '').slice(-6);
-            // Добавляем дату, чтобы искать именно текущий матч
-            const googleQuery = encodeURIComponent(`${match.team1 || ''} ${match.team2 || ''} ${match.date || ''} счет`);
+            // Добавляем дату и универсальное слово для лучшего поиска виджета Google
+            const googleQuery = encodeURIComponent(`${match.team1 || ''} ${match.team2 || ''} ${match.date || ''} результат матча`);
             const resultLink = `<a class="result-link" href="https://www.google.com/search?q=${googleQuery}" target="_blank" rel="noopener" title="Проверить результат матча на ${match.date || ''}">📊 Итог</a>`;
             function oddBtn(label, value) {
                 const raw = value || '';
