@@ -2,8 +2,10 @@ name: Update Matches
 
 on:
   schedule:
-    # Runs every 30 minutes
-    - cron: '*/30 * * * *'
+    # 9:00 MSK = 6:00 UTC
+    - cron: '0 6 * * *'
+    # 21:00 MSK = 18:00 UTC
+    - cron: '0 18 * * *'
   workflow_dispatch: # Allows manual trigger from GitHub UI
 
 jobs:
@@ -34,7 +36,6 @@ jobs:
         env:
           API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
           BOT_TOKEN: ${{ secrets.BOT_TOKEN }}
-          # Add any other required secrets here
 
       - name: Commit and push changes
         run: |

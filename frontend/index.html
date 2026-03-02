@@ -2944,7 +2944,14 @@
             const scrollY = window.scrollY || window.pageYOffset || 0;
 
             const leagues = {};
-            filtered.forEach(m => { (leagues[m.league] = leagues[m.league] || []).push(m); });
+            const leagueOrder = [];
+            filtered.forEach(m => {
+                if (!leagues[m.league]) {
+                    leagues[m.league] = [];
+                    leagueOrder.push(m.league);
+                }
+                leagues[m.league].push(m);
+            });
 
             // Убираем спиннер и прочие не-секции (например, начальный div "Загрузка линии...")
             content.querySelectorAll(':scope > :not(.section)').forEach(el => el.remove());
@@ -2970,21 +2977,22 @@
             });
 
             let sectionIndex = 0;
-            for (const [league, matches] of Object.entries(leagues)) {
+            for (const league of leagueOrder) {
+                const matches = leagues[league];
                 let section = existingSections[league];
                 if (!section) {
                     section = document.createElement('div');
                     section.className = 'section';
                     section.style.animationDelay = `${sectionIndex * 0.05}s`;
                     section.innerHTML = `<h2 class="section-title">${escapeHtml(league)}</h2>`;
-                    content.appendChild(section);
                 }
+                // Always re-append to force correct order
+                content.appendChild(section);
                 matches.forEach(match => {
                     const existingCard = existingCards[match.id];
                     if (existingCard) {
-                        // Обновляем на месте — коэффициенты и избранное
                         patchCardOdds(existingCard, match, favorites);
-                        if (existingCard.parentElement !== section) section.appendChild(existingCard);
+                        section.appendChild(existingCard);
                     } else {
                         section.appendChild(createMatchCard(match, favorites));
                     }
