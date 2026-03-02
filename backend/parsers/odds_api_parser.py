@@ -44,7 +44,7 @@ IO_TOP_SLUGS = [
     "champions-league", "europa-league", "conference-league",
     "primera-division", "primeira-liga", "super-lig",
     "ekstraklasa", "russian-premier", "ukraine-premier",
-    "nba", "nhl",
+    "nba", "nhl", "khl", "kontinental-hockey-league", "national-hockey-league"
 ]
 
 # Sports to fetch from odds-api.io
