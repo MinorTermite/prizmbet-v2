@@ -2706,9 +2706,9 @@
             filtered = filtered.filter(m => {
                 const sport = getMatchSport(m);
                 const game = getMatchGame(m);
-                if (filters.sport !== 'all' && filters.sport !== 'favs' && filters.sport !== 'totals' && sport !== filters.sport) return false;
+                if (filters.sport !== 'all' && filters.sport !== 'favs' && filters.sport !== 'totals' && filters.sport !== 'results' && sport !== filters.sport) return false;
                 if (filters.game !== 'all' && game !== filters.game) return false;
-                if (filters.pop && filters.sport !== 'totals') {
+                if (filters.pop && filters.sport !== 'totals' && filters.sport !== 'results') {
                     const combined = ((game || '') + ' ' + (m.league || '')).toLowerCase();
                     if (!/(лига чемпионов|лига европы|лига конференций|премьер-лига англия|ла лига|бундеслига|серия a|лига 1 франция|nba|нхл|кхл|евролига|атп|wta|ufc)/.test(combined)) {
                         if (/(dota|cs2|valorant)/.test(combined)) return false;
