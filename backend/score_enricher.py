@@ -41,29 +41,41 @@ HEADERS = {
 def _normalize(name: str) -> str:
     """Убирает лишние символы для сравнения."""
     if not name: return ""
-    return name.lower().replace("-", " ").replace("fc", "").replace("fk", "").replace("jk", "").strip()
+    # Убираем типичные приставки/суффиксы
+    s = name.lower()
+    for drop in ["fc", "fk", "jk", "u21", "u19", "u23", "sc", "cs"]:
+        s = s.replace(drop, "")
+    return s.replace("-", " ").strip()
 
 
 def _teams_match(our_t1: str, our_t2: str, api_t1: str, api_t2: str) -> bool:
     """Проверяет совпадение пары команд (нечёткий поиск)."""
-    our1 = _normalize(our_t1)
-    our2 = _normalize(our_t2)
-    api1 = _normalize(api_t1)
-    api2 = _normalize(api_t2)
+    a1 = _normalize(our_t1)
+    a2 = _normalize(our_t2)
+    b1 = _normalize(api_t1)
+    b2 = _normalize(api_t2)
     
-    # Прямое или обратное совпадение (если вдруг команды в другом порядке)
-    def match_pair(a1, a2, b1, b2):
-        # Проверяем вхождение первого слова (часто это имя клуба)
-        w1_a = a1.split()[0] if a1.split() else "???"
-        w2_a = a2.split()[0] if a2.split() else "???"
-        w1_b = b1.split()[0] if b1.split() else "???"
-        w2_b = b2.split()[0] if b2.split() else "???"
+    def core_match(name1, name2):
+        # Если имена короткие, нужно полное совпадение
+        if len(name1) < 4 or len(name2) < 4:
+            return name1 in name2 or name2 in name1
+            
+        words1 = [w for w in name1.split() if w not in ("al", "the", "club", "team")]
+        words2 = [w for w in name2.split() if w not in ("al", "the", "club", "team")]
         
-        match1 = (w1_a in b1 or w1_b in a1)
-        match2 = (w2_a in b2 or w2_b in a2)
-        return match1 and match2
+        if not words1 or not words2:
+            return name1 == name2
+            
+        # Хотя бы одно значимое слово должно совпадать полностью
+        for w in words1:
+            if w in words2 or any(w in bw for bw in words2):
+                return True
+        return False
 
-    return match_pair(our1, our2, api1, api2) or match_pair(our1, our2, api2, api1)
+    def pair_match(p1a, p1b, p2a, p2b):
+        return core_match(p1a, p2a) and core_match(p1b, p2b)
+
+    return pair_match(a1, a2, b1, b2) or pair_match(a1, a2, b2, b1)
 
 
 def _parse_match_date(match_json_item: Dict) -> Optional[datetime]:
