@@ -90,11 +90,10 @@ def to_frontend(match: Dict[str, Any]) -> Dict[str, Any]:
     t_over = match.get("total_over")
     t_under = match.get("total_under")
     
+    # Принудительно устанавливаем тотал = 2.5 (если букмекер дал другую линию)
     try:
-        if t_val is not None and float(t_val) > 2.5:
-            t_val = None
-            t_over = 0
-            t_under = 0
+        if t_val is not None and float(t_val) != 0:
+            t_val = 2.5  # Всегда показываем тотал 2.5
     except (ValueError, TypeError):
         pass
         
@@ -132,6 +131,62 @@ def _write_json(matches: List[Dict[str, Any]]) -> int:
     if not matches:
         print("[generate_json] WARNING: No matches collected — keeping existing matches.json intact")
         return 0
+    
+    # Сохраняем результаты завершённых матчей (с полем score) из предыдущего файла на 24 часа
+    out = os.path.normpath(OUT_PATH)
+    scored_old = []
+    try:
+        if os.path.exists(out):
+            with open(out, "r", encoding="utf-8") as f:
+                old_payload = json.load(f)
+            for m in old_payload.get("matches", []):
+                if m.get("score"):
+                    scored_old.append(m)
+    except Exception:
+        pass
+    
+    # Собираем ID новых матчей, чтобы не дублировать
+    new_ids = {m.get("id") for m in matches}
+    
+    # Добавляем старые завершённые (со счетом) матчи, если их нет среди новых
+    # и если они не старше 24 часов
+    MONTHS_RU_PARSE = {
+        "янв": 1, "фев": 2, "мар": 3, "апр": 4, "май": 5, "июн": 6,
+        "июл": 7, "авг": 8, "сен": 9, "окт": 10, "ноя": 11, "дек": 12,
+    }
+    now = datetime.now(tz=timezone.utc)
+    carried = 0
+    for old_m in scored_old:
+        if old_m.get("id") in new_ids:
+            # Передаём score существующему матчу
+            for nm in matches:
+                if nm.get("id") == old_m.get("id") and not nm.get("score"):
+                    nm["score"] = old_m["score"]
+            continue
+        
+        # Проверяем давность
+        try:
+            ds = (old_m.get("date") or "").strip()
+            ts = (old_m.get("time") or "").strip()
+            if ds:
+                parts = ds.split()
+                day = int(parts[0])
+                month = MONTHS_RU_PARSE.get(parts[1].lower(), 0)
+                if month:
+                    year = now.year
+                    h, mn = (int(x) for x in ts.split(":")) if ":" in ts else (0, 0)
+                    match_dt = datetime(year, month, day, h, mn, tzinfo=timezone.utc)
+                    hours_ago = (now - match_dt).total_seconds() / 3600
+                    if hours_ago <= 24:
+                        matches.append(old_m)
+                        carried += 1
+                        continue
+        except Exception:
+            pass
+    
+    if carried:
+        print(f"[generate_json] Carried over {carried} finished matches with scores (24h retention)")
+    
     payload = {
         "last_update": datetime.now(tz=timezone(timedelta(hours=3))).strftime("%d.%m.%Y, %H:%M:%S"),
         "source": "multi-parser",
@@ -139,7 +194,6 @@ def _write_json(matches: List[Dict[str, Any]]) -> int:
         "matches": matches,
     }
 
-    out = os.path.normpath(OUT_PATH)
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w", encoding="utf-8") as f:
         json.dump(payload, f, ensure_ascii=False, indent=2)

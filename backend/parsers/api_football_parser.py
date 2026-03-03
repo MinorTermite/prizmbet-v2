@@ -108,21 +108,51 @@ class ApiFootballParser(BaseParser):
                             match_data["odds_2"] = odd
 
                 elif name in ("Goals Over/Under", "Over/Under"):
+                    # Собираем все линии тоталов, предпочитая 2.5
+                    best_over = None
+                    best_under = None
+                    best_val = None
+                    fallback_over = None
+                    fallback_under = None
+                    fallback_val = None
                     for v in values:
                         label = v.get("value", "")
                         odd = float(v.get("odd", 0) or 0)
                         if label.startswith("Over"):
-                            # Expected format: "Over 2.5" — gracefully handle compact "Over2.5"
                             parts = label.split(" ", 1)
                             try:
                                 raw = parts[1] if len(parts) > 1 else parts[0][4:]
                                 if raw:
-                                    match_data["total_value"] = float(raw)
+                                    line_val = float(raw)
+                                    if line_val == 2.5:
+                                        best_val = line_val
+                                        best_over = odd
+                                    elif fallback_val is None:
+                                        fallback_val = line_val
+                                        fallback_over = odd
                             except (IndexError, ValueError):
                                 pass
-                            match_data["total_over"] = odd
                         elif label.startswith("Under"):
-                            match_data["total_under"] = odd
+                            parts = label.split(" ", 1)
+                            try:
+                                raw = parts[1] if len(parts) > 1 else parts[0][5:]
+                                if raw:
+                                    line_val = float(raw)
+                                    if line_val == 2.5:
+                                        best_under = odd
+                                    elif fallback_under is None:
+                                        fallback_under = odd
+                            except (IndexError, ValueError):
+                                pass
+                    
+                    if best_val is not None:
+                        match_data["total_value"] = best_val
+                        match_data["total_over"] = best_over or 0.0
+                        match_data["total_under"] = best_under or 0.0
+                    elif fallback_val is not None:
+                        match_data["total_value"] = fallback_val
+                        match_data["total_over"] = fallback_over or 0.0
+                        match_data["total_under"] = fallback_under or 0.0
 
     async def parse(self) -> List[Dict]:
         if not API_KEY:

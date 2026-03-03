@@ -141,8 +141,14 @@ class LeonbetsParser(BaseParser):
                     elif rname == "2":
                         match_data["odds_2"] = float(price)
 
-            # Total
+            # Total — ищем конкретно линию 2.5
             elif "\u043e\u0442\u0430\u043b" in mname or "otal" in mname:
+                best_over = None
+                best_under = None
+                best_val = None
+                fallback_over = None
+                fallback_under = None
+                fallback_val = None
                 for runner in runners:
                     rname = runner.get("name", "") or ""
                     price = runner.get("price") or 0
@@ -152,11 +158,29 @@ class LeonbetsParser(BaseParser):
                             pval = float(param)
                         except (TypeError, ValueError):
                             continue
-                        if "\u043e\u043b\u044c\u0448" in rname or "ver" in rname or rname == "\u0411":
-                            match_data["total_value"] = pval
-                            match_data["total_over"]  = float(price)
-                        elif "\u0435\u043d\u044c\u0448" in rname or "nder" in rname or rname == "\u041c":
-                            match_data["total_under"] = float(price)
+                        is_over = "\u043e\u043b\u044c\u0448" in rname or "ver" in rname or rname == "\u0411"
+                        is_under = "\u0435\u043d\u044c\u0448" in rname or "nder" in rname or rname == "\u041c"
+                        if pval == 2.5:
+                            if is_over:
+                                best_over = float(price)
+                                best_val = pval
+                            elif is_under:
+                                best_under = float(price)
+                        else:
+                            if is_over and fallback_val is None:
+                                fallback_over = float(price)
+                                fallback_val = pval
+                            elif is_under and fallback_under is None:
+                                fallback_under = float(price)
+                
+                if best_val is not None:
+                    match_data["total_value"] = best_val
+                    match_data["total_over"] = best_over or 0.0
+                    match_data["total_under"] = best_under or 0.0
+                elif fallback_val is not None:
+                    match_data["total_value"] = fallback_val
+                    match_data["total_over"] = fallback_over or 0.0
+                    match_data["total_under"] = fallback_under or 0.0
 
             # Handicap
             elif "\u043e\u0440\u0430" in mname or "andicap" in mname or "\u0437\u0438\u0430\u0442\u0441\u043a" in mname:

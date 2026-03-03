@@ -97,7 +97,7 @@ class OddsAPIParser(BaseParser):
             params = {
                 "apiKey": API_KEY,
                 "regions": "eu,us",
-                "markets": "h2h,totals,spreads",
+                "markets": "h2h,totals,alternate_totals,spreads",
                 "oddsFormat": "decimal",
                 "dateFormat": "iso",
             }
@@ -163,16 +163,40 @@ class OddsAPIParser(BaseParser):
                     elif n == "Draw":    md["odds_x"] = p
                 if sport_type in ("tennis", "basket"):
                     md["odds_x"] = 0.0
-            elif key == "totals":
+            elif key in ("totals", "alternate_totals"):
+                # Ищем конкретно линию 2.5
+                best_over = None
+                best_under = None
+                best_point = None
+                fallback_over = None
+                fallback_under = None
+                fallback_point = None
                 for o in outcomes:
                     n = o.get("name", "")
                     p = float(o.get("price", 0) or 0)
                     pt = o.get("point", 0)
-                    if n == "Over":
-                        md["total_over"]  = p
-                        md["total_value"] = float(pt) if pt else None
-                    elif n == "Under":
-                        md["total_under"] = p
+                    pt_val = float(pt) if pt else None
+                    if pt_val == 2.5:
+                        if n == "Over":
+                            best_over = p
+                            best_point = pt_val
+                        elif n == "Under":
+                            best_under = p
+                    elif fallback_point is None and n == "Over":
+                        fallback_over = p
+                        fallback_point = pt_val
+                    elif fallback_point is not None and n == "Under" and fallback_under is None:
+                        fallback_under = p
+                
+                # Предпочитаем 2.5, иначе берём основную линию
+                if best_point is not None:
+                    md["total_value"] = best_point
+                    md["total_over"] = best_over or 0.0
+                    md["total_under"] = best_under or 0.0
+                elif fallback_point is not None and md["total_value"] is None:
+                    md["total_value"] = fallback_point
+                    md["total_over"] = fallback_over or 0.0
+                    md["total_under"] = fallback_under or 0.0
             elif key == "spreads":
                 for o in outcomes:
                     n  = o.get("name", "")
