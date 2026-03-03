@@ -65,7 +65,7 @@ class ApiFootballParser(BaseParser):
         all_fixtures: List[dict] = []
         league_ids = set(LEAGUES.keys())
 
-        for offset in range(DAYS_AHEAD + 1):
+        for offset in range(-2, DAYS_AHEAD + 1):
             date_str = (today + timedelta(days=offset)).strftime("%Y-%m-%d")
             data = await self._get("/fixtures", {"date": date_str})
             for fix in (data or {}).get("response", []):
@@ -161,6 +161,15 @@ class ApiFootballParser(BaseParser):
             except Exception:
                 match_time = date_str
 
+            score = None
+            status_short = f.get("status", {}).get("short", "")
+            if status_short in ("FT", "AET", "PEN"):
+                goals = fixture.get("goals", {})
+                h_goals = goals.get("home")
+                a_goals = goals.get("away")
+                if h_goals is not None and a_goals is not None:
+                    score = f"{h_goals}:{a_goals}"
+
             match_data = {
                 "external_id":       f"apifootball_{fixture_id}",
                 "sport":             sport_type,
@@ -170,6 +179,7 @@ class ApiFootballParser(BaseParser):
                 "match_time":        match_time,
                 "match_url":         f"https://www.api-football.com/fixture/{fixture_id}",
                 "is_live":           is_live,
+                "score":             score,
                 "odds_1":            0.0,
                 "odds_x":            0.0,
                 "odds_2":            0.0,

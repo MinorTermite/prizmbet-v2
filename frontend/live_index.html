@@ -1823,10 +1823,7 @@
             </div>
             <p
                 style="color: var(--text-tertiary); font-size: 0.75rem; line-height: 1.4; max-width: 600px; margin: 0 auto;">
-                Букмекер, осуществляющий игровую деятельность с децентрализованной криптовалютой Prizm. Настоящий сайт
-                является источником информации о проводимых играх и коэффициентах, правилах букмекера. Игрок ознакомился
-                с правилами, они понятны ему и игрок соглашается с ними акцептируя переводом криптовалюты Prizm на
-                кошелёк PrizmBet.
+                Информационно-аналитический портал о спортивных событиях. Сайт носит исключительно информационный характер и не занимается организацией азартных игр на деньги. Используя данный сервис, вы соглашаетесь с правилами предоставления информации.
             </p>
         </footer>
     </div>
@@ -2134,13 +2131,17 @@
                 const game = getMatchGame(m);
                 if (filters.sport !== 'all' && sport !== filters.sport) return false;
                 if (filters.game !== 'all' && game !== filters.game) return false;
-                if (filters.pop) {
+                if (filters.pop && filters.sport !== 'totals') {
                     const combined = ((game || '') + ' ' + (m.league || '')).toLowerCase();
                     if (!/(лига чемпионов|лига европы|лига конференций|премьер-лига англия|ла лига|бундеслига|серия a|лига 1 франция|nba|нхл|кхл|евролига|атп|wta|ufc)/.test(combined)) {
                         if (/(dota|cs2|valorant)/.test(combined)) return false;
                     }
                 }
                 if (filters.favOnly && !filters.favs.includes(m.id)) return false;
+                if (filters.sport === 'totals') {
+                    const hasTotals = m.total_over && m.total_over !== '0.00' && m.total_value;
+                    if (!hasTotals || parseFloat(m.total_value) !== 2.5) return false;
+                }
                 if (filters.q) {
                     const blob = ((m.id || '') + ' ' + (m.league || '') + ' ' + (m.team1 || '') + ' ' + (m.team2 || '') + ' ' + game).toLowerCase();
                     if (!blob.includes(filters.q)) return false;
@@ -2369,12 +2370,17 @@
                         bkBadge = `<span class="bk-badge bk-badge--marathon">Marathon</span>`;
                         verifyLink = `<a href="${mUrl}" target="_blank" rel="noopener" class="match-link" title="Проверить коэффициент на Marathon">🔍 Проверить</a>`;
                     }
+                    const scoreHtml = match.score ? `<span class="match-score" style="margin-right: 8px; font-weight: bold; color: var(--accent); background: rgba(56, 189, 248, 0.1); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.3);">📋 Счёт: <span style="color:#fff">${escapeHtml(match.score)}</span></span>` : '';
+
                     card.id = `match-${eid}`;
                     card.innerHTML = `
                         <div class="match-header">
                             <a class="match-id" href="#match-${eid}" onclick="shareMatch('${eid}','${teams.replace(/'/g, "\\'")}','${escapeHtml((match.date || 'Сегодня') + ' ' + (match.time || ''))}'); return false;" title="Скопировать ссылку на матч">#${eid}</a>
                             ${bkBadge}
-                            <div style="display:flex;align-items:center;gap:4px;margin-left:auto;">
+                            <div style="display:flex;align-items:center;margin-left:auto;">
+                                ${scoreHtml}
+                            </div>
+                            <div style="display:flex;align-items:center;gap:4px;margin-left:8px;">
                                 ${verifyLink}
                                 <button class="share-btn" onclick="shareMatch('${eid}','${teams.replace(/'/g, "\\'")}','${escapeHtml((match.date || 'Сегодня') + ' ' + (match.time || ''))}')" title="Поделиться матчем">🔗</button>
                                 <button class="favorite-btn ${isFavorite ? 'active' : ''}" onclick="toggleFavorite('${eid}')">

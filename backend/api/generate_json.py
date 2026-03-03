@@ -111,6 +111,7 @@ def to_frontend(match: Dict[str, Any]) -> Dict[str, Any]:
         "handicap_2_value": match.get("handicap_2_value"),
         "handicap_2":       _fmt_odd(match.get("handicap_2")),
         "is_live":          bool(match.get("is_live", False)),
+        "score":            match.get("score"),
     }
 
 
