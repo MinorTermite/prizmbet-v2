@@ -53,5 +53,12 @@ async def run_all_parsers():
     finally:
         await cache.close()
 
+    # Обогащаем matches.json финальными счетами завершённых матчей
+    try:
+        from backend.score_enricher import main as enrich_scores
+        await enrich_scores()
+    except Exception as e:
+        print(f"[run_parsers] score_enricher failed: {type(e).__name__}: {e}")
+
 if __name__ == "__main__":
     asyncio.run(run_all_parsers())

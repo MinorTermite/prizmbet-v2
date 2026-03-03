@@ -822,6 +822,23 @@
             transform: scale(1.05);
         }
 
+        .match-score {
+            font-weight: 700;
+            color: var(--accent);
+            background: rgba(56, 189, 248, 0.1);
+            padding: 3px 10px;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            font-size: 0.72rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        .match-score span { color: #fff; font-size: 0.8rem; }
+        
         /* target highlight when jumping to anchor */
         .match-card:target {
             box-shadow: 0 0 0 2px var(--accent), var(--shadow-md);
@@ -2370,14 +2387,14 @@
                         bkBadge = `<span class="bk-badge bk-badge--marathon">Marathon</span>`;
                         verifyLink = `<a href="${mUrl}" target="_blank" rel="noopener" class="match-link" title="Проверить коэффициент на Marathon">🔍 Проверить</a>`;
                     }
-                    const scoreHtml = match.score ? `<span class="match-score" style="margin-right: 8px; font-weight: bold; color: var(--accent); background: rgba(56, 189, 248, 0.1); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.3);">📋 Счёт: <span style="color:#fff">${escapeHtml(match.score)}</span></span>` : '';
+                    const scoreHtml = match.score ? `<span class="match-score">📋 Счёт: <span>${escapeHtml(match.score)}</span></span>` : '';
 
                     card.id = `match-${eid}`;
                     card.innerHTML = `
                         <div class="match-header">
                             <a class="match-id" href="#match-${eid}" onclick="shareMatch('${eid}','${teams.replace(/'/g, "\\'")}','${escapeHtml((match.date || 'Сегодня') + ' ' + (match.time || ''))}'); return false;" title="Скопировать ссылку на матч">#${eid}</a>
                             ${bkBadge}
-                            <div style="display:flex;align-items:center;margin-left:auto;">
+                            <div class="match-meta" style="display:flex;align-items:center;margin-left:auto;">
                                 ${scoreHtml}
                             </div>
                             <div style="display:flex;align-items:center;gap:4px;margin-left:8px;">

@@ -1056,6 +1056,23 @@
             min-width: 0;
         }
 
+        .match-score {
+            font-weight: 700;
+            color: var(--accent);
+            background: rgba(56, 189, 248, 0.1);
+            padding: 3px 10px;
+            border-radius: var(--radius-sm);
+            border: 1px solid rgba(56, 189, 248, 0.25);
+            font-size: 0.72rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+        }
+        .match-score span { color: #fff; font-size: 0.8rem; }
+        
         .result-link {
             color: var(--text-tertiary);
             text-decoration: none;
@@ -2829,7 +2846,7 @@
             // Добавляем дату и универсальное слово для лучшего поиска виджета Google
             const googleQuery = encodeURIComponent(`${match.team1 || ''} ${match.team2 || ''} ${match.date || ''} результат матча`);
             const resultLink = `<a class="result-link" href="https://www.google.com/search?q=${googleQuery}" target="_blank" rel="noopener" title="Проверить результат матча на ${match.date || ''}">📊 Итог</a>`;
-            const scoreHtml = match.score ? `<span class="match-score" style="margin-right: 8px; font-weight: bold; color: var(--accent); background: rgba(56, 189, 248, 0.1); padding: 2px 8px; border-radius: 4px; border: 1px solid rgba(56, 189, 248, 0.3);">📋 Счёт: <span style="color:#fff">${escapeHtml(match.score)}</span></span>` : '';
+            const scoreHtml = match.score ? `<span class="match-score">📋 Счёт: <span>${escapeHtml(match.score)}</span></span>` : '';
             function oddBtn(label, value) {
                 const raw = value || '';
                 const unavail = !raw || raw === '—' || raw === '-' || raw === '0.00';
@@ -2845,7 +2862,7 @@
             card.innerHTML = `
                 <div class="match-header">
                     <a class="match-id" href="#match-${eid}" onclick="shareMatch('${eid}','${teams.replace(/'/g,"\\'") }','${escapeHtml((match.date||'Сегодня')+' '+(match.time||''))}');return false;" title="ID: ${eid}">#${shortId}</a>
-                    <div style="display:flex;align-items:center;gap:4px;">
+                    <div class="match-meta" style="display:flex;align-items:center;gap:4px;">
                         ${scoreHtml}
                         ${resultLink}
                     </div>
@@ -2872,6 +2889,28 @@
             if (isFav) card.classList.add('favorited'); else card.classList.remove('favorited');
             const favBtn = card.querySelector('.favorite-btn');
             if (favBtn) { favBtn.classList.toggle('active', isFav); favBtn.title = isFav ? 'Убрать из избранного' : 'В избранное'; }
+            
+            // Update score
+            let meta = card.querySelector('.match-meta');
+            let scoreTag = card.querySelector('.match-score');
+            if (match.score) {
+                if (!scoreTag && meta) {
+                    scoreTag = document.createElement('span');
+                    scoreTag.className = 'match-score';
+                    meta.prepend(scoreTag);
+                }
+                if (scoreTag) {
+                    const hollowScore = `📋 Счёт: <span>${escapeHtml(match.score)}</span>`;
+                    if (scoreTag.innerHTML !== hollowScore) {
+                        scoreTag.innerHTML = hollowScore;
+                        scoreTag.classList.add('highlight-pulse');
+                        setTimeout(() => scoreTag.classList.remove('highlight-pulse'), 1500);
+                    }
+                }
+            } else if (scoreTag) {
+                scoreTag.remove();
+            }
+            
             const oddMap = { 
                 'П1': match.p1, 'X': match.x, 'П2': match.p2, 
                 '1X': match.p1x, '12': match.p12, 'X2': match.px2,
