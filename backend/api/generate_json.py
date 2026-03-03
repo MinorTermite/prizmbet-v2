@@ -86,6 +86,18 @@ def to_frontend(match: Dict[str, Any]) -> Dict[str, Any]:
     odds_x = match.get("odds_x", 0)
     odds_2 = match.get("odds_2", 0)
 
+    t_val = match.get("total_value")
+    t_over = match.get("total_over")
+    t_under = match.get("total_under")
+    
+    try:
+        if t_val is not None and float(t_val) > 2.5:
+            t_val = None
+            t_over = 0
+            t_under = 0
+    except (ValueError, TypeError):
+        pass
+        
     return {
         "sport":     match.get("sport", ""),
         "league":    match.get("league", ""),
@@ -103,9 +115,9 @@ def to_frontend(match: Dict[str, Any]) -> Dict[str, Any]:
         "px2":       _calc_double_chance(odds_x, odds_2),
         "source":    _bookmaker_from_id(match.get("external_id", "")),
         # Extra fields kept for potential future use
-        "total_value":      match.get("total_value"),
-        "total_over":       _fmt_odd(match.get("total_over")),
-        "total_under":      _fmt_odd(match.get("total_under")),
+        "total_value":      t_val,
+        "total_over":       _fmt_odd(t_over),
+        "total_under":      _fmt_odd(t_under),
         "handicap_1_value": match.get("handicap_1_value"),
         "handicap_1":       _fmt_odd(match.get("handicap_1")),
         "handicap_2_value": match.get("handicap_2_value"),
