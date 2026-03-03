@@ -1752,6 +1752,7 @@
                 <button class="tab" data-sport="volleyball">🏐 Волейбол</button>
                 <button class="tab" data-sport="mma">🥊 MMA</button>
                 <button class="tab" data-sport="esports">🎮 Киберспорт</button>
+                <button class="tab" data-sport="results">📝 Результаты</button>
             </div>
             <div class="filters">
                 <select id="gameFilter" class="select">
@@ -2143,11 +2144,21 @@
 
         function filterMatches(matches, filters) {
             let filtered = matches.filter(isValidMatch);
+            // В live-разделе обычно только лайв-матчи, 
+            // но для "Результатов" делаем исключение
+            if (filters.sport !== 'results') {
+                filtered = filtered.filter(isMatchLive);
+            }
+            
             filtered = filtered.filter(m => {
                 const sport = getMatchSport(m);
                 const game = getMatchGame(m);
-                if (filters.sport !== 'all' && sport !== filters.sport) return false;
+                if (filters.sport !== 'all' && filters.sport !== 'favs' && sport !== filters.sport && filters.sport !== 'results') return false;
                 if (filters.game !== 'all' && game !== filters.game) return false;
+                
+                if (filters.sport === 'results') {
+                    if (!m.score) return false;
+                }
                 if (filters.pop && filters.sport !== 'totals') {
                     const combined = ((game || '') + ' ' + (m.league || '')).toLowerCase();
                     if (!/(лига чемпионов|лига европы|лига конференций|премьер-лига англия|ла лига|бундеслига|серия a|лига 1 франция|nba|нхл|кхл|евролига|атп|wta|ufc)/.test(combined)) {

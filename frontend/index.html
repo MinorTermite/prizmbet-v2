@@ -2124,6 +2124,7 @@
                 <button class="tab" data-sport="volleyball">🏐 Волейбол</button>
                 <button class="tab" data-sport="baseball">⚾ Бейсбол</button>
                 <button class="tab" data-sport="totals">🎯 Тоталы</button>
+                <button class="tab" data-sport="results">📝 Результаты</button>
                 <button class="tab" data-sport="favs">⭐ Избранное</button>
             </div>
             </div>
@@ -2697,8 +2698,11 @@
 
         function filterMatches(matches, filters) {
             let filtered = matches.filter(isValidMatch);
-            // Убираем live-матчи: показываем только предстоящие
-            filtered = filtered.filter(m => !isMatchLive(m));
+            // Убираем live-матчи: показываем только предстоящие, 
+            // КРОМЕ случая просмотра результатов
+            if (filters.sport !== 'results') {
+                filtered = filtered.filter(m => !isMatchLive(m));
+            }
             filtered = filtered.filter(m => {
                 const sport = getMatchSport(m);
                 const game = getMatchGame(m);
@@ -2716,6 +2720,9 @@
                 if (filters.sport === 'totals') {
                     const hasTotals = m.total_over && m.total_over !== '0.00' && m.total_value;
                     if (!hasTotals || parseFloat(m.total_value) !== 2.5) return false;
+                }
+                if (filters.sport === 'results') {
+                    if (!m.score) return false;
                 }
                 if (filters.q) {
                     const blob = ((m.id || '') + ' ' + (m.league || '') + ' ' + (m.team1 || '') + ' ' + (m.team2 || '') + ' ' + game).toLowerCase();
