@@ -789,8 +789,43 @@
             align-items: center;
         }
 
-        .select,
-        .search {
+        .search-container {
+            position: relative;
+            margin-bottom: 20px;
+            width: 100%;
+        }
+
+        .search-premium {
+            width: 100%;
+            padding: 14px 20px 14px 48px;
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.03);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+            font-size: 0.95rem;
+            outline: none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(12px);
+        }
+
+        .search-premium:focus {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: var(--accent);
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 18px;
+            top: 50%;
+            transform: translateY(-50%);
+            opacity: 0.4;
+            font-size: 1.1rem;
+            pointer-events: none;
+        }
+
+        .select {
             padding: 10px 16px;
             border-radius: var(--radius-pill);
             border: 1px solid var(--border);
@@ -804,19 +839,9 @@
             backdrop-filter: blur(8px);
         }
 
-        .select:focus,
-        .search:focus {
+        .select:focus {
             border-color: var(--accent);
             box-shadow: 0 0 16px var(--accent-glow);
-        }
-
-        .search {
-            flex: 1;
-            min-width: 200px;
-        }
-
-        .search::placeholder {
-            color: var(--text-tertiary);
         }
 
         .toggle-switch {
@@ -1575,6 +1600,24 @@
             }
         }
 
+        /* ===== SHIMMER ===== */
+        .shimmer {
+            background: linear-gradient(-45deg, rgba(255, 255, 255, 0.05) 40%, rgba(255, 255, 255, 0.1) 50%, rgba(255, 255, 255, 0.05) 60%);
+            background-size: 300%;
+            background-position-x: 100%;
+            animation: shimmer-anim 1.5s infinite linear;
+        }
+
+        @keyframes shimmer-anim {
+            to { background-position-x: 0%; }
+        }
+
+        .skeleton-card {
+            height: 120px;
+            border-radius: var(--radius-xl);
+            margin-bottom: 14px;
+        }
+
         /* ===== FOOTER ===== */
         footer {
             text-align: center;
@@ -2112,6 +2155,12 @@
             <span class="tg-bot-arrow">→</span>
         </a>
 
+        <!-- SEARCH & FILTERS -->
+        <div class="search-container">
+            <input id="searchInput" class="search-premium" placeholder="Поиск команды, лиги или ID матча..." oninput="onSearchInput()"/>
+            <div class="search-icon">🔍</div>
+        </div>
+
         <!-- FILTERS -->
         <div class="filters-bar">
             <div class="tabs-wrap" id="tabsWrap">
@@ -2137,12 +2186,6 @@
                     <div class="toggle-slider"></div>
                     <span>Только топ</span>
                 </label>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="favoritesOnly" />
-                    <div class="toggle-slider"></div>
-                    <span>⭐ Избранное</span>
-                </label>
-                <input id="searchInput" class="search" placeholder="Поиск: команда, лига, ID..." />
             </div>
             <div class="sort-controls"
                 style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;">
@@ -2183,7 +2226,7 @@
                 <div class="wallet-label">Адрес кошелька</div>
                 <div class="wallet-address" id="walletAddress">PRIZM-4N7T-L2A7-RQZA-5BETW</div>
             </div>
-            <button class="btn btn-primary" onclick="copyWallet()">📋 Копировать адрес</button>
+            <button class="btn btn-primary" onclick="copyWallet(this)">📋 Скопировать адрес</button>
             <p class="wallet-note">Укажите ID события и тип ставки в комментарии к переводу</p>
         </div>
 
@@ -3181,7 +3224,12 @@
             if (!currentBet) return;
             const amt = document.getElementById('bsInput').value.trim() || '0';
             const matchLink = window.location.origin + window.location.pathname + '#match-' + currentBet.id;
-            const msg = `${currentBet.teams}, ${currentBet.betType} @ ${currentBet.coef}\nСтавка: ${amt} PRIZM\nСсылка: ${matchLink}`;
+            const now = new Date();
+            const timeStr = now.toLocaleString('ru-RU', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+            });
+            const msg = `${currentBet.teams}, ${currentBet.betType} @ ${currentBet.coef}\nСтавка: ${amt} PRIZM\nВремя ставки: ${timeStr}\nСсылка: ${matchLink}`;
 
             navigator.clipboard.writeText(msg).then(() => {
                 // Сохраняем в локальную историю
@@ -3196,8 +3244,20 @@
                 });
 
                 closeBetSlip();
-                showToast('Данные для перевода скопированы!');
+                showToast('✅ Данные скопированы!');
                 if (navigator.vibrate) navigator.vibrate(50);
+                
+                // Visual feedback on the button if it's still visible
+                const btn = event?.target;
+                if (btn && btn.classList.contains('bet-action-btn')) {
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '✅ Скопировано!';
+                    btn.style.background = 'var(--green)';
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.style.background = '';
+                    }, 2000);
+                }
             });
         }
 
@@ -3255,10 +3315,25 @@
             }
         }
 
-        function copyWallet() {
-            navigator.clipboard.writeText(document.getElementById('walletAddress').textContent).then(() => {
-                showToast('Адрес скопирован!');
+        function onSearchInput() {
+            if (window.__ALL_MATCHES__) renderMatches(window.__ALL_MATCHES__);
+        }
+
+        function copyWallet(btn) {
+            const addr = document.getElementById('walletAddress').textContent;
+            navigator.clipboard.writeText(addr).then(() => {
+                showToast('💎 Адрес кошелька скопирован!');
                 if (navigator.vibrate) navigator.vibrate(50);
+                
+                if (btn) {
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '✅ Скопировано!';
+                    btn.classList.add('btn-success');
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.classList.remove('btn-success');
+                    }, 2000);
+                }
             });
         }
 
