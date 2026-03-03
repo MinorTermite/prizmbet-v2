@@ -41,35 +41,67 @@ HEADERS = {
 def _normalize(name: str) -> str:
     """Убирает лишние символы для сравнения."""
     if not name: return ""
-    # Убираем типичные приставки/суффиксы
     s = name.lower()
-    for drop in ["fc", "fk", "jk", "u21", "u19", "u23", "sc", "cs"]:
-        s = s.replace(drop, "")
-    return s.replace("-", " ").strip()
+    words = s.split()
+    # Убираем типичные приставки/суффиксы, но оставляем важные маркеры (например, u20)
+    words = [w for w in words if w not in ("fc", "fk", "jk", "sc", "cs", "club", "team", "the", "al", "afc", "cfc", "cd", "ac", "rc", "ud")]
+    return " ".join(words).replace("-", " ").strip()
 
 
 def _teams_match(our_t1: str, our_t2: str, api_t1: str, api_t2: str) -> bool:
-    """Проверяет совпадение пары команд (нечёткий поиск)."""
+    """Проверяет совпадение пары команд (строгий и нечёткий поиск)."""
+    import difflib
     a1 = _normalize(our_t1)
     a2 = _normalize(our_t2)
     b1 = _normalize(api_t1)
     b2 = _normalize(api_t2)
     
     def core_match(name1, name2):
-        # Если имена короткие, нужно полное совпадение
-        if len(name1) < 4 or len(name2) < 4:
-            return name1 in name2 or name2 in name1
-            
-        words1 = [w for w in name1.split() if w not in ("al", "the", "club", "team")]
-        words2 = [w for w in name2.split() if w not in ("al", "the", "club", "team")]
+        if not name1 or not name2: return False
         
-        if not words1 or not words2:
-            return name1 == name2
+        # Строгая проверка возрастных групп (U20, U21 и т.д.)
+        def get_age_group(n):
+            for w in n.split():
+                if w.startswith("u") and w[1:].isdigit():
+                    return w
+            return None
             
-        # Хотя бы одно значимое слово должно совпадать полностью
-        for w in words1:
-            if w in words2 or any(w in bw for bw in words2):
-                return True
+        age1 = get_age_group(name1)
+        age2 = get_age_group(name2)
+        if age1 and age2 and age1 != age2: return False
+        if bool(age1) != bool(age2): return False # Основной состав против молодежного
+            
+        # Проверка пола
+        def has_women(n):
+            return "women" in n.split() or " (w) " in f" {n} " or "(w)" in n.replace(" ", "") or " w " in f" {n} "
+        if has_women(name1) != has_women(name2): return False
+            
+        ratio = difflib.SequenceMatcher(None, name1, name2).ratio()
+        if ratio > 0.88: return True
+            
+        set1 = set(name1.split())
+        set2 = set(name2.split())
+        if not set1 or not set2: return False
+        
+        intersect = set1 & set2
+        meaningful_intersect = {w for w in intersect if len(w) > 2 and not (w.startswith("u") and w[1:].isdigit()) and w not in {"united", "city", "real", "athletic", "sporting", "dynamo", "boys", "girls", "women", "men"}}
+        
+        if meaningful_intersect:
+            # Предотвращение ложных совпадений
+            if ("united" in set1 ^ set2) and ("city" in set1 ^ set2): return False
+            if ("real" in set1 ^ set2) and ("atletico" in set1 ^ set2): return False
+            if ("inter" in set1 ^ set2) and ("ac" in set1 ^ set2): return False
+            if ("aston" in set1 ^ set2) and ("west" in set1 ^ set2): return False
+            return True
+                
+        # Если одно содержит другое целиком
+        if set1.issubset(set2) or set2.issubset(set1):
+            longest_word = max(set1 | set2, key=len)
+            if len(longest_word) > 4:
+                only_share_generic = not meaningful_intersect
+                if not only_share_generic:
+                    return True
+            
         return False
 
     def pair_match(p1a, p1b, p2a, p2b):
@@ -111,6 +143,8 @@ async def _fetch_fixtures(session: aiohttp.ClientSession, date_str: str) -> List
             print(f"[score_enricher] API-Football {r.status} for {date_str}")
     except Exception as e:
         print(f"[score_enricher] Ошибка запроса на {date_str}: {e}")
+    finally:
+        print(f"[score_enricher] Done fetch for {date_str}")
     return []
 
 
@@ -198,9 +232,14 @@ async def main():
                     continue
             
             if _teams_match(t1, t2, candidate["t1"], candidate["t2"]):
+                print(f"MATCH: {t1} vs {t2} == {candidate['t1']} vs {candidate['t2']}".encode('ascii', 'replace').decode('ascii'))
                 m["score"] = candidate["score"]
                 updated += 1
                 break
+        else:
+            if m.get("league", "").lower() in ["primavera 1", "championship", "premier league", "serie a", "la liga", "primeira liga"]:
+                # Print why top leagues failed
+                print(f"NO MATCH FOR: {t1} vs {t2} | {dt}".encode('ascii', 'replace').decode('ascii'))
 
     print(f"[score_enricher] Успешно добавлено {updated} счётов")
 

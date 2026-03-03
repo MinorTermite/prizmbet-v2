@@ -58,6 +58,26 @@ def determine_win(bet_type: str, home_goals: int, away_goals: int) -> bool:
         return away_goals >= home_goals
     elif bet_type == "12":
         return home_goals != away_goals
+    
+    # Обработка Тоталов (ТБ / ТМ) до 2.5
+    # Формат бет: "ТБ 2.5", "ТМ 1.5"
+    if bet_type.startswith("ТБ") or bet_type.startswith("ТМ"):
+        try:
+            parts = bet_type.split()
+            if len(parts) == 2:
+                t_type = parts[0] # "ТБ" или "ТМ"
+                t_value = float(parts[1]) # 0.5, 1.5, 2.5
+                
+                # Защита: только до 2.5, по бизнес-требованию
+                if t_value <= 2.5:
+                    total_goals = home_goals + away_goals
+                    if t_type == "ТБ":
+                        return total_goals > t_value
+                    elif t_type == "ТМ":
+                        return total_goals < t_value
+        except ValueError:
+            pass # Если не удалось распарсить
+
     return False
 
 async def check_match_results(bot: Bot = None):
