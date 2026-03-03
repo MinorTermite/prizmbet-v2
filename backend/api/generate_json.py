@@ -11,7 +11,7 @@ import json
 import asyncio
 import os
 from datetime import datetime, timezone, timedelta
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 
 # Allow running as both `python backend/api/generate_json.py` and
 # `python -m backend.api.generate_json` from the repo root.
@@ -69,22 +69,32 @@ def _bookmaker_from_id(external_id: str) -> str:
     return "unknown"
 
 
-def to_frontend(match: Dict[str, Any]) -> Dict[str, Any]:
+def to_frontend(match: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     """Convert parser match dict → legacy frontend dict."""
     date_str = time_str = ""
     raw_time = match.get("match_time", "")
+    match_dt = None
     if raw_time:
         try:
             dt = datetime.fromisoformat(str(raw_time).replace("Z", "+00:00"))
-            dt_msk = dt.astimezone(timezone.utc)  # display in UTC for consistency
-            date_str = f"{dt_msk.day} {MONTHS_RU[dt_msk.month - 1]}"
-            time_str = dt_msk.strftime("%H:%M")
+            match_dt = dt.astimezone(timezone.utc)
+            # Filter: Skip matches more than 3 days ahead
+            now = datetime.now(timezone.utc)
+            if (match_dt - now).days > 3:
+                return None
+            
+            date_str = f"{match_dt.day} {MONTHS_RU[match_dt.month - 1]}"
+            time_str = match_dt.strftime("%H:%M")
         except Exception:
             pass
 
     odds_1 = match.get("odds_1", 0)
     odds_x = match.get("odds_x", 0)
     odds_2 = match.get("odds_2", 0)
+    
+    # Filter: Skip matches with no odds at all
+    if not odds_1 and not odds_x and not odds_2:
+        return None
 
     t_val = match.get("total_value")
     t_over = match.get("total_over")
@@ -93,11 +103,11 @@ def to_frontend(match: Dict[str, Any]) -> Dict[str, Any]:
     # Принудительно устанавливаем тотал = 2.5 (если букмекер дал другую линию)
     try:
         if t_val is not None and float(t_val) != 0:
-            t_val = 2.5  # Всегда показываем тотал 2.5
+            t_val = 2.5
     except (ValueError, TypeError):
         pass
         
-    return {
+    out = {
         "sport":     match.get("sport", ""),
         "league":    match.get("league", ""),
         "id":        match.get("external_id", ""),
@@ -113,17 +123,20 @@ def to_frontend(match: Dict[str, Any]) -> Dict[str, Any]:
         "p12":       _calc_double_chance(odds_1, odds_2),
         "px2":       _calc_double_chance(odds_x, odds_2),
         "source":    _bookmaker_from_id(match.get("external_id", "")),
-        # Extra fields kept for potential future use
-        "total_value":      t_val,
         "total_over":       _fmt_odd(t_over),
         "total_under":      _fmt_odd(t_under),
-        "handicap_1_value": match.get("handicap_1_value"),
         "handicap_1":       _fmt_odd(match.get("handicap_1")),
-        "handicap_2_value": match.get("handicap_2_value"),
         "handicap_2":       _fmt_odd(match.get("handicap_2")),
         "is_live":          bool(match.get("is_live", False)),
-        "score":            match.get("score"),
     }
+    
+    # Compact: Only include optional fields if they have value
+    if t_val is not None: out["total_value"] = t_val
+    if match.get("handicap_1_value") is not None: out["handicap_1_value"] = match.get("handicap_1_value")
+    if match.get("handicap_2_value") is not None: out["handicap_2_value"] = match.get("handicap_2_value")
+    if match.get("score"): out["score"] = match.get("score")
+    
+    return out
 
 
 def _write_json(matches: List[Dict[str, Any]]) -> int:
@@ -256,7 +269,11 @@ async def generate_from_raw(raw: List[Dict[str, Any]]) -> int:
     Use this when the caller has already run the parsers (e.g. run_parsers.py)
     to avoid running the full parser network a second time.
     """
-    matches = [to_frontend(m) for m in raw]
+    matches = []
+    for m in raw:
+        fm = to_frontend(m)
+        if fm:
+            matches.append(fm)
     return _write_json(matches)
 
 
@@ -264,7 +281,11 @@ async def generate() -> int:
     """Run parsers, convert, write frontend/matches.json."""
     print("[generate_json] Starting parser run…")
     raw = await collect_all_matches()
-    matches = [to_frontend(m) for m in raw]
+    matches = []
+    for m in raw:
+        fm = to_frontend(m)
+        if fm:
+            matches.append(fm)
     return _write_json(matches)
 
 if __name__ == "__main__":

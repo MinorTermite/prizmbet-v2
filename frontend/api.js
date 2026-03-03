@@ -42,6 +42,9 @@ async function loadData() {
     if (cached?.matches?.length) {
         if (typeof renderMatches === 'function') renderMatches(cached.matches);
         showStatus(cached.last_update, 'cache');
+    } else {
+        // Если кэша нет, показываем шиммер (скелетон)
+        showShimmer();
     }
 
     // Округляем до 10-минутного интервала — CDN и браузер могут кэшировать ответ
@@ -95,4 +98,14 @@ async function refreshData() {
         await loadData();
         if (typeof showToast === 'function') showToast('Загружены кэшированные данные');
     }
+}
+
+function showShimmer() {
+    const content = document.getElementById('content');
+    if (!content) return;
+    let html = '';
+    for (let i = 0; i < 5; i++) {
+        html += '<div class="skeleton-card shimmer"></div>';
+    }
+    content.innerHTML = html;
 }
