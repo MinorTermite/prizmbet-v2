@@ -2,7 +2,10 @@ name: Update Matches & Deploy to GitHub Pages
 
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    # 06:00 UTC = 09:00 MSK
+    - cron: "0 6 * * *"
+    # 14:00 UTC = 17:00 MSK
+    - cron: "0 14 * * *"
   workflow_dispatch:
   push:
     branches: [main]
@@ -24,11 +27,13 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
         run: pip install -r requirements.txt
@@ -46,9 +51,22 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           PINNACLE_LOGIN: ${{ secrets.PINNACLE_LOGIN }}
           PINNACLE_PASSWORD: ${{ secrets.PINNACLE_PASSWORD }}
-          PROXY_ENABLED: 'true'
+          PROXY_ENABLED: "true"
           PROXY_URL: ${{ secrets.PROXY_URL }}
         run: python backend/api/generate_json.py
+
+      - name: Enrich matches with real scores
+        env:
+          API_FOOTBALL_KEY: ${{ secrets.API_FOOTBALL_KEY }}
+        run: python backend/score_enricher.py
+
+      - name: Commit and push matches.json
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add frontend/matches.json
+          git commit -m "chore(data): scheduled match & scores update $(date +'%Y-%m-%d %H:%M UTC')" || echo "No changes to commit"
+          git push || echo "Nothing to push"
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -56,7 +74,7 @@ jobs:
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './frontend'
+          path: "./frontend"
 
   deploy:
     needs: build
@@ -69,4 +87,3 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-
