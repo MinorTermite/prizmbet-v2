@@ -104,10 +104,20 @@ prizmbet-v2/
 │   └── config.py
 ├── frontend/
 │   ├── css/
+│   │   └── base.min.css      # Minified styles
 │   ├── js/
+│   │   ├── app.js            # Main application logic
+│   │   └── api.js            # API logic
 │   └── pwa/
 ├── config/
 ├── .github/workflows/
 ├── Dockerfile
 └── docker-compose.yml
 ```
+
+## Frontend Deployment
+The frontend is built purely with HTML/CSS/JS - no bundlers required.
+- **Styling**: All CSS is extracted and minified into `frontend/css/base.min.css` for optimal loading.
+- **Logic**: Main logic lives in `frontend/js/app.js` with `defer` loading.
+- **Assets**: Images and videos use modern formats (WebP, WebM) with lazy loading and responsive tags.
+- **Hosting**: Pre-configured for Netlify via `netlify.toml` which outlines advanced caching and security (CSP) headers.
