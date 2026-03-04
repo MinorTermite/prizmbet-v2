@@ -2069,6 +2069,136 @@
             font-weight: bold;
             font-size: 0.9rem;
         }
+
+        /* ===== FINISHED MATCH RESULT CARD ===== */
+        .match-result-card {
+            background: #f8f9fa; /* Светлый фон из скриншота */
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            margin-bottom: 14px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            color: #333; /* Темный текст для контраста */
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Если включена темная тема (по умолчанию), мы можем оставить светлую карточку или адаптировать. 
+           По скриншоту юзер хочет именно светлую шапку и фон для результатов. */
+           
+        .result-header {
+            background: #a3a3a3; /* Серый фон шапки */
+            color: #fff;
+            text-align: center;
+            padding: 6px 10px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .result-body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px 10px;
+            gap: 15px;
+        }
+
+        .team-block {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+        }
+
+        .team-block.home {
+            justify-content: flex-end;
+            text-align: right;
+        }
+
+        .team-block.away {
+            justify-content: flex-start;
+            text-align: left;
+        }
+
+        .team-name {
+            color: #007bff; /* Синий цвет как на скриншоте */
+            font-size: 1.4rem;
+            font-weight: normal;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 15rem;
+        }
+
+        .team-logo {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: #e9ecef;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #adb5bd;
+            font-size: 1.2rem;
+            border: 2px solid #dee2e6;
+            flex-shrink: 0;
+        }
+
+        .score-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .score-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .score-box {
+            background: #008000; /* Зеленый фон для счета */
+            color: #fff;
+            font-size: 1.8rem;
+            font-weight: bold;
+            width: 44px;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+        }
+
+        .match-status-text {
+            color: #000;
+            font-size: 0.85rem;
+            font-weight: bold;
+            margin-top: 4px;
+        }
+        
+        /* Мобильная адаптация результатов */
+        @media (max-width: 480px) {
+            .team-name {
+                font-size: 1rem;
+                max-width: 90px;
+                white-space: normal;
+            }
+            .team-logo {
+                width: 36px;
+                height: 36px;
+                font-size: 0.9rem;
+            }
+            .score-box {
+                font-size: 1.4rem;
+                width: 36px;
+                height: 40px;
+            }
+            .result-body {
+                padding: 15px 5px;
+                gap: 8px;
+            }
+        }
+
     </style>
 </head>
 
@@ -2891,12 +3021,70 @@
             const t2 = escapeHtml(match.team2 || '');
             const teams = `${t1} vs ${t2}`;
             const countdown = getCountdownText(match);
-            const matchUrl = match.match_url || match.match_url_marathon || '';
             const shortId = String(eid).replace(/^[a-z]+_/i, '').slice(-6);
-            // Добавляем дату и универсальное слово для лучшего поиска виджета Google
+            
+            // Если матч завершен (есть счет и нет коэффициентов для ставок)
+            // ПРИМЕЧАНИЕ: мы считаем матч завершенным, если есть score, либо если мы на вкладке результатов
+            if (match.score) {
+                // Парсим счет (например "2:1" -> [2, 1])
+                let score1 = '-', score2 = '-';
+                if (match.score.includes(':')) {
+                    const parts = match.score.split(':');
+                    score1 = parts[0].trim();
+                    score2 = parts[1].trim();
+                } else if (match.score.includes('-')) {
+                    const parts = match.score.split('-');
+                    score1 = parts[0].trim();
+                    score2 = parts[1].trim();
+                } else {
+                    score1 = match.score;
+                    score2 = '';
+                }
+
+                // Генерация инициалов для логотипов
+                const init1 = t1.substring(0, 2).toUpperCase();
+                const init2 = t2.substring(0, 2).toUpperCase();
+                
+                const card = document.createElement('div');
+                card.id = `match-${eid}`;
+                card.className = 'match-result-card' + (isFav ? ' favorited' : '');
+                
+                // Формируем заголовок аналогично скриншоту
+                const headerText = `${escapeHtml(match.league || '')}, ${escapeHtml(match.date || '')} ${escapeHtml(match.time || '')}`;
+                
+                card.innerHTML = `
+                    <div class="result-header">
+                        ${headerText}
+                    </div>
+                    <div class="result-body">
+                        <div class="team-block home">
+                            <div class="team-name">${t1}</div>
+                            <div class="team-logo">${init1}</div>
+                        </div>
+                        
+                        <div class="score-block">
+                            <div class="score-row">
+                                <div class="score-box">${escapeHtml(score1)}</div>
+                                <div class="score-box">${escapeHtml(score2)}</div>
+                            </div>
+                            <div class="match-status-text">Завершен</div>
+                        </div>
+                        
+                        <div class="team-block away">
+                            <div class="team-logo">${init2}</div>
+                            <div class="team-name">${t2}</div>
+                        </div>
+                    </div>
+                `;
+                return card;
+            }
+
+            // --- Стандартная карточка для активных матчей ---
+            const matchUrl = match.match_url || match.match_url_marathon || '';
             const googleQuery = encodeURIComponent(`${match.team1 || ''} ${match.team2 || ''} ${match.date || ''} результат матча`);
-            const resultLink = `<a class="result-link" href="https://www.google.com/search?q=${googleQuery}" target="_blank" rel="noopener" title="Проверить результат матча на ${match.date || ''}">📊 Итог</a>`;
-            const scoreHtml = match.score ? `<span class="match-score">📋 Счёт: <span>${escapeHtml(match.score)}</span></span>` : '';
+            const resultLink = `<a class="result-link" style="opacity:0.6; pointer-events:none;" href="#" title="Матч еще не начался">⏳ Ожидается</a>`;
+            const scoreHtml = '';
+            
             function oddBtn(label, value) {
                 const raw = value || '';
                 const unavail = !raw || raw === '—' || raw === '-' || raw === '0.00';
@@ -2906,6 +3094,7 @@
                 if (unavail) return `<div class="odd-item odd-item--na" data-bet="${label}"><div class="odd-label">${label}</div><div class="odd-value">${val}</div></div>`;
                 return `<div class="odd-item" data-bet="${label}" onclick="openBetSlip('${eid}','${teams.replace(/'/g,"\\'")   }','${label}','${val}','${dt}','${lg}')"><div class="odd-label">${label}</div><div class="odd-value">${val}</div></div>`;
             }
+            
             const card = document.createElement('div');
             card.id = `match-${eid}`;
             card.className = 'match-card' + (isFav ? ' favorited' : '');
@@ -3112,7 +3301,7 @@
 
             // Карта уже отрисованных карточек
             const existingCards = {};
-            content.querySelectorAll('.match-card[id]').forEach(c => {
+            content.querySelectorAll('.match-card[id], .match-result-card[id]').forEach(c => {
                 existingCards[c.id.replace('match-', '')] = c;
             });
 
@@ -3145,8 +3334,27 @@
                 matches.forEach(match => {
                     const existingCard = existingCards[match.id];
                     if (existingCard) {
-                        patchCardOdds(existingCard, match, favorites);
-                        section.appendChild(existingCard);
+                        const isResultNow = existingCard.classList.contains('match-result-card');
+                        const shouldBeResult = !!match.score;
+                        
+                        if (isResultNow !== shouldBeResult) {
+                            // Статус матча изменился, пересоздаем карточку
+                            const newCard = createMatchCard(match, favorites);
+                            existingCard.replaceWith(newCard);
+                            // Чтобы appendChild добавил правильный элемент в конец (для сортировки)
+                            section.appendChild(newCard);
+                            existingCards[match.id] = newCard;
+                        } else {
+                            if (!shouldBeResult) {
+                                patchCardOdds(existingCard, match, favorites);
+                            } else {
+                                // Если это уже завершенный матч, можно обновить счет при необходимости,
+                                // но пока просто оставляем как есть или пересоздаем если нужно.
+                                // Для надежности можно просто пересоздать, если счет изменился во время "Завершен", 
+                                // но обычно он не меняется. Главное добавить в секцию:
+                            }
+                            section.appendChild(existingCard);
+                        }
                     } else {
                         section.appendChild(createMatchCard(match, favorites));
                     }
@@ -3156,7 +3364,7 @@
 
             // Убираем секции без карточек
             content.querySelectorAll('.section').forEach(sec => {
-                if (sec.querySelectorAll('.match-card').length === 0) sec.remove();
+                if (sec.querySelectorAll('.match-card, .match-result-card').length === 0) sec.remove();
             });
 
             // Восстанавливаем скролл — страница не прыгает при обновлении
@@ -3224,12 +3432,7 @@
             if (!currentBet) return;
             const amt = document.getElementById('bsInput').value.trim() || '0';
             const matchLink = window.location.origin + window.location.pathname + '#match-' + currentBet.id;
-            const now = new Date();
-            const timeStr = now.toLocaleString('ru-RU', {
-                year: 'numeric', month: '2-digit', day: '2-digit',
-                hour: '2-digit', minute: '2-digit', second: '2-digit'
-            });
-            const msg = `${currentBet.teams}, ${currentBet.betType} @ ${currentBet.coef}\nСтавка: ${amt} PRIZM\nВремя ставки: ${timeStr}\nСсылка: ${matchLink}`;
+            const msg = `${currentBet.teams}, ${currentBet.betType} @ ${currentBet.coef}\nСтавка: ${amt} PRIZM\nВремя события: ${currentBet.datetime}\nСсылка: ${matchLink}`;
 
             navigator.clipboard.writeText(msg).then(() => {
                 // Сохраняем в локальную историю
