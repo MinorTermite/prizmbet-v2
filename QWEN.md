@@ -559,7 +559,14 @@ GitHub Actions:
 ```env
 # Критично для работы
 ODDS_API_KEY=sk_...              # the-odds-api.com → +60-100 матчей
-PROXY_URL=http://...             # Прокси РФ для 1xBet → +5000 матчей
+
+# Прокси для 1xBet (гео-блок РФ) — ОПЦИОНАЛЬНО
+# Бесплатные не работают! Используйте платные:
+# - proxy6.net (~50₽/месяц, Россия)
+# - proxy-sale.com (~60₽/месяц, Россия)  
+# - proxy-seller.ru (~80₽/месяц, Россия)
+# Формат: http://login:password@ip:port
+PROXY_URL=http://user:pass@123.45.67.89:8080
 
 # Опционально (кэш, уведомления)
 SUPABASE_URL=https://...         # PostgreSQL для истории
@@ -572,6 +579,29 @@ PINNACLE_LOGIN=...               # ps3838 аккаунт (API недоступе
 PINNACLE_PASSWORD=...
 ```
 
+### 🌐 Прокси для 1xBet (важно!)
+
+**Бесплатные прокси:** ❌ Не работают для 1xBet (тестируется автоматически)
+
+**Платные прокси (рекомендуется):**
+
+| Сервис | Цена | Страна | Ссылка |
+|--------|------|--------|--------|
+| Proxy6 | ~50₽/мес | Россия | https://proxy6.net/ |
+| Proxy-Sale | ~60₽/мес | Россия | https://proxy-sale.com/ |
+| Proxy-Seller | ~80₽/мес | Россия | https://proxy-seller.ru/ |
+
+**Как добавить:**
+1. Купите прокси с российским IP
+2. Получите данные: `IP:PORT`, `login`, `password`
+3. Добавьте в GitHub Secrets:
+   ```
+   PROXY_URL = http://login:password@ip:port
+   ```
+4. В workflow измените `PROXY_ENABLED: "true"`
+
+**Альтернатива:** Использовать только Leonbets (~2500 матчей без прокси)
+
 ### 📄 Документация
 
 - **PROXY_SETUP.md** — подробная инструкция по настройке прокси и оптимизации лимитов
@@ -583,9 +613,14 @@ PINNACLE_PASSWORD=...
 
 ### Приоритет 1 (данные)
 1. **Настроить ODDS_API_KEY** — +60-100 матчей из топ-лиг (5 минут)
-2. **Найти рабочий прокси для 1xBet** — +5000 матчей
-   - Запустить: `python backend/utils/free_proxy_fetcher.py`
-   - Или купить: ~$5/месяц (proxy6.net, proxy-sale.com)
+   - Получить: https://the-odds-api.com/api-keys/
+   - Добавить в GitHub Secrets: `ODDS_API_KEY=sk_...`
+
+2. **Купить прокси для 1xBet** — +5000 матчей (~50₽/месяц)
+   - Сервисы: proxy6.net, proxy-sale.com, proxy-seller.ru
+   - Формат: `http://login:password@ip:port`
+   - Добавить в GitHub Secrets: `PROXY_URL=...`
+
 3. **Исследовать Pinnacle API** — проверить актуальный эндпоинт
 
 ### Приоритет 2 (UX)
