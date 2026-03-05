@@ -15,20 +15,20 @@ API_KEY = os.getenv("API_FOOTBALL_KEY", "")
 BASE_URL = "https://v3.football.api-sports.io"
 
 # League IDs → (sport_type, league_name)
+# Optimized: Only top leagues to minimize API calls
 LEAGUES: Dict[int, tuple] = {
     2:   ("football", "Лига чемпионов УЕФА"),
-    3:   ("football", "Лига Европы УЕФА"),
     39:  ("football", "Англия. Премьер-лига"),
     140: ("football", "Испания. Ла Лига"),
     135: ("football", "Италия. Серия А"),
     78:  ("football", "Германия. Бундеслига"),
     61:  ("football", "Франция. Лига 1"),
-    94:  ("football", "Португалия. Примейра"),
-    203: ("football", "Турция. Суперлига"),
+    235: ("football", "Россия. Премьер-Лига"),  # РПЛ
 }
 
 # Fetch fixtures N days into the future
-DAYS_AHEAD = 3
+# Optimized: 2 days instead of 3 to reduce API calls (free plan: 100/day)
+DAYS_AHEAD = 2
 
 
 class ApiFootballParser(BaseParser):

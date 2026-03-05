@@ -28,30 +28,36 @@ BASE_IO_URL  = "https://api.odds-api.io/v3"
 IO_BOOKMAKER = "1xbet"  # bookmaker available on free plan
 
 # Sports to fetch from the-odds-api.com
+# Free plan: 500 requests/month, 10 requests/minute
+# Optimized: Only top 3 leagues to stay within limits
 ODDS_API_SPORTS: Dict[str, Tuple[str, str]] = {
     "soccer_uefa_champions_league": ("football", "Liga Chempionov UEFA"),
     "soccer_epl":                   ("football", "Angliya. Premier-liga"),
     "soccer_spain_la_liga":         ("football", "Ispaniya. La Liga"),
-    "soccer_germany_bundesliga":    ("football", "Germaniya. Bundesliga"),
-    "soccer_italy_serie_a":         ("football", "Italiya. Seriya A"),
-    "basketball_nba":               ("basket",   "NBA"),
-    "icehockey_nhl":                ("hockey",   "NHL"),
+    # Disabled to save quota:
+    # "soccer_germany_bundesliga":    ("football", "Germaniya. Bundesliga"),
+    # "soccer_italy_serie_a":         ("football", "Italiya. Seriya A"),
+    # "basketball_nba":               ("basket",   "NBA"),
+    # "icehockey_nhl":                ("hockey",   "NHL"),
 }
 
 # Top-league slug keywords for odds-api.io filtering
+# Free plan: 60 requests/day, rate limited
+# Optimized: Only most popular leagues
 IO_TOP_SLUGS = [
     "premier-league", "la-liga", "bundesliga", "serie-a", "ligue-1",
-    "champions-league", "europa-league", "conference-league",
-    "primera-division", "primeira-liga", "super-lig",
-    "ekstraklasa", "russian-premier", "ukraine-premier",
-    "nba", "nhl", "khl", "kontinental-hockey-league", "national-hockey-league"
+    "champions-league", "europa-league",
+    "russian-premier",  # РПЛ - приоритет для RU аудитории
+    "nba", "nhl", "khl",
 ]
 
 # Sports to fetch from odds-api.io
-IO_SPORTS = ["football", "basketball", "ice-hockey"]
+# Disabled ice-hockey to save quota (use Leonbets instead)
+IO_SPORTS = ["football", "basketball"]
 
 # Max events per sport on odds-api.io (limits per-event requests)
-IO_MAX_EVENTS_PER_SPORT = 60
+# Reduced from 60 to 25 to stay within rate limits
+IO_MAX_EVENTS_PER_SPORT = 25
 
 
 class OddsAPIParser(BaseParser):

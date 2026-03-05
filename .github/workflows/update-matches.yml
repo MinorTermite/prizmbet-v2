@@ -2,10 +2,13 @@ name: Update Matches & Deploy to GitHub Pages
 
 on:
   schedule:
-    # 06:00 UTC = 09:00 MSK
+    # Optimized schedule for free API limits:
+    # 09:00 MSK - morning update (European leagues)
     - cron: "0 6 * * *"
-    # 14:00 UTC = 17:00 MSK
+    # 17:00 MSK - evening update (more matches)
     - cron: "0 14 * * *"
+    # 22:00 MSK - night update (catch late matches)
+    - cron: "0 19 * * *"
   workflow_dispatch:
   push:
     branches: [main]
@@ -51,8 +54,9 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           PINNACLE_LOGIN: ${{ secrets.PINNACLE_LOGIN }}
           PINNACLE_PASSWORD: ${{ secrets.PINNACLE_PASSWORD }}
-          PROXY_ENABLED: "true"
-          PROXY_URL: ${{ secrets.PROXY_URL }}
+          # Free proxy for 1xBet (Russian IP required)
+          PROXY_ENABLED: "false"
+          PROXY_URL: ""
         run: python backend/api/generate_json.py
 
       - name: Enrich matches with real scores
