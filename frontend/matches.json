@@ -50,7 +50,8 @@
       "handicap_2": "2.81",
       "is_live": false,
       "handicap_1_value": 1.75,
-      "handicap_2_value": -1.75
+      "handicap_2_value": -1.75,
+      "score": "0:0"
     },
     {
       "sport": "football",
@@ -20579,7 +20580,8 @@
       "total_under": "—",
       "handicap_1": "—",
       "handicap_2": "—",
-      "is_live": false
+      "is_live": false,
+      "score": "2:1"
     },
     {
       "sport": "football",
@@ -20601,7 +20603,8 @@
       "total_under": "—",
       "handicap_1": "—",
       "handicap_2": "—",
-      "is_live": false
+      "is_live": false,
+      "score": "0:2"
     },
     {
       "sport": "football",
@@ -24761,7 +24764,8 @@
       "total_under": "—",
       "handicap_1": "—",
       "handicap_2": "—",
-      "is_live": false
+      "is_live": false,
+      "score": "0:1"
     },
     {
       "sport": "football",
@@ -25929,7 +25933,8 @@
       "total_under": "—",
       "handicap_1": "—",
       "handicap_2": "—",
-      "is_live": false
+      "is_live": false,
+      "score": "0:0"
     },
     {
       "sport": "football",
