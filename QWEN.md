@@ -560,13 +560,9 @@ GitHub Actions:
 # Критично для работы
 ODDS_API_KEY=sk_...              # the-odds-api.com → +60-100 матчей
 
-# Прокси для 1xBet (гео-блок РФ) — ОПЦИОНАЛЬНО
-# Бесплатные не работают! Используйте платные:
-# - proxy6.net (~50₽/месяц, Россия)
-# - proxy-sale.com (~60₽/месяц, Россия)  
-# - proxy-seller.ru (~80₽/месяц, Россия)
-# Формат: http://login:password@ip:port
-PROXY_URL=http://user:pass@123.45.67.89:8080
+# Прокси для 1xBet (гео-блок РФ)
+# Формат SOCKS5: socks5://login:password@ip:port
+PROXY_URL=socks5://user:pass@45.81.77.14:8000
 
 # Опционально (кэш, уведомления)
 SUPABASE_URL=https://...         # PostgreSQL для истории
@@ -583,15 +579,24 @@ PINNACLE_PASSWORD=...
 
 **Статус на март 2026:**
 - Бесплатные прокси: ❌ Не работают (протестировано 3058 — 0 рабочих)
-- Платные прокси: ⚠️ Требуют проверки перед покупкой
+- Платные прокси: ✅ Работают (SOCKS5 формат)
 
-**Проверка прокси перед покупкой:**
+**Формат прокси:**
+```
+# Правильно (SOCKS5):
+socks5://login:password@ip:port
+
+# Неправильно (HTTP):
+http://login:password@ip:port  # Не работает!
+```
+
+**Проверка прокси:**
 ```bash
 # Запустить тест
-python test_proxy.py
+python test_user_proxy.py
 
-# Если все тесты "Timeout" — прокси не работает
-# Если хотя бы один "OK" — прокси рабочий
+# Если "SUCCESS! Proxy is working" — прокси рабочий
+# Если "FAILED" — прокси не работает
 ```
 
 **Платные прокси (рекомендуется):**
@@ -603,14 +608,14 @@ python test_proxy.py
 | Proxy-Seller | ~80₽/мес | Россия | https://proxy-seller.ru/ |
 
 **Как добавить:**
-1. Купите прокси с российским IP
+1. Купите прокси с российским IP (SOCKS5)
 2. Получите данные: `IP:PORT`, `login`, `password`
-3. Протестируйте: `python test_proxy.py`
+3. Протестируйте: `python test_user_proxy.py`
 4. Если работает — добавьте в GitHub Secrets:
    ```
-   PROXY_URL = http://login:password@ip:port
+   PROXY_URL = socks5://login:password@ip:port
    ```
-5. В workflow измените `PROXY_ENABLED: "true"`
+5. Workflow автоматически подхватит прокси
 
 **Альтернатива:** Использовать только Leonbets (~2500 матчей без прокси)
 
