@@ -47,11 +47,15 @@ Object.assign(window, {
             favs.splice(index, 1);
         } else {
             favs.push(id);
-            // Optional: detailed fav info
+            // Detailed fav info for notifications
             const match = allMatches.find(m => m.id === id);
             if (match) {
                 let details = storage.getFavDetails();
-                details[id] = { home: match.home_team, away: match.away_team, time: match.match_time };
+                details[id] = { 
+                    home: match.home_team || match.team1 || 'Команда 1', 
+                    away: match.away_team || match.team2 || 'Команда 2', 
+                    time: match.match_time 
+                };
                 storage.saveFavDetails(details);
             }
         }
@@ -78,6 +82,9 @@ Object.assign(window, {
     toggleMyBets: betSlip.toggleMyBets,
     checkMyBets: betSlip.checkMyBets,
     copyWallet: (btn) => betSlip.copyWallet(btn),
+
+    // Helpers
+    openImage: (src) => ui.openImage(src),
 
     // History
     openHistory: historyUI.openHistory,

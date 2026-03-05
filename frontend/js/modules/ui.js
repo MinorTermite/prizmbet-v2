@@ -74,3 +74,7 @@ export function patchCardOdds(id, odds) {
     if (!card) return;
     // Implementation for dynamic updates if needed
 }
+
+export function openImage(src) { 
+    window.open(src, '_blank'); 
+}
