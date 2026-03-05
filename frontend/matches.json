@@ -14154,7 +14154,8 @@
       "total_under": "—",
       "handicap_1": "—",
       "handicap_2": "—",
-      "is_live": false
+      "is_live": false,
+      "score": "0:4"
     },
     {
       "sport": "football",
@@ -18207,7 +18208,8 @@
       "total_under": "—",
       "handicap_1": "—",
       "handicap_2": "—",
-      "is_live": false
+      "is_live": false,
+      "score": "2:1"
     },
     {
       "sport": "football",
@@ -18229,7 +18231,8 @@
       "total_under": "—",
       "handicap_1": "—",
       "handicap_2": "—",
-      "is_live": false
+      "is_live": false,
+      "score": "0:0"
     },
     {
       "sport": "football",
