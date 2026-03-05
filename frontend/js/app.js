@@ -150,11 +150,6 @@ window.addEventListener('load', () => {
     if (window.loadData) {
         window.loadData().then(updateApp);
     }
-    
-    // Auto-refresh (optional every 30s)
-    setInterval(() => {
-        if (window.loadData) window.loadData().then(updateApp);
-    }, 30000);
 });
 
 // Service Worker (if implemented)
