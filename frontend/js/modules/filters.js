@@ -104,18 +104,34 @@ export function getLeaguePriority(match) {
 
 export function sortMatches(matches, sortType) {
     const sorted = [...matches];
-    if (sortType === 'time') {
-        sorted.sort((a, b) => parseMatchDateTime(a) - parseMatchDateTime(b));
-    } else if (sortType === 'odds') {
-        sorted.sort((a, b) => (parseFloat(a.odds_home || a.p1) || 0) - (parseFloat(b.odds_home || b.p1) || 0));
-    } else if (sortType === 'league') {
-        sorted.sort((a, b) => {
+    const now = new Date();
+    
+    function isPast(m) {
+        if (m.score) return true;
+        const start = parseMatchDateTime(m);
+        // If match started more than 4 hours ago, consider it past for sorting
+        return (now - start) > (4 * 60 * 60 * 1000);
+    }
+
+    sorted.sort((a, b) => {
+        const pastA = isPast(a);
+        const pastB = isPast(b);
+        
+        // Put past matches at the bottom
+        if (pastA !== pastB) return pastA ? 1 : -1;
+        
+        if (sortType === 'time') {
+            return parseMatchDateTime(a) - parseMatchDateTime(b);
+        } else if (sortType === 'odds') {
+            return (parseFloat(a.odds_home || a.p1) || 0) - (parseFloat(b.odds_home || b.p1) || 0);
+        } else if (sortType === 'league') {
             const pa = getLeaguePriority(a);
             const pb = getLeaguePriority(b);
             if (pa !== pb) return pa - pb;
             return (a.league || "").localeCompare(b.league || "");
-        });
-    }
+        }
+        return 0;
+    });
     return sorted;
 }
 

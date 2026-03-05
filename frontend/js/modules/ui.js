@@ -129,8 +129,6 @@ export function createMatchCard(match, favorites) {
             ${sport === 'football' ? `<div class="odds-section-title">Двойной шанс</div>${oddBtn('1X',match.p1x)}${oddBtn('12',match.p12)}${oddBtn('X2',match.px2)}` : ''}
             
             ${(match.total_over && match.total_over!=='0.00' && match.total_value) ? `<div class="odds-section-title">Тотал (${match.total_value})</div>${oddBtn('ТБ '+match.total_value, match.total_over)}${oddBtn('ТМ '+match.total_value, match.total_under)}<div></div>` : ''}
-            
-            ${(match.handicap_1 && match.handicap_1!=='0.00' && match.handicap_1_value) ? `<div class="odds-section-title">Фора (${match.handicap_1_value})</div>${oddBtn('Ф1 '+match.handicap_1_value, match.handicap_1)}${oddBtn('Ф2 '+match.handicap_2_value, match.handicap_2)}<div></div>` : ''}
         </div>`;
     return card;
 }
@@ -152,9 +150,7 @@ export function patchCardOdds(card, match, favorites) {
         'П2': match.p2 || match.odds_away, 
         '1X': match.p1x, '12': match.p12, 'X2': match.px2,
         ['ТБ '+match.total_value]: match.total_over,
-        ['ТМ '+match.total_value]: match.total_under,
-        ['Ф1 '+match.handicap_1_value]: match.handicap_1,
-        ['Ф2 '+match.handicap_2_value]: match.handicap_2
+        ['ТМ '+match.total_value]: match.total_under
     };
     
     card.querySelectorAll('[data-bet]').forEach(btn => {
