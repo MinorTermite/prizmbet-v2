@@ -55,8 +55,9 @@ jobs:
           PINNACLE_LOGIN: ${{ secrets.PINNACLE_LOGIN }}
           PINNACLE_PASSWORD: ${{ secrets.PINNACLE_PASSWORD }}
           # Proxy for 1xBet (Russian IP required)
-          PROXY_ENABLED: "true"
-          PROXY_URL: ${{ secrets.PROXY_URL }}
+          # DISABLED: Current proxy not responding
+          PROXY_ENABLED: "false"
+          PROXY_URL: ""
         run: python backend/api/generate_json.py
 
       - name: Enrich matches with real scores
