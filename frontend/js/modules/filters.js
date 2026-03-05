@@ -105,21 +105,24 @@ export function getLeaguePriority(match) {
 export function sortMatches(matches, sortType) {
     const sorted = [...matches];
     const now = new Date();
-    
+
     function isPast(m) {
+        // Если есть счет — матч точно завершен
         if (m.score) return true;
+        
+        // Если матч начался больше 3 часов назад — считаем завершенным
         const start = parseMatchDateTime(m);
-        // If match started more than 4 hours ago, consider it past for sorting
-        return (now - start) > (4 * 60 * 60 * 1000);
+        return (now - start) > (3 * 60 * 60 * 1000);
     }
 
     sorted.sort((a, b) => {
         const pastA = isPast(a);
         const pastB = isPast(b);
-        
-        // Put past matches at the bottom
+
+        // ВСЕГДА перемещаем завершенные матчи вниз
         if (pastA !== pastB) return pastA ? 1 : -1;
-        
+
+        // Сортировка внутри групп (активные и завершенные)
         if (sortType === 'time') {
             return parseMatchDateTime(a) - parseMatchDateTime(b);
         } else if (sortType === 'odds') {
@@ -130,7 +133,9 @@ export function sortMatches(matches, sortType) {
             if (pa !== pb) return pa - pb;
             return (a.league || "").localeCompare(b.league || "");
         }
-        return 0;
+        
+        // По умолчанию: активные по времени, завершенные по времени завершения
+        return parseMatchDateTime(a) - parseMatchDateTime(b);
     });
     return sorted;
 }
