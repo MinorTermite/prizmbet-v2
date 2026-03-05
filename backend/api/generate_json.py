@@ -200,16 +200,16 @@ def _write_json(matches: List[Dict[str, Any]]) -> int:
     if carried:
         print(f"[generate_json] Carried over {carried} finished matches with scores (24h retention)")
     
-    payload = {
-        "last_update": datetime.now(tz=timezone(timedelta(hours=3))).strftime("%d.%m.%Y, %H:%M:%S"),
+    final_doc = {
+        "last_update": datetime.now(tz=timezone(timedelta(hours=3))).isoformat(timespec='seconds'),
         "source": "multi-parser",
         "total": len(matches),
-        "matches": matches,
+        "matches": matches
     }
 
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with open(out, "w", encoding="utf-8") as f:
-        json.dump(payload, f, ensure_ascii=False, indent=2)
+        json.dump(final_doc, f, ensure_ascii=False, indent=2)
 
     print(f"[generate_json] Wrote {len(matches)} matches -> {out}")
     return len(matches)
