@@ -2500,13 +2500,9 @@
 
         function copyBetSlipData() {
             if (!currentBet) return;
-            const amt = document.getElementById('bsInput').value.trim();
-            const now = new Date();
-            const timeStr = now.toLocaleString('ru-RU', {
-                year: 'numeric', month: '2-digit', day: '2-digit',
-                hour: '2-digit', minute: '2-digit', second: '2-digit'
-            });
-            const msg = `${currentBet.teams} ${currentBet.datetime} ${currentBet.betType} ${currentBet.coef}\nВремя перевода: ${timeStr}`;
+            const amt = document.getElementById('bsInput').value.trim() || '0';
+            const matchLink = window.location.origin + window.location.pathname + '#match-' + currentBet.id;
+            const msg = `${currentBet.teams}, ${currentBet.betType} @ ${currentBet.coef}\n${currentBet.datetime} ${matchLink}`;
 
             navigator.clipboard.writeText(msg).then(() => {
                 // Сохраняем в локальную историю

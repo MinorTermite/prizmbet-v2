@@ -976,9 +976,8 @@
 
         function copyBetSlipData() {
             if (!currentBet) return;
-            const amt = document.getElementById('bsInput').value.trim() || '0';
             const matchLink = window.location.origin + window.location.pathname + '#match-' + currentBet.id;
-            const msg = `${currentBet.teams}, ${currentBet.betType} @ ${currentBet.coef}\nСтавка: ${amt} PRIZM\nВремя события: ${currentBet.datetime}\nСсылка: ${matchLink}`;
+            const msg = `${currentBet.teams}, ${currentBet.betType} @ ${currentBet.coef}\n${currentBet.datetime} ${matchLink}`;
 
             navigator.clipboard.writeText(msg).then(() => {
                 // Сохраняем в локальную историю
