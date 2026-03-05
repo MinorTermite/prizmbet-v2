@@ -1,64 +1,52 @@
 # -*- coding: utf-8 -*-
-"""Health Check Script"""
 import asyncio
+import sys
+import os
 import aiohttp
-from datetime import datetime
-from backend.utils.telegram import telegram
 from backend.utils.redis_client import cache
-from backend.db.supabase_client import db
+from backend.config import config
 
-async def check_website(url: str, name: str):
-    """Check if website is up"""
+async def check_redis():
+    print("Checking Redis connection...")
+    await cache.connect()
+    if cache.initialized:
+        test_val = "health_check_ok"
+        await cache.set("health_test", test_val, expire=10)
+        val = await cache.get("health_test")
+        if val == test_val:
+            print("[+] Redis: OK")
+            return True
+    print("[-] Redis: Failed (Check URL/Token in .env)")
+    return False
+
+async def check_supabase():
+    print("Checking Supabase connection...")
     try:
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, timeout=10) as response:
-                return response.status == 200
-    except Exception:
-        return False
+            url = f"{config.SUPABASE_URL}/rest/v1/matches?select=count"
+            headers = {
+                "apikey": config.SUPABASE_KEY,
+                "Authorization": f"Bearer {config.SUPABASE_KEY}"
+            }
+            async with session.get(url, headers=headers, timeout=5) as resp:
+                if resp.status == 200:
+                    print("[+] Supabase: OK")
+                    return True
+                else:
+                    print(f"[-] Supabase: Failed (Status {resp.status})")
+    except Exception as e:
+        print(f"[-] Supabase: Error ({e})")
+    return False
 
-async def check_database():
-    """Check database connection"""
-    if not db.initialized:
-        return False
-    try:
-        matches = await db.get_matches(limit=1)
-        return True
-    except Exception:
-        return False
-
-async def check_cache():
-    """Check cache connection"""
-    if not cache.initialized:
-        return False
-    try:
-        test_key = "health_check:test"
-        await cache.set(test_key, "1", expire=10)
-        value = await cache.get(test_key)
-        await cache.delete(test_key)
-        return value == "1"
-    except Exception:
-        return False
-
-async def run_health_check():
-    """Run all health checks"""
-    print("Running Health Check...")
+async def main():
+    print("--- PrizmBet v2 Health Check ---")
+    r_ok = await check_redis()
+    s_ok = await check_supabase()
     
-    results = {
-        "github_pages": await check_website("https://minortermite.github.io/prizmbet-v2/", "GitHub Pages"),
-        "database": await check_database(),
-        "cache": await check_cache()
-    }
-    
-    all_healthy = all(results.values())
-    
-    if all_healthy:
-        print("All systems healthy")
+    if r_ok and s_ok:
+        print("\nALL SYSTEMS GO!")
     else:
-        failed = [k for k, v in results.items() if not v]
-        print(f"Failed: {', '.join(failed)}")
-        await telegram.send_alert("Health Check Failed", f"Failed: {', '.join(failed)}")
-    
-    return all_healthy
+        print("\nSYSTEMS NOT READY: Check .env and network.")
 
 if __name__ == "__main__":
-    asyncio.run(run_health_check())
+    asyncio.run(main())

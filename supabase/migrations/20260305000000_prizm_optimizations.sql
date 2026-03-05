@@ -1,6 +1,6 @@
 -- PrizmBet Database Schema  
--- Execute this in Supabase SQL Editor  
-  
+-- Migrated via Supabase CLI
+
 -- Matches table  
 CREATE TABLE IF NOT EXISTS matches (  
     id UUID DEFAULT gen_random_uuid() PRIMARY KEY,  
@@ -16,9 +16,10 @@ CREATE TABLE IF NOT EXISTS matches (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),  
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()  
 );  
-  
--- Add new columns for totals and handicaps
+
+-- Add columns
 ALTER TABLE matches 
+ADD COLUMN IF NOT EXISTS score VARCHAR(50),
 ADD COLUMN IF NOT EXISTS total_value DECIMAL(10,2),
 ADD COLUMN IF NOT EXISTS total_over DECIMAL(10,2),
 ADD COLUMN IF NOT EXISTS total_under DECIMAL(10,2),
@@ -35,28 +36,20 @@ CREATE INDEX IF NOT EXISTS idx_matches_bookmaker ON matches(bookmaker);
 CREATE INDEX IF NOT EXISTS idx_matches_total ON matches(total_value);
 CREATE INDEX IF NOT EXISTS idx_matches_handicap ON matches(handicap_1_value, handicap_2_value);  
 
--- ✅ NEW INDEXES (Optimization)
--- Composite index for fast filtering by sport and sorting by date (most frequent frontend request)
+-- ✅ Optimization Indexes
 CREATE INDEX IF NOT EXISTS idx_matches_composite ON matches(sport, match_time DESC);
-
--- Index for fast search of matches that are happening now or recently ended
 CREATE INDEX IF NOT EXISTS idx_matches_time_desc ON matches(match_time DESC);
+CREATE INDEX IF NOT EXISTS idx_matches_active ON matches(sport, match_time DESC) WHERE score IS NULL;
+CREATE INDEX IF NOT EXISTS idx_matches_league_sport ON matches(league, sport) WHERE score IS NULL;
 
--- Critical indexes for deduplication
-CREATE INDEX IF NOT EXISTS idx_matches_active 
-ON matches(sport, match_time DESC) WHERE score IS NULL;
-
-CREATE INDEX IF NOT EXISTS idx_matches_league_sport 
-ON matches(league, sport) WHERE score IS NULL;
-
--- Unique index for deduplication (normalized teams)
+-- Unique index for deduplication
 CREATE UNIQUE INDEX IF NOT EXISTS idx_matches_unique 
 ON matches(
     LOWER(TRIM(home_team)), 
     LOWER(TRIM(away_team)), 
-    DATE(match_time), 
+    match_time, 
     bookmaker
-) WHERE match_time > NOW() - INTERVAL '24 hours';
+);
 
 -- Index for totals filtering
 CREATE INDEX IF NOT EXISTS idx_matches_totals 
@@ -86,4 +79,4 @@ CREATE TABLE IF NOT EXISTS settings (
     key VARCHAR(100) PRIMARY KEY,  
     value JSONB NOT NULL,  
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()  
- 
+);

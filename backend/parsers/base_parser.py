@@ -44,8 +44,20 @@ class BaseParser:
                     proxy_url = None
                     self.proxy = None
 
+            # ✅ OPTIMIZATION: Connection pooling and DNS caching (if not SOCKS)
+            if connector is None:
+                connector = aiohttp.TCPConnector(
+                    limit=50,             # Overall connection pool limit
+                    limit_per_host=10,    # Per-host limit
+                    use_dns_cache=True,   # Cache IP addresses of bookmakers
+                    ttl_dns_cache=300     # For 5 minutes
+                )
+
+            # ✅ OPTIMIZATION: Added compression support (gzip, deflate, br)
+            headers = {**ua_rotator.get_headers(), "Accept-Encoding": "gzip, deflate, br"}
+
             self.session = aiohttp.ClientSession(
-                headers=ua_rotator.get_headers(),
+                headers=headers,
                 timeout=aiohttp.ClientTimeout(total=30),
                 connector=connector,
             )
@@ -80,27 +92,57 @@ class BaseParser:
         raise NotImplementedError("Subclasses must implement parse()")
     
     async def save_matches(self):
-        """Save matches to database"""
+        """Save matches to database with Redis pipeline and deduplication"""
         if not self.matches:
             return 0
         
-        saved = 0
+        # 1. Normalization and preparation
+        matches_to_check = []
+        cache_keys = []
         for match in self.matches:
-            match["home_team"] = team_normalizer.normalize(match.get("home_team", ""))
-            match["away_team"] = team_normalizer.normalize(match.get("away_team", ""))
-            date_str = str(match.get('match_time') or '')[:10]  # YYYY-MM-DD
-            cache_key = f"match:{self.name}:{date_str}:{match.get('home_team')}:{match.get('away_team')}"
-            cached = await cache.get(cache_key)
+            # Using team_normalizer as in original code
+            home = team_normalizer.normalize(match.get("home_team", ""))
+            away = team_normalizer.normalize(match.get("away_team", ""))
+            match["home_team"] = home
+            match["away_team"] = away
             
-            if not cached:
+            date_str = str(match.get('match_time') or '')[:10]
+            cache_key = f"match:{self.name}:{date_str}:{home}:{away}"
+            
+            matches_to_check.append(match)
+            cache_keys.append(cache_key)
+            
+        # 2. Bulk cache check (using optimized get_many)
+        try:
+            cached_results = await cache.get_many(cache_keys)
+        except Exception as e:
+            print(f"Bulk cache check failed: {e}")
+            cached_results = [False] * len(cache_keys)
+
+        matches_to_insert = []
+        cache_to_set = {}
+        
+        # 3. Filter duplicates
+        for match, cache_key, is_cached in zip(matches_to_check, cache_keys, cached_results):
+            if not is_cached:
                 match["bookmaker"] = self.name
                 match["parsed_at"] = datetime.utcnow().isoformat()
-                
-                if db.initialized:
+                matches_to_insert.append(match)
+                cache_to_set[cache_key] = "1"
+        
+        # 4. Save to DB and bulk cache update
+        saved = 0
+        if matches_to_insert and db.initialized:
+            # Note: insert_match is still per-item, but bulk insert could be a future step
+            for match in matches_to_insert:
+                try:
                     await db.insert_match(match)
-                
-                await cache.set(cache_key, "1", expire=3600)
-                saved += 1
+                    saved += 1
+                except Exception as e:
+                    print(f"DB Error for {match.get('home_team')}: {e}")
+            
+            if cache_to_set:
+                await cache.set_many(cache_to_set, expire=3600)
         
         return saved
     
