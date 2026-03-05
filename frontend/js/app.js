@@ -418,10 +418,9 @@
 
         function filterMatches(matches, filters) {
             let filtered = matches.filter(isValidMatch);
-            // Убираем live-матчи: показываем только предстоящие, 
-            // КРОМЕ случая просмотра результатов
+            // Убираем live-матчи и завершенные (score) из всех вкладок, кроме 'results'
             if (filters.sport !== 'results') {
-                filtered = filtered.filter(m => !isMatchLive(m));
+                filtered = filtered.filter(m => !isMatchLive(m) && !m.score);
             }
             filtered = filtered.filter(m => {
                 const sport = getMatchSport(m);
