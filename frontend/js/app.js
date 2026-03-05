@@ -15,7 +15,10 @@ let allMatches = [];
 /**
  * Main Orchestration Logic
  */
-function updateApp() {
+function updateApp(newMatches) {
+    if (Array.isArray(newMatches)) {
+        window.__ALL_MATCHES__ = newMatches;
+    }
     allMatches = window.__ALL_MATCHES__ || [];
     
     // 1. Check notifications
