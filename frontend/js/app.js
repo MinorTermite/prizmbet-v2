@@ -1,169 +1,156 @@
-// PrizmBet v2 - Main Application Module
-import * as ui from './modules/ui.js';
-import * as fav from './modules/favorites.js';
-import * as notif from './modules/notifications.js';
+/**
+ * PrizmBet v2 - Main Entry Point
+ */
+import * as utils from './modules/utils.js';
 import * as filters from './modules/filters.js';
+import * as storage from './modules/storage.js';
+import * as notif from './modules/notifications.js';
 import * as betSlip from './modules/bet_slip.js';
-import * as history from './modules/history.js';
+import * as historyUI from './modules/history_ui.js';
+import * as ui from './modules/ui.js';
 
-// Global state
-let currentSportsFilter = 'football';
-let currentLeagueFilter = 'all';
-let currentSort = 'none';
-let currentBet = null;
+// Global matches buffer (shared from api.js)
+let allMatches = [];
 
-// Attach modules to window for legacy HTML handlers (onclick, etc.)
+/**
+ * Main Orchestration Logic
+ */
+function updateApp() {
+    allMatches = window.__ALL_MATCHES__ || [];
+    
+    // 1. Check notifications
+    notif.checkFinishedFavorites(allMatches);
+
+    // 2. Filter & Sort
+    const state = filters.getFilterState();
+    let filtered = filters.filterMatches(allMatches, state);
+    filtered = filters.sortMatches(filtered, state.sort);
+    
+    // 3. Render
+    ui.buildGameFilter(allMatches);
+    ui.updateStats(filtered);
+    ui.renderMatches(filtered);
+}
+
+/**
+ * Global Exposure for HTML inline handlers
+ */
 Object.assign(window, {
-    ...ui, ...fav, ...notif, ...filters, ...betSlip, ...history,
+    // UI Helpers
+    shareMatch: (id) => utils.shareMatch(id, notif.showToast),
+    
+    // Favorites
     toggleFavorite: (id) => {
-        fav.toggleFavorite(id, window.__ALL_MATCHES__);
-        renderMatches(window.__ALL_MATCHES__);
-        ui.showToast('Изменено в избранном');
+        let favs = storage.getFavorites();
+        const index = favs.indexOf(id);
+        if (index > -1) {
+            favs.splice(index, 1);
+        } else {
+            favs.push(id);
+            // Optional: detailed fav info
+            const match = allMatches.find(m => m.id === id);
+            if (match) {
+                let details = storage.getFavDetails();
+                details[id] = { home: match.home_team, away: match.away_team, time: match.match_time };
+                storage.saveFavDetails(details);
+            }
+        }
+        storage.saveFavorites(favs);
+        notif.showToast(index > -1 ? 'Удалено из избранного' : 'Добавлено в избранное');
+        updateApp();
     },
+
+    // Notifications
     requestNotificationPermission: async () => {
         const granted = await notif.requestNotificationPermission();
-        if (granted) ui.showToast('Уведомления включены!');
-        updateNotifBell();
+        if (granted) notif.showToast('Уведомления включены!');
+        notif.updateNotifBell();
     },
+
+    // Bet Slip
     openBetSlip: (id, teams, betType, coef, datetime, league) => {
-        currentBet = { id, teams, betType, coef, datetime, league };
-        betSlip.openBetSlip(currentBet, betType, coef);
+        const betData = { id, teams, betType, coef, datetime, league };
+        betSlip.openBetSlip(betData, betType, coef);
     },
-    copyBetSlipData: () => {
-        betSlip.copyBetSlipData(currentBet);
-    },
-    onSearchInput: () => renderMatches(window.__ALL_MATCHES__ || []),
-    refreshData: () => window.refreshData() // from api.js
+    closeBetSlip: betSlip.closeBetSlip,
+    calcPayout: betSlip.calcPayout,
+    copyBetSlipData: betSlip.copyBetSlipData,
+    toggleMyBets: betSlip.toggleMyBets,
+    checkMyBets: betSlip.checkMyBets,
+    copyWallet: (btn) => betSlip.copyWallet(btn),
+
+    // History
+    openHistory: historyUI.openHistory,
+    closeHistory: historyUI.closeHistory,
+    clearHistory: historyUI.clearHistory,
+
+    // Orchestrator
+    renderMatches: updateApp,
+    onSearchInput: updateApp,
+    refreshData: () => { if (window.loadData) window.loadData().then(updateApp); }
 });
 
 /**
- * Main Orchestrator
+ * Event Listeners
  */
-function renderMatches(allMatches) {
-    if (!allMatches) return;
-    window.__ALL_MATCHES__ = allMatches;
-    
-    // Check for finished matches in favorites
-    notif.checkFinishedFavorites(allMatches);
-
-    const state = {
-        sport: currentSportsFilter,
-        league: currentLeagueFilter,
-        search: document.getElementById('searchInput')?.value,
-        popularOnly: document.getElementById('popularOnly')?.checked
-    };
-
-    let filtered = filters.filterMatches(allMatches, state);
-    filtered = filters.sortMatches(filtered, currentSort);
-    
-    // Update UI components
-    filters.buildLeagueFilter(allMatches);
-    updateStats(filtered);
-    renderToDom(filtered);
-}
-
-function updateStats(matches) {
-    document.getElementById('totalMatches').textContent = matches.length;
-    document.getElementById('totalLeagues').textContent = new Set(matches.map(m => m.league)).size;
-}
-
-function renderToDom(matches) {
-    const container = document.getElementById('content');
-    if (!container) return;
-    
-    if (matches.length === 0) {
-        container.innerHTML = '<div class="section"><p style="text-align:center; color:var(--text-tertiary);">Матчи не найдены</p></div>';
-        return;
-    }
-
-    const favs = fav.getFavorites();
-    const html = matches.map(m => createMatchCard(m, favs)).join('');
-    container.innerHTML = `<div class="section">${html}</div>`;
-}
-
-function createMatchCard(m, favs) {
-    const isFav = favs.includes(m.id);
-    const t1 = ui.escapeHtml(m.team1 || '');
-    const t2 = ui.escapeHtml(m.team2 || '');
-    const countdown = ui.getCountdownText(m);
-    
-    return `
-        <div class="match-card ${isFav ? 'favorited' : ''}" id="match-${m.id}">
-            <div class="match-header">
-                <span class="match-id">#${m.id.slice(-6)}</span>
-                <div class="match-actions">
-                    <button onclick="shareMatch('${m.id}')">🔗</button>
-                    <button class="${isFav ? 'active' : ''}" onclick="toggleFavorite('${m.id}')">★</button>
-                </div>
-            </div>
-            <div class="match-time">${m.date || ''} ${m.time || ''} ${countdown ? `<span class="countdown">${countdown}</span>` : ''}</div>
-            <div class="match-teams">${t1} vs ${t2}</div>
-            <div class="odds-container">
-                <button onclick="openBetSlip('${m.id}', '${t1} vs ${t2}', 'П1', '${m.p1}', '${m.date} ${m.time}', '${m.league}')">П1: ${m.p1 || '—'}</button>
-                <button onclick="openBetSlip('${m.id}', '${t1} vs ${t2}', 'X', '${m.x}', '${m.date} ${m.time}', '${m.league}')">X: ${m.x || '—'}</button>
-                <button onclick="openBetSlip('${m.id}', '${t1} vs ${t2}', 'П2', '${m.p2}', '${m.date} ${m.time}', '${m.league}')">П2: ${m.p2 || '—'}</button>
-            </div>
-        </div>
-    `;
-}
-
-function updateNotifBell() {
-    const btn = document.getElementById('notifBtn');
-    if (!btn) return;
-    if (Notification.permission === 'granted') {
-        btn.textContent = '🔔';
-        btn.style.opacity = '1';
-    } else {
-        btn.textContent = '🔕';
-        btn.style.opacity = '0.5';
-    }
-}
-
-// Event Listeners for Filter orchestration
-function wireEvents() {
+function wireFilters() {
+    // Tabs
     document.querySelectorAll('.tab').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            currentSportsFilter = btn.dataset.sport;
-            renderMatches(window.__ALL_MATCHES__);
+            filters.setSportFilter(btn.dataset.sport);
+            updateApp();
         });
     });
 
+    // League select
     document.getElementById('gameFilter')?.addEventListener('change', e => {
-        currentLeagueFilter = e.target.value;
-        renderMatches(window.__ALL_MATCHES__);
+        filters.setGameFilter(e.target.value);
+        updateApp();
     });
 
+    // Sort buttons
     document.querySelectorAll('.sort-btn').forEach(btn => {
         btn.addEventListener('click', () => {
             document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
-            currentSort = btn.dataset.sort;
-            renderMatches(window.__ALL_MATCHES__);
+            filters.setSort(btn.dataset.sort);
+            updateApp();
         });
     });
 
-    window.addEventListener('betPlaced', e => {
-        history.saveBetToHistory(e.detail);
-        ui.showToast('✅ Ставка сохранена в историю');
-    });
+    // Popular only checkbox
+    document.getElementById('popularOnly')?.addEventListener('change', updateApp);
 }
 
-// Initialization
+/**
+ * Initialization
+ */
 window.addEventListener('load', () => {
-    ui.initScrollProgress();
-    ui.initTabsHint();
-    wireEvents();
-    updateNotifBell();
-    
-    // Initial data load (loadData comes from api.js)
+    utils.initScrollProgress();
+    utils.initTabsHint();
+    notif.updateNotifBell();
+    wireFilters();
+
+    // Custom event from modules
+    window.addEventListener('betPlaced', e => {
+        storage.saveBetToHistory(e.detail);
+        notif.showToast('✅ Ставка сохранена в историю');
+    });
+
+    // Initial load
     if (window.loadData) {
-        window.loadData().then(() => {
-            if (window.__ALL_MATCHES__) renderMatches(window.__ALL_MATCHES__);
-        });
+        window.loadData().then(updateApp);
     }
+    
+    // Auto-refresh (optional every 30s)
+    setInterval(() => {
+        if (window.loadData) window.loadData().then(updateApp);
+    }, 30000);
 });
 
-// Export renderMatches for api.js to call
-window.renderMatches = renderMatches;
+// Service Worker (if implemented)
+if ('serviceWorker' in navigator) {
+    // navigator.serviceWorker.register('/sw.js').catch(() => {});
+}

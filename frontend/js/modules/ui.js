@@ -1,90 +1,76 @@
-// UI Utilities for PrizmBet
-
 /**
- * Parses match date and time for sorting/display
+ * PrizmBet v2 - UI Module
  */
-export function parseMatchDateTime(match) {
-    if (!match.match_time) return new Date(0);
-    return new Date(match.match_time);
+import { escapeHtml, getCountdownText } from './utils.js';
+import { getFavorites } from './storage.js';
+import { getMatchGame } from './filters.js';
+
+export function updateStats(matches) {
+    const totalMatches = document.getElementById('totalMatches');
+    const totalLeagues = document.getElementById('totalLeagues');
+    if (totalMatches) totalMatches.textContent = matches.length;
+    if (totalLeagues) totalLeagues.textContent = new Set(matches.map(m => m.league)).size;
 }
 
-/**
- * Checks if a match is currently live (started < 2 hours ago)
- */
-export function isMatchLive(match) {
-    const start = parseMatchDateTime(match);
-    const now = new Date();
-    const diffHours = (now - start) / (1000 * 60 * 60);
-    return diffHours >= 0 && diffHours < 2;
+export function buildGameFilter(matches) {
+    const sel = document.getElementById('gameFilter');
+    if (!sel) return;
+    const set = new Set();
+    matches.forEach(m => set.add(getMatchGame(m)));
+    const leagues = Array.from(set).sort((a, b) => a.localeCompare(b, 'ru'));
+    const prev = sel.value || 'all';
+    sel.innerHTML = '<option value="all">Все лиги</option>' +
+        leagues.map(g => `<option value="${g}">${g}</option>`).join('');
+    if (leagues.includes(prev)) sel.value = prev;
 }
 
-/**
- * Returns countdown text for match start
- */
-export function getCountdownText(match) {
-    const start = parseMatchDateTime(match);
-    const now = new Date();
-    const diff = start - now;
-    if (diff <= 0) return isMatchLive(match) ? "LIVE" : "Завершен";
+export function createMatchCard(m, favs) {
+    const isFav = favs.includes(m.id);
+    const t1 = escapeHtml(m.team1 || m.home_team || '');
+    const t2 = escapeHtml(m.team2 || m.away_team || '');
+    const countdown = getCountdownText(m);
     
-    const minutes = Math.floor(diff / 60000);
-    if (minutes < 60) return `${minutes} м`;
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours} ч`;
-    return `${Math.floor(hours / 24)} д`;
+    // Normalize p1/x/p2 for card display
+    const p1 = m.p1 || m.odds_home || '—';
+    const x = m.x || m.odds_draw || '—';
+    const p2 = m.p2 || m.odds_away || '—';
+
+    return `
+        <div class="match-card ${isFav ? 'favorited' : ''}" id="match-${m.id}">
+            <div class="match-header">
+                <span class="match-id">#${m.id.slice(-6)}</span>
+                <div class="match-actions">
+                    <button onclick="shareMatch('${m.id}')">🔗</button>
+                    <button class="${isFav ? 'active' : ''}" onclick="toggleFavorite('${m.id}')">★</button>
+                </div>
+            </div>
+            <div class="match-time">${m.match_time ? new Date(m.match_time).toLocaleString('ru-RU', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'}) : ''} ${countdown ? `<span class="countdown">${countdown}</span>` : ''}</div>
+            <div class="match-teams">${t1} vs ${t2}</div>
+            <div class="odds-container">
+                <button onclick="openBetSlip('${m.id}', '${t1} vs ${t2}', 'П1', '${p1}', '${m.match_time}', '${m.league}')">П1: ${p1}</button>
+                <button onclick="openBetSlip('${m.id}', '${t1} vs ${t2}', 'X', '${x}', '${m.match_time}', '${m.league}')">X: ${x}</button>
+                <button onclick="openBetSlip('${m.id}', '${t1} vs ${t2}', 'П2', '${p2}', '${m.match_time}', '${m.league}')">П2: ${p2}</button>
+            </div>
+        </div>
+    `;
 }
 
-/**
- * Shows a toast notification
- */
-export function showToast(msg) {
-    const t = document.getElementById('betToast');
-    const m = document.getElementById('betToastMessage');
-    if (t && m) {
-        m.textContent = msg;
-        t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 3500);
+export function renderMatches(matches) {
+    const container = document.getElementById('content');
+    if (!container) return;
+    
+    if (matches.length === 0) {
+        container.innerHTML = '<div class="section"><p style="text-align:center; color:var(--text-tertiary);">Матчи не найдены</p></div>';
+        return;
     }
+
+    const favs = getFavorites();
+    const html = matches.map(m => createMatchCard(m, favs)).join('');
+    container.innerHTML = `<div class="section">${html}</div>`;
 }
 
-/**
- * Initializes scroll progress bar
- */
-export function initScrollProgress() {
-    window.addEventListener('scroll', () => {
-        const h = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-        const bar = document.getElementById('scrollProgress');
-        if (h > 0 && bar) {
-            bar.style.width = ((document.documentElement.scrollTop / h) * 100) + '%';
-        }
-    });
-}
-
-/**
- * Initializes mobile tabs swipe hint
- */
-export function initTabsHint() {
-    const tabs = document.getElementById('tabsRow');
-    const wrap = document.getElementById('tabsWrap');
-    if (!tabs || !wrap) return;
-
-    tabs.addEventListener('scroll', () => {
-        const atEnd = tabs.scrollLeft + tabs.clientWidth >= tabs.scrollWidth - 8;
-        wrap.classList.toggle('scrolled-end', atEnd);
-    }, { passive: true });
-}
-
-export function openImage(src) { window.open(src, '_blank'); }
-
-export function shareMatch(id) {
-    const url = `${window.location.origin}${window.location.pathname}#match-${id}`;
-    navigator.clipboard.writeText(url).then(() => {
-        showToast('Ссылка на матч скопирована!');
-        const el = document.getElementById('match-' + id);
-        if (el) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            el.classList.add('highlight-pulse');
-            setTimeout(() => el.classList.remove('highlight-pulse'), 1500);
-        }
-    });
+export function patchCardOdds(id, odds) {
+    const card = document.getElementById(`match-${id}`);
+    if (!card) return;
+    // Implementation for dynamic updates if needed
 }

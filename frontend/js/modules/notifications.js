@@ -1,5 +1,19 @@
-// Notification management for PrizmBet
-import { getFavDetails, saveFavDetails } from './favorites.js';
+/**
+ * PrizmBet v2 - Notifications Module
+ */
+import { getFavDetails, saveFavDetails } from './storage.js';
+
+export function updateNotifBell() {
+    const btn = document.getElementById('notifBtn');
+    if (!btn) return;
+    if (Notification.permission === 'granted') {
+        btn.textContent = '🔔';
+        btn.style.opacity = '1';
+    } else {
+        btn.textContent = '🔕';
+        btn.style.opacity = '0.5';
+    }
+}
 
 export async function requestNotificationPermission() {
     if (!("Notification" in window)) return false;
@@ -39,4 +53,14 @@ export function checkFinishedFavorites(allMatches) {
             saveFavDetails(details);
         }
     });
+}
+
+export function showToast(msg) {
+    const t = document.getElementById('betToast');
+    const m = document.getElementById('betToastMessage');
+    if (t && m) {
+        m.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3500);
+    }
 }

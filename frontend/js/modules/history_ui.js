@@ -1,20 +1,8 @@
-// History management for PrizmBet
-import { escapeHtml } from './ui.js';
-
-const HISTORY_KEY = 'prizmbet_history';
-
-export function getHistory() {
-    try {
-        return JSON.parse(localStorage.getItem(HISTORY_KEY)) || [];
-    } catch { return []; }
-}
-
-export function saveBetToHistory(betItem) {
-    const h = getHistory();
-    h.unshift(betItem);
-    if (h.length > 50) h.pop();
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(h));
-}
+/**
+ * PrizmBet v2 - History UI Module
+ */
+import { getHistory } from './storage.js';
+import { escapeHtml } from './utils.js';
 
 export function openHistory() {
     const modal = document.getElementById('historyModal');
@@ -55,7 +43,7 @@ export function closeHistory() {
 
 export function clearHistory() {
     if (confirm('Вы уверены, что хотите удалить локальную историю ставок?')) {
-        localStorage.removeItem(HISTORY_KEY);
+        localStorage.removeItem('prizmbet_history'); // Use literal or export constant
         openHistory();
     }
 }

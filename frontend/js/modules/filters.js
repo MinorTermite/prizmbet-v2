@@ -1,5 +1,11 @@
-// Filtering and Sorting logic for PrizmBet
-import { parseMatchDateTime } from './ui.js';
+/**
+ * PrizmBet v2 - Filters Module
+ */
+import { parseMatchDateTime } from './utils.js';
+
+export let currentSportFilter = 'football';
+export let currentGameFilter = 'all';
+export let currentSort = 'none';
 
 export const LEAGUE_PRIORITY = {
     'лига чемпионов уэфа': 1, 'champions league': 1, 'лч': 1,
@@ -10,14 +16,6 @@ export const LEAGUE_PRIORITY = {
     'кхл': 10, 'khl': 10, 'nhl': 11, 'нхл': 11,
     'nba': 20, 'нба': 20,
 };
-
-export function getLeaguePriority(match) {
-    const league = (match.league || "").toLowerCase();
-    for (const [key, priority] of Object.entries(LEAGUE_PRIORITY)) {
-        if (league.includes(key)) return priority;
-    }
-    return 999;
-}
 
 export function inferSport(match) {
     const t = ((match.league || '') + ' ' + (match.team1 || '') + ' ' + (match.team2 || '')).toLowerCase();
@@ -35,10 +33,9 @@ export function getMatchSport(match) {
     return (match.sport || '').toLowerCase() || inferSport(match);
 }
 
-export function getMatchLeagueGroup(m) {
+export function getMatchGame(m) {
     if (m.game) return String(m.game);
     const l = (m.league || '').toLowerCase();
-    // Simplified mapping for the module
     if (l.includes('лига чемпионов') || l.includes('champions league')) return 'ЛЧ УЕФА';
     if (l.includes('лига европы') || l.includes('europa league')) return 'ЛЕ УЕФА';
     if (l.includes('премьер-лига') && l.includes('англия')) return 'Англия. Премьер-лига';
@@ -60,37 +57,35 @@ export function isValidMatch(m) {
     return true;
 }
 
-export function buildLeagueFilter(matches) {
-    const sel = document.getElementById('gameFilter');
-    if (!sel) return;
-    const set = new Set();
-    matches.forEach(m => set.add(getMatchLeagueGroup(m)));
-    const leagues = Array.from(set).sort((a, b) => a.localeCompare(b, 'ru'));
-    const prev = sel.value || 'all';
-    sel.innerHTML = '<option value="all">Все лиги</option>' +
-        leagues.map(g => `<option value="${g}">${g}</option>`).join('');
-    if (leagues.includes(prev)) sel.value = prev;
+export function getFilterState() {
+    return {
+        sport: currentSportFilter,
+        league: currentGameFilter,
+        sort: currentSort,
+        search: document.getElementById('searchInput')?.value || '',
+        popularOnly: document.getElementById('popularOnly')?.checked || false
+    };
 }
 
-export function filterMatches(matches, { sport, league, search, popularOnly }) {
+export function filterMatches(matches, state) {
     return matches.filter(m => {
         if (!isValidMatch(m)) return false;
         
         // Sport filter
         const mSport = getMatchSport(m);
-        if (sport !== 'all' && sport !== 'favs' && sport !== 'results' && mSport !== sport) return false;
+        if (state.sport !== 'all' && state.sport !== 'favs' && state.sport !== 'results' && mSport !== state.sport) return false;
         
         // Results tab
-        if (sport === 'results' && !m.score) return false;
-        if (sport !== 'results' && m.score) return false;
+        if (state.sport === 'results' && !m.score) return false;
+        if (state.sport !== 'results' && m.score) return false;
 
         // League filter
-        const mLeague = getMatchLeagueGroup(m);
-        if (league !== 'all' && mLeague !== league) return false;
+        const mLeagueGroup = getMatchGame(m);
+        if (state.league !== 'all' && mLeagueGroup !== state.league) return false;
         
         // Search filter
-        if (search) {
-            const s = search.toLowerCase();
+        if (state.search) {
+            const s = state.search.toLowerCase();
             const content = `${m.home_team || m.team1} ${m.away_team || m.team2} ${m.league} ${m.id}`.toLowerCase();
             if (!content.includes(s)) return false;
         }
@@ -99,12 +94,20 @@ export function filterMatches(matches, { sport, league, search, popularOnly }) {
     });
 }
 
+export function getLeaguePriority(match) {
+    const league = (match.league || "").toLowerCase();
+    for (const [key, priority] of Object.entries(LEAGUE_PRIORITY)) {
+        if (league.includes(key)) return priority;
+    }
+    return 999;
+}
+
 export function sortMatches(matches, sortType) {
     const sorted = [...matches];
     if (sortType === 'time') {
         sorted.sort((a, b) => parseMatchDateTime(a) - parseMatchDateTime(b));
     } else if (sortType === 'odds') {
-        sorted.sort((a, b) => (a.odds_home || 0) - (b.odds_home || 0));
+        sorted.sort((a, b) => (parseFloat(a.odds_home || a.p1) || 0) - (parseFloat(b.odds_home || b.p1) || 0));
     } else if (sortType === 'league') {
         sorted.sort((a, b) => {
             const pa = getLeaguePriority(a);
@@ -115,3 +118,8 @@ export function sortMatches(matches, sortType) {
     }
     return sorted;
 }
+
+// State setters
+export function setSportFilter(val) { currentSportFilter = val; }
+export function setGameFilter(val) { currentGameFilter = val; }
+export function setSort(val) { currentSort = val; }

@@ -1,18 +1,31 @@
-// Bet Slip and Wallet logic for PrizmBet
-import { escapeHtml } from './ui.js';
+/**
+ * PrizmBet v2 - Bet Slip Module
+ */
 
-export function toggleMyBets() {
-    const modal = document.getElementById('myBetsModal');
-    if (modal) modal.classList.toggle('active');
+export let currentBet = null;
+
+export function setBet(data) {
+    currentBet = data;
 }
 
-export function copyWallet(btn) {
-    const address = "PRIZM-4N7T-L2A7-RQZA-5BETW";
-    navigator.clipboard.writeText(address).then(() => {
-        const originalText = btn.innerHTML;
-        btn.innerHTML = "✅ Скопировано!";
-        setTimeout(() => btn.innerHTML = originalText, 2000);
-    });
+export function closeBetSlip() {
+    const slip = document.getElementById('betSlip');
+    if (slip) slip.classList.remove('active');
+}
+
+export function openBetSlip(betData, betType, coef) {
+    const slip = document.getElementById('betSlip');
+    if (!slip) return;
+    
+    currentBet = betData;
+    
+    document.getElementById('bsMatch').textContent = betData.teams;
+    document.getElementById('bsMeta').textContent = `${betData.league} • #${betData.id}`;
+    document.getElementById('bsOutcome').textContent = betType;
+    document.getElementById('bsCoef').textContent = coef;
+    
+    slip.classList.add('active');
+    calcPayout();
 }
 
 export function calcPayout() {
@@ -26,17 +39,25 @@ export function calcPayout() {
     payout.textContent = (amount * c).toFixed(2);
 }
 
-export function openBetSlip(match, selection, odds) {
-    const slip = document.getElementById('betSlip');
-    if (!slip) return;
-    
-    document.getElementById('bsMatch').textContent = `${match.home_team} — ${match.away_team}`;
-    document.getElementById('bsMeta').textContent = `${match.league} • #${match.id}`;
-    document.getElementById('bsOutcome').textContent = selection;
-    document.getElementById('bsCoef').textContent = odds;
-    
-    slip.classList.add('active');
-    calcPayout();
+export function copyBetSlipData() {
+    if (!currentBet) return;
+    const amtInput = document.getElementById('bsInput');
+    const amt = amtInput ? amtInput.value.trim() : '0';
+    const matchLink = `${window.location.origin}${window.location.pathname}#match-${currentBet.id}`;
+    const msg = `${currentBet.teams}, ${currentBet.betType} @ ${currentBet.coef}\n${currentBet.datetime} ${matchLink}`;
+
+    navigator.clipboard.writeText(msg).then(() => {
+        closeBetSlip();
+        // Notify app for history saving
+        window.dispatchEvent(new CustomEvent('betPlaced', { 
+            detail: { ...currentBet, amount: amt, timestamp: Date.now() } 
+        }));
+    });
+}
+
+export function toggleMyBets() {
+    const modal = document.getElementById('myBetsModal');
+    if (modal) modal.classList.toggle('active');
 }
 
 export async function checkMyBets() {
@@ -48,7 +69,6 @@ export async function checkMyBets() {
     
     try {
         const r = await fetch('bets.json?t=' + Date.now());
-        if (!r.ok) throw new Error('Network error');
         const data = await r.json();
         const bets = Array.isArray(data) ? data : (data.bets || []);
         
@@ -88,16 +108,11 @@ export async function checkMyBets() {
     }
 }
 
-export function copyBetSlipData(currentBet) {
-    if (!currentBet) return;
-    const amt = document.getElementById('bsInput').value.trim() || '0';
-    const matchLink = `${window.location.origin}${window.location.pathname}#match-${currentBet.id}`;
-    const msg = `${currentBet.teams}, ${currentBet.betType} @ ${currentBet.coef}\n${currentBet.datetime} ${matchLink}`;
-
-    navigator.clipboard.writeText(msg).then(() => {
-        closeBetSlip();
-        // This would normally call a history module but we can't easily import it here circularly
-        // So we'll trigger a custom event or let app.js handle it
-        window.dispatchEvent(new CustomEvent('betPlaced', { detail: { ...currentBet, amount: amt, timestamp: Date.now() } }));
+export function copyWallet(btn) {
+    const address = "PRIZM-4N7T-L2A7-RQZA-5BETW";
+    navigator.clipboard.writeText(address).then(() => {
+        const originalText = btn.innerHTML;
+        btn.innerHTML = "✅ Скопировано!";
+        setTimeout(() => btn.innerHTML = originalText, 2000);
     });
 }
