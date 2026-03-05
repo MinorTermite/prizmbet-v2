@@ -75,9 +75,18 @@ export function filterMatches(matches, state) {
         const mSport = getMatchSport(m);
         if (state.sport !== 'all' && state.sport !== 'favs' && state.sport !== 'results' && mSport !== state.sport) return false;
         
+        const now = new Date();
+        const start = parseMatchDateTime(m);
+        const diffMs = now - start;
+        const isOld = diffMs > (3 * 60 * 60 * 1000); // 3 hours from start (~1h after end)
+
         // Results tab
-        if (state.sport === 'results' && !m.score) return false;
-        if (state.sport !== 'results' && m.score) return false;
+        if (state.sport === 'results') {
+            return !!m.score;
+        }
+        
+        // Main list
+        if (m.score && isOld) return false;
 
         // League filter
         const mLeagueGroup = getMatchGame(m);
@@ -107,10 +116,13 @@ export function sortMatches(matches, sortType) {
     const now = new Date();
     
     function isPast(m) {
-        if (m.score) return true;
         const start = parseMatchDateTime(m);
-        // If match started more than 4 hours ago, consider it past for sorting
-        return (now - start) > (4 * 60 * 60 * 1000);
+        const diffMs = now - start;
+        // Move to bottom if it has a score AND it's "old" (1h after completion)
+        // OR if it's just very old anyway
+        if (m.score && diffMs > (3 * 60 * 60 * 1000)) return true;
+        if (diffMs > (4 * 60 * 60 * 1000)) return true;
+        return false;
     }
 
     sorted.sort((a, b) => {
