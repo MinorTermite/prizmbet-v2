@@ -54,9 +54,9 @@ jobs:
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           PINNACLE_LOGIN: ${{ secrets.PINNACLE_LOGIN }}
           PINNACLE_PASSWORD: ${{ secrets.PINNACLE_PASSWORD }}
-          # Free proxy for 1xBet (Russian IP required)
-          PROXY_ENABLED: "false"
-          PROXY_URL: ""
+          # Proxy for 1xBet (Russian IP required)
+          PROXY_ENABLED: "true"
+          PROXY_URL: ${{ secrets.PROXY_URL }}
         run: python backend/api/generate_json.py
 
       - name: Enrich matches with real scores
