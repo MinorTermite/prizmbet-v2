@@ -519,18 +519,18 @@ echo $SUPABASE_URL
 
 ---
 
-## 📊 Статус парсеров (v2.2 — март 2026, оптимизация бесплатных лимитов)
+## 📊 Статус парсеров (v2.3 — март 2026, SOCKS5 прокси)
 
 | Парсер | Статус | Матчей | Примечание |
 |--------|--------|--------|------------|
-| **Leonbets** | ✅ | ~2500 | Основной источник (95% матчей) |
-| **ApiFootball** | ✅ | ~12 | Free plan, 7 лиг (вкл. РПЛ) |
-| **OddsAPI.io** | ⚠️ | 0 | Лимит исчерпан (429 Too Many Requests) |
-| **the-odds-api.com** | ⚠️ | 0 | 401 Unauthorized (нет ключа в Secrets) |
-| **1xBet** | ⚠️ | 0 | Гео-блок РФ (нужен прокси) |
+| **Leonbets** | ✅ | ~2540 | Основной источник (95% матчей) |
+| **ApiFootball** | ⚠️ | 0 | Rate limit исчерпан (429) |
+| **1xBet** | ⚠️ | 0 | Прокси не работает для 1xBet (IP не в РФ) |
+| **OddsAPI.io** | ⚠️ | 0 | Лимит исчерпан (429) |
+| **the-odds-api.com** | ⚠️ | 0 | 401 Unauthorized (нет ключа) |
 | **Pinnacle** | ❌ | 0 | 410 Gone (API недоступен) |
 
-**Итого:** ~2500 матчей (без прокси и ODDS_API_KEY)
+**Итого:** ~2540 матчей (Leonbets + завершённые счёты)
 
 ### 🎯 Оптимизация бесплатных лимитов (v2.2)
 
@@ -554,70 +554,31 @@ GitHub Actions:
   - При превышении лимитов: уменьшить до 2 раз
 ```
 
-### 🔧 Требуемые секреты (GitHub Secrets → Actions)
+### 🔧 Прокси (SOCKS5)
 
+**Конфигурация:**
 ```env
-# Критично для работы
-ODDS_API_KEY=sk_...              # the-odds-api.com → +60-100 матчей
-
-# Прокси для 1xBet (гео-блок РФ)
-# Формат SOCKS5: socks5://login:password@ip:port
-PROXY_URL=socks5://user:pass@45.81.77.14:8000
-
-# Опционально (кэш, уведомления)
-SUPABASE_URL=https://...         # PostgreSQL для истории
-SUPABASE_KEY=eyJ...
-UPSTASH_REDIS_URL=https://...    # Redis кэш
-UPSTASH_REDIS_TOKEN=...
-TELEGRAM_BOT_TOKEN=...           # Уведомления
-TELEGRAM_CHAT_ID=...
-PINNACLE_LOGIN=...               # ps3838 аккаунт (API недоступен)
-PINNACLE_PASSWORD=...
+PROXY_ENABLED=true
+PROXY_URL=socks5://LNbHRm:tHCxnE@45.81.77.14:8000
 ```
 
-### 🌐 Прокси для 1xBet (важно!)
+**Статус:**
+- ✅ Прокси работает (IP: 45.81.77.14)
+- ❌ 1xBet недоступен (IP не в России или заблокирован)
+- ✅ Leonbets работает без прокси
 
-**Статус на март 2026:**
-- Бесплатные прокси: ❌ Не работают (протестировано 3058 — 0 рабочих)
-- Платные прокси: ✅ Работают (SOCKS5 формат)
-
-**Формат прокси:**
-```
-# Правильно (SOCKS5):
-socks5://login:password@ip:port
-
-# Неправильно (HTTP):
-http://login:password@ip:port  # Не работает!
-```
-
-**Проверка прокси:**
+**Тестирование:**
 ```bash
-# Запустить тест
+# Проверка прокси
 python test_user_proxy.py
 
-# Если "SUCCESS! Proxy is working" — прокси рабочий
-# Если "FAILED" — прокси не работает
+# Проверка 1xBet через прокси
+python test_1xbet_proxy.py
 ```
 
-**Платные прокси (рекомендуется):**
-
-| Сервис | Цена | Страна | Ссылка |
-|--------|------|--------|--------|
-| Proxy6 | ~50₽/мес | Россия | https://proxy6.net/ |
-| Proxy-Sale | ~60₽/мес | Россия | https://proxy-sale.com/ |
-| Proxy-Seller | ~80₽/мес | Россия | https://proxy-seller.ru/ |
-
-**Как добавить:**
-1. Купите прокси с российским IP (SOCKS5)
-2. Получите данные: `IP:PORT`, `login`, `password`
-3. Протестируйте: `python test_user_proxy.py`
-4. Если работает — добавьте в GitHub Secrets:
-   ```
-   PROXY_URL = socks5://login:password@ip:port
-   ```
-5. Workflow автоматически подхватит прокси
-
-**Альтернатива:** Использовать только Leonbets (~2500 матчей без прокси)
+**Решение:**
+- Купить российский SOCKS5 прокси (proxy6.net, proxy-seller.ru)
+- Или использовать HTTP прокси с российским IP
 
 ### 📄 Документация
 
