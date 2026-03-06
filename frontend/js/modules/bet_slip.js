@@ -1,6 +1,7 @@
 /**
  * PrizmBet v2 - Bet Slip Module
  */
+import { showToast } from './notifications.js';
 
 export let currentBet = null;
 
@@ -39,20 +40,53 @@ export function calcPayout() {
     payout.textContent = (amount * c).toFixed(2);
 }
 
+function _copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        return navigator.clipboard.writeText(text).catch(() => {
+            _copyFallback(text);
+        });
+    }
+    _copyFallback(text);
+    return Promise.resolve();
+}
+
+function _copyFallback(text) {
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0';
+    document.body.appendChild(ta);
+    ta.focus();
+    ta.select();
+    try { document.execCommand('copy'); } catch (_) {}
+    document.body.removeChild(ta);
+}
+
 export function copyBetSlipData() {
     if (!currentBet) return;
     const amtInput = document.getElementById('bsInput');
     const amt = amtInput ? amtInput.value.trim() : '0';
-    
-    // Формат: "Команда 1 vs Команда 2, X @ 4.56   5 мар 12:15"
-    const msg = `${currentBet.teams}, ${currentBet.betType} @ ${currentBet.coef}   ${currentBet.datetime}`;
+    const matchLink = `${window.location.origin}${window.location.pathname}#match-${currentBet.id}`;
+    const amtPart = amt && amt !== '0' ? ` | ${amt} PZM` : '';
+    const msg = `${currentBet.teams}, ${currentBet.betType} @ ${currentBet.coef}${amtPart}\n${currentBet.datetime} ${matchLink}`;
 
-    navigator.clipboard.writeText(msg).then(() => {
-        closeBetSlip();
-        // Notify app for history saving
-        window.dispatchEvent(new CustomEvent('betPlaced', {
-            detail: { ...currentBet, amount: amt, timestamp: Date.now() }
-        }));
+    // Show feedback on button, then close
+    const btn = document.querySelector('#betSlip .bet-action-btn');
+    if (btn) {
+        const orig = btn.innerHTML;
+        btn.innerHTML = '✅ Скопировано!';
+        btn.disabled = true;
+        setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; }, 1200);
+    }
+
+    _copyText(msg).then(() => {
+        showToast('✅ Данные скопированы!');
+        setTimeout(() => {
+            closeBetSlip();
+            // Notify app for history saving
+            window.dispatchEvent(new CustomEvent('betPlaced', {
+                detail: { ...currentBet, amount: amt, timestamp: Date.now() }
+            }));
+        }, 900);
     });
 }
 
@@ -111,7 +145,7 @@ export async function checkMyBets() {
 
 export function copyWallet(btn) {
     const address = "PRIZM-4N7T-L2A7-RQZA-5BETW";
-    navigator.clipboard.writeText(address).then(() => {
+    _copyText(address).then(() => {
         const originalText = btn.innerHTML;
         btn.innerHTML = "✅ Скопировано!";
         setTimeout(() => btn.innerHTML = originalText, 2000);

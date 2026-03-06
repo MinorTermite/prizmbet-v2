@@ -119,7 +119,7 @@ export function createMatchCard(match, favorites) {
                 <button class="favorite-btn ${isFav?'active':''}" onclick="window.toggleFavorite('${eid}')" title="${isFav?'Убрать из избранного':'В избранное'}">★</button>
             </div>
         </div>
-        <div class="match-time">${dt}${countdown?`<span class="countdown">${countdown}</span>`:''}</div>
+        <div class="match-time">${dt}${countdown?`<span class="countdown${countdown==='LIVE'?' live-badge':''}">${countdown}</span>`:''}</div>
         <div class="match-teams">${t1} <span class="vs">—</span> ${t2}</div>
         <div class="odds-container">
             <div class="odds-section-title">Основные</div>
