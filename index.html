@@ -11,6 +11,9 @@
     <!-- Только нужные веса - быстрее загружается -->
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&family=JetBrains+Mono:wght@600&display=swap" rel="stylesheet">
 
+    <!-- OPTIMIZATION: Preload matches.json for instant fetch -->
+    <link rel="preload" href="matches.json" as="fetch" crossorigin="anonymous">
+
     <style>
         *, *::before, *::after {
             margin: 0;
@@ -201,19 +204,23 @@
             overflow: hidden;
             position: relative;
             z-index: 2;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 70%);
         }
 
-        .logo-video, .logo-fallback {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
+        .logo-fallback {
+            width: 75%;
+            height: 75%;
+            object-fit: contain;
             display: block;
+            animation: logoPulse 3s ease-in-out infinite;
         }
 
-        .logo-video {
-            position: absolute;
-            top: 0;
-            left: 0;
+        @keyframes logoPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.9; }
         }
 
         .brand-name {
@@ -1204,10 +1211,8 @@
             <div class="logo-wrapper">
                 <div class="logo-ring"></div>
                 <div class="logo-container">
-                    <video class="logo-video" autoplay loop muted playsinline preload="none">
-                        <source src="prizmbet-logo.mp4" type="video/mp4">
-                    </video>
-                    <img src="prizmbet-logo.gif" alt="PRIZMBET" class="logo-fallback" decoding="async">
+                    <!-- OPTIMIZATION: Removed video logo, using GIF only (saves ~500KB) -->
+                    <img src="prizmbet-logo.gif" alt="PRIZMBET" class="logo-fallback" loading="eager" fetchpriority="high">
                 </div>
             </div>
             <h1 class="brand-name">PRIZMBET</h1>
@@ -1840,9 +1845,12 @@
         document.addEventListener('visibilitychange', () => { if (!document.hidden) loadData(); });
         setInterval(() => { if (window.__ALL_MATCHES__) renderMatches(window.__ALL_MATCHES__); }, 60000);
 
-        window.addEventListener('load', () => {
+        // OPTIMIZATION: Use DOMContentLoaded instead of load for faster initial render
+        // load waits for all images/videos, DOMContentLoaded fires immediately after HTML parsed
+        document.addEventListener('DOMContentLoaded', () => {
+            // Start fetching matches immediately (don't wait for images)
             loadData().then(() => {
-                // После загрузки — проверяем якорь в URL
+                // After load — check URL hash
                 if (window.location.hash && window.location.hash.startsWith('#match-')) {
                     setTimeout(() => {
                         const el = document.querySelector(window.location.hash);

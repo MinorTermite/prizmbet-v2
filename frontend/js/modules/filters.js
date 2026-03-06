@@ -110,9 +110,10 @@ export function sortMatches(matches, sortType) {
         // Если есть счет — матч точно завершен
         if (m.score) return true;
         
-        // Если матч начался больше 3 часов назад — считаем завершенным
+        // Если матч начался больше 2 часов назад — считаем завершенным
+        // (для хоккея/баскетбола матчи длятся 2-3 часа)
         const start = parseMatchDateTime(m);
-        return (now - start) > (3 * 60 * 60 * 1000);
+        return (now - start) > (2 * 60 * 60 * 1000);
     }
 
     sorted.sort((a, b) => {
