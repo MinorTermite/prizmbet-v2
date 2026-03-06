@@ -66,8 +66,7 @@ export function copyBetSlipData() {
     const amtInput = document.getElementById('bsInput');
     const amt = amtInput ? amtInput.value.trim() : '0';
     const matchLink = `${window.location.origin}${window.location.pathname}#match-${currentBet.id}`;
-    const amtPart = amt && amt !== '0' ? ` | ${amt} PZM` : '';
-    const msg = `${currentBet.teams}, ${currentBet.betType} @ ${currentBet.coef}${amtPart}\n${currentBet.datetime} ${matchLink}`;
+    const msg = `${currentBet.teams}, ${currentBet.betType} @ ${currentBet.coef}\n${currentBet.datetime} ${matchLink}`;
 
     // Show feedback on button, then close
     const btn = document.querySelector('#betSlip .bet-action-btn');
