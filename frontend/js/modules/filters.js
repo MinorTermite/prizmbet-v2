@@ -107,8 +107,12 @@ export function sortMatches(matches, sortType) {
     const now = new Date();
 
     function isPast(m) {
-        // Если есть счет — матч точно завершен
-        if (m.score) return true;
+        // Если есть счет — проверяем дату (чтобы не перепутать с будущими матчами)
+        if (m.score) {
+            const matchDate = parseMatchDateTime(m);
+            // Если матч уже прошёл (больше 15 минут назад) — считаем завершенным
+            return (now - matchDate) > (15 * 60 * 1000);
+        }
         
         // Если матч начался больше 2 часов назад — считаем завершенным
         // (для хоккея/баскетбола матчи длятся 2-3 часа)

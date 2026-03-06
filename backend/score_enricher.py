@@ -220,11 +220,17 @@ async def main():
     for m in our_matches:
         if m.get("score"): continue  # Уже есть
         if (m.get("sport") or "football") != "football": continue # Только футбол пока
-        
+
         t1 = m.get("team1", "")
         t2 = m.get("team2", "")
         dt = _parse_match_date(m)
         
+        # OPTIMIZATION: Skip future matches — they can't have scores yet
+        if dt:
+            now = datetime.now(timezone.utc)
+            if dt > now:
+                continue  # Match is in the future, skip
+
         for candidate in api_map:
             # Сверяем по дате ±24 часа
             if dt:
