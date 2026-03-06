@@ -226,9 +226,12 @@ async def main():
         dt = _parse_match_date(m)
         
         for candidate in api_map:
-            # Сверяем по дате ±24 часа
+            # Только матчи в прошлом можно обогащать
+            if dt and dt > datetime.now(timezone.utc):
+                break
+            # Сверяем по дате ±3 часа
             if dt:
-                if abs((candidate["dt"] - dt).total_seconds()) > 86400:
+                if abs((candidate["dt"] - dt).total_seconds()) > 10800:
                     continue
             
             if _teams_match(t1, t2, candidate["t1"], candidate["t2"]):

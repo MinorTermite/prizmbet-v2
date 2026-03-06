@@ -52,7 +52,7 @@ async function _fetchJson(url) {
 
 // ===== MAIN LOAD =====
 async function loadData() {
-    // 1. Show today-only cache instantly (if available & fresh)
+    // 1. Show cached data instantly
     const cached = _getLS(LS_CACHE_KEY);
     if (cached?.matches?.length) {
         if (typeof renderMatches === 'function') renderMatches(cached.matches);
@@ -70,50 +70,12 @@ async function loadData() {
     if (todayData?.matches?.length) {
         _setLS(LS_CACHE_KEY, todayData);
         if (typeof renderMatches === 'function') renderMatches(todayData.matches);
-        // Show "total" from full dataset (stored in today_doc) if available
         if (todayData.total) {
             const el = document.getElementById('totalMatches');
             if (el) el.textContent = todayData.total;
         }
         showStatus(todayData.last_update, ' <span style="font-size:.75em;opacity:.6">(сегодня)</span>');
     }
-
-    // 3. Fetch full matches.json in background (all dates)
-    _loadFullInBackground(todayData?.last_update);
-}
-
-function _loadFullInBackground(knownTs) {
-    // Delay slightly so today's matches render first
-    setTimeout(async () => {
-        try {
-            // If we have a fresh full cache, use it and skip network
-            const fullCached = _getLS(LS_FULL_KEY);
-            if (fullCached?.matches?.length && !isDataStale(fullCached.last_update)) {
-                // Only update if it has more matches than what's shown
-                const shownCount = _getLS(LS_CACHE_KEY)?.matches?.length || 0;
-                if (fullCached.matches.length > shownCount) {
-                    _setLS(LS_CACHE_KEY, fullCached);
-                    if (typeof renderMatches === 'function') renderMatches(fullCached.matches);
-                    showStatus(fullCached.last_update);
-                }
-            }
-
-            const fullData = await _fetchJson(`matches.json?v=${cacheBust()}`);
-            if (!fullData?.matches?.length) return;
-
-            // Skip if same version as today data
-            if (knownTs && fullData.last_update === knownTs && fullData.total === fullData.matches.length) {
-                // today.json already had all matches (small dataset case)
-                _setLS(LS_FULL_KEY, fullData);
-                return;
-            }
-
-            _setLS(LS_FULL_KEY, fullData);
-            _setLS(LS_CACHE_KEY, fullData);
-            if (typeof renderMatches === 'function') renderMatches(fullData.matches);
-            showStatus(fullData.last_update);
-        } catch (e) { console.warn('[api] full fetch:', e.message); }
-    }, 400);
 }
 
 // ===== REFRESH (manual / auto) =====

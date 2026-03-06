@@ -239,10 +239,15 @@ export function renderMatches(matches) {
 
     const favs = getFavorites();
 
+    // Completed matches (with score) go to the bottom
+    const active = matches.filter(m => !m.score);
+    const completed = matches.filter(m => !!m.score);
+    const sorted = [...active, ...completed];
+
     // Group by league (preserve order)
     const matchesMap = {};
     const leagueOrder = [];
-    matches.forEach(m => {
+    sorted.forEach(m => {
         if (!matchesMap[m.league]) { matchesMap[m.league] = []; leagueOrder.push(m.league); }
         matchesMap[m.league].push(m);
     });
