@@ -98,7 +98,7 @@ export function createMatchCard(match, favorites) {
     
     function oddBtn(label, value) {
         const raw = value || '';
-        const unavail = !raw || raw === '—' || raw === '-' || raw === '0.00';
+        const unavail = !raw || raw === '—' || raw === '-' || raw === '0.00' || parseFloat(raw) < 1.01;
         const val = escapeHtml(unavail ? '—' : raw);
         const lg = escapeHtml(match.league || '');
         const lgJs = lg.replace(/'/g, "\\'");

@@ -37,6 +37,8 @@ def _calc_double_chance(odd_a, odd_b) -> str:
         b = float(odd_b) if odd_b else 0
         if a > 0 and b > 0:
             result = 1.0 / (1.0/a + 1.0/b)
+            if result < 1.01:
+                return "—"  # not offered when implied probability > 99%
             return f"{result:.2f}"
     except (TypeError, ValueError, ZeroDivisionError):
         pass
