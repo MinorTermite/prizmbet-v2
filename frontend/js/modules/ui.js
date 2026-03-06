@@ -101,8 +101,9 @@ export function createMatchCard(match, favorites) {
         const unavail = !raw || raw === '—' || raw === '-' || raw === '0.00';
         const val = escapeHtml(unavail ? '—' : raw);
         const lg = escapeHtml(match.league || '');
+        const lgJs = lg.replace(/'/g, "\\'");
         if (unavail) return `<div class="odd-item odd-item--na" data-bet="${label}"><div class="odd-label">${label}</div><div class="odd-value">${val}</div></div>`;
-        return `<div class="odd-item" data-bet="${label}" onclick="window.openBetSlip('${eid}','${teams.replace(/'/g,"\\'")   }','${label}','${val}','${dt}','${lg}')"><div class="odd-label">${label}</div><div class="odd-value">${val}</div></div>`;
+        return `<div class="odd-item" data-bet="${label}" onclick="if(navigator.vibrate)navigator.vibrate(20);window.openBetSlip('${eid}','${teams.replace(/'/g,"\\'")}','${label}','${val}','${dt}','${lgJs}')"><div class="odd-label">${label}</div><div class="odd-value">${val}</div></div>`;
     }
     
     const card = document.createElement('div');

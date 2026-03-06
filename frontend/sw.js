@@ -1,5 +1,5 @@
 // ── PrizmBet Service Worker ───────────────────────────────────────────────────
-const VERSION     = 'v22';
+const VERSION     = 'v23';
 const SHELL_CACHE = `prizmbet-shell-${VERSION}`;
 const DATA_CACHE  = 'prizmbet-data';   // вечный, обновляется по контенту
 
@@ -127,9 +127,10 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // App Shell и локальные ресурсы: Cache-First
+    // App Shell и локальные ресурсы: Stale-While-Revalidate
+    // (быстро отдаём из кэша, обновляем в фоне — новый код виден со следующего визита)
     if (isShellAsset(url)) {
-        event.respondWith(cacheFirst(request, SHELL_CACHE));
+        event.respondWith(staleWhileRevalidate(request, SHELL_CACHE));
         return;
     }
 

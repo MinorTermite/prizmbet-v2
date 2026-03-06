@@ -11,7 +11,7 @@ export function setBet(data) {
 
 export function closeBetSlip() {
     const slip = document.getElementById('betSlip');
-    if (slip) slip.classList.remove('active');
+    if (slip) slip.classList.remove('show');
 }
 
 export function openBetSlip(betData, betType, coef) {
@@ -25,8 +25,9 @@ export function openBetSlip(betData, betType, coef) {
     document.getElementById('bsOutcome').textContent = betType;
     document.getElementById('bsCoef').textContent = coef;
     
-    slip.classList.add('active');
+    slip.classList.add('show');
     calcPayout();
+    if (navigator.vibrate) navigator.vibrate(30);
 }
 
 export function calcPayout() {
@@ -66,7 +67,8 @@ export function copyBetSlipData() {
     const amtInput = document.getElementById('bsInput');
     const amt = amtInput ? amtInput.value.trim() : '0';
     const matchLink = `${window.location.origin}${window.location.pathname}#match-${currentBet.id}`;
-    const msg = `${currentBet.teams}, ${currentBet.betType} @ ${currentBet.coef}\n${currentBet.datetime} ${matchLink}`;
+    const amtPart = amt && amt !== '0' ? ` | ${amt} PZM` : '';
+    const msg = `${currentBet.teams}, ${currentBet.betType} @ ${currentBet.coef}${amtPart}\n${currentBet.datetime} ${matchLink}`;
 
     // Show feedback on button, then close
     const btn = document.querySelector('#betSlip .bet-action-btn');
@@ -91,7 +93,7 @@ export function copyBetSlipData() {
 
 export function toggleMyBets() {
     const modal = document.getElementById('myBetsModal');
-    if (modal) modal.classList.toggle('active');
+    if (modal) modal.classList.toggle('show');
 }
 
 export async function checkMyBets() {

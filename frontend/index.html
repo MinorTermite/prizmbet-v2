@@ -289,6 +289,14 @@
     <script src="tests.js" defer></script>
 
     <script src="js/app.js" type="module"></script>
+    <script>
+        // Micro-vibration on all interactive buttons and tabs
+        document.addEventListener('click', e => {
+            if (navigator.vibrate && e.target.closest('.tab,.sort-btn,.date-btn,.btn,.share-btn,.favorite-btn')) {
+                navigator.vibrate(15);
+            }
+        }, { passive: true });
+    </script>
 </body>
 
 </html>
