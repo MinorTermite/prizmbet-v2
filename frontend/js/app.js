@@ -155,7 +155,21 @@ window.addEventListener('load', () => {
     }
 });
 
-// Service Worker (if implemented)
+// Service Worker
 if ('serviceWorker' in navigator) {
-    // navigator.serviceWorker.register('/sw.js').catch(() => {});
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js', { scope: './' })
+            .then(reg => {
+                // Если есть новая версия SW — обновляем тихо
+                reg.addEventListener('updatefound', () => {
+                    reg.installing?.addEventListener('statechange', e => {
+                        if (e.target.state === 'installed' && navigator.serviceWorker.controller) {
+                            // Новый SW готов — уведомим пользователя при желании
+                            console.log('[SW] Новая версия готова');
+                        }
+                    });
+                });
+            })
+            .catch(err => console.warn('[SW] Регистрация не удалась:', err));
+    });
 }

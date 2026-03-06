@@ -1,55 +1,138 @@
-const CACHE_NAME = 'prizmbet-v13';
-const ASSETS = [
+// ── PrizmBet Service Worker ───────────────────────────────────────────────────
+const VERSION     = 'v20';
+const SHELL_CACHE = `prizmbet-shell-${VERSION}`;
+const DATA_CACHE  = 'prizmbet-data';   // вечный, обновляется по контенту
+
+// Статика, которую кэшируем при install (App Shell)
+const SHELL_ASSETS = [
     './',
     './index.html',
-    './live_index.html',
     './manifest.json',
-    './prizmbet-logo.webp'
+    './api.js',
+    './tests.js',
+    './js/app.js',
+    './js/modules/bet_slip.js',
+    './js/modules/filters.js',
+    './js/modules/history_ui.js',
+    './js/modules/notifications.js',
+    './js/modules/storage.js',
+    './js/modules/ui.js',
+    './js/modules/utils.js',
+    './css/base.min.css',
+    './prizmbet-logo.webp',
+    './qr_wallet.webp',
+    './prizmbet-info-1.webp',
+    './prizmbet-info-2.webp',
 ];
 
-self.addEventListener('install', (event) => {
+// ── INSTALL: предзагрузка Shell ───────────────────────────────────────────────
+self.addEventListener('install', event => {
     self.skipWaiting();
     event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(ASSETS).catch(err => {
-                console.warn('SW Install - some assets failed to cache:', err);
-            });
-        })
+        caches.open(SHELL_CACHE).then(cache =>
+            cache.addAll(SHELL_ASSETS).catch(err =>
+                console.warn('[SW] Install - некоторые ресурсы не закэшированы:', err)
+            )
+        )
     );
 });
 
-self.addEventListener('activate', (event) => {
-    event.waitUntil(clients.claim());
+// ── ACTIVATE: удаляем старые кэши ────────────────────────────────────────────
+self.addEventListener('activate', event => {
     event.waitUntil(
-        caches.keys().then((keys) => {
-            return Promise.all(
-                keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-            );
-        })
+        caches.keys().then(keys =>
+            Promise.all(
+                keys
+                    .filter(k => k !== SHELL_CACHE && k !== DATA_CACHE)
+                    .map(k => caches.delete(k))
+            )
+        ).then(() => clients.claim())
     );
 });
 
-self.addEventListener('fetch', (event) => {
-    // Не кешируем matches.json (он должен быть всегда свежим), но можем отдавать fallback
-    if (event.request.url.includes('matches.json')) {
-        event.respondWith(
-            fetch(event.request).catch(() => caches.match(event.request))
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function isDataRequest(url) {
+    return url.includes('matches.json') || url.includes('matches-today.json');
+}
+
+function isShellAsset(url) {
+    // Google Fonts и внешние ресурсы — пусть браузер кэширует сам
+    return url.startsWith(self.location.origin) && !isDataRequest(url);
+}
+
+// Stale-While-Revalidate: сразу отдаём кэш, обновляем в фоне
+function staleWhileRevalidate(request, cacheName) {
+    const cachePromise = caches.open(cacheName);
+    return cachePromise.then(cache =>
+        cache.match(request).then(cached => {
+            const networkFetch = fetch(request).then(response => {
+                if (response && response.status === 200) {
+                    cache.put(request, response.clone());
+                }
+                return response;
+            }).catch(() => cached);
+
+            return cached || networkFetch;
+        })
+    );
+}
+
+// Network-First с таймаутом, fallback — кэш
+function networkFirst(request, cacheName, timeoutMs = 4000) {
+    return caches.open(cacheName).then(cache => {
+        const networkPromise = new Promise((resolve, reject) => {
+            const timer = setTimeout(() => reject(new Error('timeout')), timeoutMs);
+            fetch(request).then(response => {
+                clearTimeout(timer);
+                if (response && response.status === 200) {
+                    cache.put(request, response.clone());
+                }
+                resolve(response);
+            }).catch(err => { clearTimeout(timer); reject(err); });
+        });
+
+        return networkPromise.catch(() =>
+            cache.match(request).then(cached => cached || caches.match('./index.html'))
         );
+    });
+}
+
+// Cache-First: быстрая отдача статики, сеть — только если нет в кэше
+function cacheFirst(request, cacheName) {
+    return caches.open(cacheName).then(cache =>
+        cache.match(request).then(cached => {
+            if (cached) return cached;
+            return fetch(request).then(response => {
+                if (response && response.status === 200 && response.type === 'basic') {
+                    cache.put(request, response.clone());
+                }
+                return response;
+            }).catch(() => caches.match('./index.html'));
+        })
+    );
+}
+
+// ── FETCH ─────────────────────────────────────────────────────────────────────
+self.addEventListener('fetch', event => {
+    const { request } = event;
+    const url = request.url;
+
+    // Только GET
+    if (request.method !== 'GET') return;
+
+    // Данные (matches.json, matches-today.json): Stale-While-Revalidate
+    // Пользователь сразу видит прошлые данные, свежие приходят в фоне
+    if (isDataRequest(url)) {
+        event.respondWith(staleWhileRevalidate(request, DATA_CACHE));
         return;
     }
 
-    event.respondWith(
-        caches.match(event.request).then((cached) => {
-            return cached || fetch(event.request).then((response) => {
-                // Если хотим динамически кешировать:
-                // if (response && response.status === 200 && response.type === 'basic') {
-                //     const responseClone = response.clone();
-                //     caches.open(CACHE_NAME).then((cache) => cache.put(event.request, responseClone));
-                // }
-                return response;
-            });
-        }).catch(() => {
-            return caches.match('./index.html');
-        })
-    );
+    // App Shell и локальные ресурсы: Cache-First
+    if (isShellAsset(url)) {
+        event.respondWith(cacheFirst(request, SHELL_CACHE));
+        return;
+    }
+
+    // Всё остальное (Google Fonts, внешние CDN): сеть, без кэша
+    // (браузер сам их кэширует по Cache-Control заголовкам)
 });
