@@ -120,12 +120,22 @@ function wireFilters() {
         updateApp();
     });
 
-    // Sort buttons
-    document.querySelectorAll('.sort-btn').forEach(btn => {
+    // Sort buttons (only .sort-only, not date buttons)
+    document.querySelectorAll('.sort-only').forEach(btn => {
         btn.addEventListener('click', () => {
-            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.sort-only').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             filters.setSort(btn.dataset.sort);
+            updateApp();
+        });
+    });
+
+    // Date filter buttons
+    document.querySelectorAll('.date-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            filters.setDateFilter(btn.dataset.date);
             updateApp();
         });
     });

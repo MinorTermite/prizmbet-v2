@@ -1,8 +1,6 @@
 // ===== КОНФИГУРАЦИЯ =====
 const AUTO_REFRESH_MS = 5 * 60 * 1000;
-const DATA_STALE_HOURS = 48;
 const LS_CACHE_KEY = 'prizmbet_matches_cache';
-const LS_FULL_KEY  = 'prizmbet_matches_full_cache';
 
 // ===== CACHE HELPERS =====
 function _getLS(key) {
@@ -11,12 +9,6 @@ function _getLS(key) {
 }
 function _setLS(key, data) {
     try { localStorage.setItem(key, JSON.stringify(data)); } catch { }
-}
-
-function isDataStale(ts) {
-    if (!ts) return true;
-    const d = new Date(ts);
-    return isNaN(d.getTime()) || (Date.now() - d.getTime()) > DATA_STALE_HOURS * 3600000;
 }
 
 function fmtTime(ts) {

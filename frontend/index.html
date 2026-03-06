@@ -149,13 +149,20 @@
                 </label>
             </div>
             <div class="sort-controls"
-                style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center;">
+                style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px;">
+                <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <span class="sort-label">Дата:</span>
+                    <button class="sort-btn date-btn active" data-date="all">Все</button>
+                    <button class="sort-btn date-btn" data-date="today">Сегодня</button>
+                    <button class="sort-btn date-btn" data-date="tomorrow">Завтра</button>
+                    <button class="sort-btn date-btn" data-date="later">Далее</button>
+                </div>
                 <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                     <span class="sort-label">Сортировка:</span>
-                    <button class="sort-btn active" data-sort="none">По умолч.</button>
-                    <button class="sort-btn" data-sort="time">По времени</button>
-                    <button class="sort-btn" data-sort="odds">По коэф.</button>
-                    <button class="sort-btn" data-sort="league">По лигам</button>
+                    <button class="sort-btn sort-only active" data-sort="none">По умолч.</button>
+                    <button class="sort-btn sort-only" data-sort="time">По времени</button>
+                    <button class="sort-btn sort-only" data-sort="odds">По коэф.</button>
+                    <button class="sort-btn sort-only" data-sort="league">По лигам</button>
                 </div>
                 <div id="lastUpdate" class="update-info" style="margin: 0; display: inline-block;">
                     <span class="loading"></span> Загрузка...
