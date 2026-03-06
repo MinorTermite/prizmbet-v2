@@ -43,14 +43,15 @@ export function copyBetSlipData() {
     if (!currentBet) return;
     const amtInput = document.getElementById('bsInput');
     const amt = amtInput ? amtInput.value.trim() : '0';
-    const matchLink = `${window.location.origin}${window.location.pathname}#match-${currentBet.id}`;
-    const msg = `${currentBet.teams}, ${currentBet.betType} @ ${currentBet.coef}\n${currentBet.datetime} ${matchLink}`;
+    
+    // Формат: "Команда 1 vs Команда 2, X @ 4.56   5 мар 12:15"
+    const msg = `${currentBet.teams}, ${currentBet.betType} @ ${currentBet.coef}   ${currentBet.datetime}`;
 
     navigator.clipboard.writeText(msg).then(() => {
         closeBetSlip();
         // Notify app for history saving
-        window.dispatchEvent(new CustomEvent('betPlaced', { 
-            detail: { ...currentBet, amount: amt, timestamp: Date.now() } 
+        window.dispatchEvent(new CustomEvent('betPlaced', {
+            detail: { ...currentBet, amount: amt, timestamp: Date.now() }
         }));
     });
 }

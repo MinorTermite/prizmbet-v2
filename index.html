@@ -1817,8 +1817,8 @@
         }
 
         function copyBet(id, teams, betType, coef, datetime, league) {
-            const matchLink = `${window.location.origin}${window.location.pathname}#match-${id}`;
-            const msg = `${teams}, ${betType} @ ${coef}\n${datetime}\n${matchLink}`;
+            // Формат: "Команда 1 vs Команда 2, X @ 4.56   5 мар 12:15"
+            const msg = `${teams}, ${betType} @ ${coef}   ${datetime}`;
             
             // Try modern Clipboard API first
             if (navigator.clipboard && navigator.clipboard.writeText) {

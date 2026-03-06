@@ -91,7 +91,7 @@ export function createMatchCard(match, favorites) {
     }
 
     // Активный матч
-    const dateStr = match.date || (match.match_time ? new Date(match.match_time).toLocaleDateString('ru-RU') : 'Сегодня');
+    const dateStr = match.date || (match.match_time ? new Date(match.match_time).toLocaleDateString('ru-RU', {day: 'numeric', month: 'short'}) : 'Сегодня');
     const timeStr = match.time || (match.match_time ? new Date(match.match_time).toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'}) : '');
     const dt = escapeHtml(`${dateStr} ${timeStr}`);
     
