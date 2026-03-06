@@ -212,7 +212,36 @@ def _write_json(matches: List[Dict[str, Any]]) -> int:
         json.dump(final_doc, f, ensure_ascii=False, indent=2)
 
     print(f"[generate_json] Wrote {len(matches)} matches -> {out}")
+
+    # Write matches-today.json — only today + tomorrow (fast first load on frontend)
+    now_msk = datetime.now(tz=timezone(timedelta(hours=3)))
+    today_day = now_msk.day
+    tomorrow_day = (now_msk + timedelta(days=1)).day
+    today_matches = [
+        m for m in matches
+        if _match_day(m) in (today_day, tomorrow_day)
+    ]
+    today_doc = {
+        "last_update": final_doc["last_update"],
+        "source": "multi-parser",
+        "total": len(matches),          # keep full total for stats display
+        "today_total": len(today_matches),
+        "matches": today_matches
+    }
+    today_out = out.replace("matches.json", "matches-today.json")
+    with open(today_out, "w", encoding="utf-8") as f:
+        json.dump(today_doc, f, ensure_ascii=False, indent=2)
+    print(f"[generate_json] Wrote {len(today_matches)} today/tomorrow matches -> {today_out}")
+
     return len(matches)
+
+
+def _match_day(match: Dict[str, Any]) -> int:
+    """Extract numeric day from match 'date' field (e.g. '6 мар' → 6)."""
+    try:
+        return int((match.get("date") or "").split()[0])
+    except (ValueError, IndexError):
+        return -1
 
 
 async def collect_all_matches() -> List[Dict[str, Any]]:
