@@ -1,5 +1,5 @@
 // ── PrizmBet Service Worker ───────────────────────────────────────────────────
-const VERSION     = 'v23';
+const VERSION     = 'v24';
 const SHELL_CACHE = `prizmbet-shell-${VERSION}`;
 const DATA_CACHE  = 'prizmbet-data';   // вечный, обновляется по контенту
 
@@ -23,6 +23,8 @@ const SHELL_ASSETS = [
     './qr_wallet.webp',
     './prizmbet-info-1.webp',
     './prizmbet-info-2.webp',
+    './icon-192x192.png',
+    './icon-512x512.png',
 ];
 
 // ── INSTALL: предзагрузка Shell ───────────────────────────────────────────────

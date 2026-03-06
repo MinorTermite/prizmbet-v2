@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark theme matching the site (#06060e background) -->
+    <style name="Theme.Prizmbet" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">#06060e</item>
+        <item name="android:statusBarColor">#06060e</item>
+        <item name="android:navigationBarColor">#06060e</item>
+        <item name="colorPrimary">#6366f1</item>
+        <item name="colorPrimaryDark">#06060e</item>
+        <item name="colorAccent">#818cf8</item>
+    </style>
+</resources>
