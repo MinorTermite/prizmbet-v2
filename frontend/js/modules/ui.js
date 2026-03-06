@@ -249,24 +249,26 @@ export function renderMatches(matches) {
         matchesMap[m.league].push(m);
     });
 
-    // Clear container, render first chunk immediately
     container.innerHTML = '';
-    _renderLeagueChunk(container, leagueOrder, matchesMap, favs);
 
-    // After render: scroll to hash anchor if present (e.g. shared link #match-xxx)
-    // Retry up to 5 times (300ms apart) to handle lazy-loaded league chunks
+    // If navigating via shared hash link — render ALL leagues immediately so the element exists
     const hash = window.location.hash;
-    if (hash && hash.startsWith('#match-')) {
-        const matchId = hash.slice(1);
-        let attempts = 0;
-        const tryScroll = () => {
-            const el = document.getElementById(matchId);
-            if (el) {
-                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            } else if (attempts++ < 5) {
-                setTimeout(tryScroll, 300);
-            }
-        };
-        requestAnimationFrame(tryScroll);
+    const anchorId = (hash && hash.startsWith('#match-')) ? hash.slice(1) : null;
+
+    if (anchorId) {
+        // Skip lazy-loading: render every league now so anchor element is in DOM
+        leagueOrder.forEach(league => {
+            const section = document.createElement('div');
+            section.className = 'section';
+            section.innerHTML = `<h2 class="section-title">${escapeHtml(league)}</h2>`;
+            (matchesMap[league] || []).forEach(m => section.appendChild(createMatchCard(m, favs)));
+            container.appendChild(section);
+        });
+        requestAnimationFrame(() => {
+            const el = document.getElementById(anchorId);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    } else {
+        _renderLeagueChunk(container, leagueOrder, matchesMap, favs);
     }
 }
