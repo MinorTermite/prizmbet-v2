@@ -68,7 +68,7 @@ jobs:
         run: |
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add frontend/matches.json
+          git add frontend/matches.json frontend/matches-today.json
           git commit -m "chore(data): scheduled match & scores update $(date +'%Y-%m-%d %H:%M UTC')" || echo "No changes to commit"
           git push || echo "Nothing to push"
 

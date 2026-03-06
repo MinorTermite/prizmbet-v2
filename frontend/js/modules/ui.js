@@ -187,94 +187,72 @@ export function patchCardOdds(card, match, favorites) {
     });
 }
 
+// ── Pagination state ──────────────────────────────────────────────────────────
+const LEAGUES_PER_PAGE = 6;   // leagues rendered per IntersectionObserver tick
+let _ioObserver = null;        // active IntersectionObserver
+
+function _renderLeagueChunk(container, pendingLeagues, matchesMap, favs) {
+    const chunk = pendingLeagues.splice(0, LEAGUES_PER_PAGE);
+    chunk.forEach(league => {
+        const section = document.createElement('div');
+        section.className = 'section';
+        section.innerHTML = `<h2 class="section-title">${escapeHtml(league)}</h2>`;
+        (matchesMap[league] || []).forEach(m => section.appendChild(createMatchCard(m, favs)));
+        container.appendChild(section);
+    });
+
+    if (pendingLeagues.length > 0) {
+        _attachSentinel(container, pendingLeagues, matchesMap);
+    }
+}
+
+function _attachSentinel(container, pendingLeagues, matchesMap) {
+    if (_ioObserver) { _ioObserver.disconnect(); _ioObserver = null; }
+
+    const sentinel = document.createElement('div');
+    sentinel.id = 'load-more-sentinel';
+    sentinel.style.cssText = 'height:1px;width:100%;pointer-events:none;';
+    container.appendChild(sentinel);
+
+    _ioObserver = new IntersectionObserver(entries => {
+        if (!entries[0].isIntersecting) return;
+        _ioObserver.disconnect();
+        _ioObserver = null;
+        sentinel.remove();
+        _renderLeagueChunk(container, pendingLeagues, matchesMap, getFavorites());
+    }, { rootMargin: '400px' });
+
+    _ioObserver.observe(sentinel);
+}
+
 export function renderMatches(matches) {
     const container = document.getElementById('content');
     if (!container) return;
-    
+
+    // Disconnect any pending observer from the previous render
+    if (_ioObserver) { _ioObserver.disconnect(); _ioObserver = null; }
+
     if (matches.length === 0) {
         container.innerHTML = '<div class="section"><p style="text-align:center; color:var(--text-tertiary);">Матчи не найдены</p></div>';
         return;
     }
 
-    const scrollY = window.scrollY || window.pageYOffset || 0;
     const favs = getFavorites();
-    
-    // Группировка по лигам
-    const leagues = {};
+
+    // Completed matches (with score) go to the bottom
+    const active = matches.filter(m => !m.score);
+    const completed = matches.filter(m => !!m.score);
+    const sorted = [...active, ...completed];
+
+    // Group by league (preserve order)
+    const matchesMap = {};
     const leagueOrder = [];
-    matches.forEach(m => {
-        if (!leagues[m.league]) {
-            leagues[m.league] = [];
-            leagueOrder.push(m.league);
-        }
-        leagues[m.league].push(m);
+    sorted.forEach(m => {
+        if (!matchesMap[m.league]) { matchesMap[m.league] = []; leagueOrder.push(m.league); }
+        matchesMap[m.league].push(m);
     });
 
-    // Очистка старого контента
-    container.querySelectorAll(':scope > :not(.section)').forEach(el => el.remove());
-
-    const existingCards = {};
-    container.querySelectorAll('.match-card[id], .match-result-card[id]').forEach(c => {
-        existingCards[c.id.replace('match-', '')] = c;
-    });
-
-    const existingSections = {};
-    container.querySelectorAll('.section').forEach(sec => {
-        const h2 = sec.querySelector('.section-title');
-        if (h2) existingSections[h2.textContent] = sec;
-    });
-
-    const newIds = new Set(matches.map(m => m.id));
-
-    // Удаляем пропавшие карточки
-    Object.keys(existingCards).forEach(mid => {
-        if (!newIds.has(mid)) { existingCards[mid].remove(); delete existingCards[mid]; }
-    });
-
-    let sectionIndex = 0;
-    for (const league of leagueOrder) {
-        const leagueMatches = leagues[league];
-        let section = existingSections[league];
-        
-        if (!section) {
-            section = document.createElement('div');
-            section.className = 'section';
-            section.style.animationDelay = `${sectionIndex * 0.05}s`;
-            section.innerHTML = `<h2 class="section-title">${escapeHtml(league)}</h2>`;
-        }
-        
-        container.appendChild(section);
-        
-        leagueMatches.forEach(match => {
-            const existingCard = existingCards[match.id];
-            if (existingCard) {
-                const isResultNow = existingCard.classList.contains('match-result-card');
-                const shouldBeResult = !!match.score;
-                
-                if (isResultNow !== shouldBeResult) {
-                    const newCard = createMatchCard(match, favs);
-                    existingCard.replaceWith(newCard);
-                    section.appendChild(newCard);
-                    existingCards[match.id] = newCard;
-                } else {
-                    if (!shouldBeResult) {
-                        patchCardOdds(existingCard, match, favs);
-                    }
-                    section.appendChild(existingCard);
-                }
-            } else {
-                section.appendChild(createMatchCard(match, favs));
-            }
-        });
-        sectionIndex++;
-    }
-
-    // Удаляем пустые секции
-    container.querySelectorAll('.section').forEach(sec => {
-        if (sec.querySelectorAll('.match-card, .match-result-card').length === 0) sec.remove();
-    });
-
-    if (scrollY > 0) {
-        requestAnimationFrame(() => { window.scrollTo(0, scrollY); });
-    }
+    // Clear container, render first chunk immediately
+    container.innerHTML = '';
+    _renderLeagueChunk(container, leagueOrder, matchesMap, favs);
 }

@@ -2,10 +2,12 @@
  * PrizmBet v2 - Filters Module
  */
 import { parseMatchDateTime } from './utils.js';
+import { getFavorites } from './storage.js';
 
 export let currentSportFilter = 'football';
 export let currentGameFilter = 'all';
 export let currentSort = 'none';
+export let currentDateFilter = 'all'; // 'all' | 'today' | 'tomorrow' | 'later'
 
 export const LEAGUE_PRIORITY = {
     'лига чемпионов уэфа': 1, 'champions league': 1, 'лч': 1,
@@ -62,34 +64,69 @@ export function getFilterState() {
         sport: currentSportFilter,
         league: currentGameFilter,
         sort: currentSort,
+        date: currentDateFilter,
         search: document.getElementById('searchInput')?.value || '',
         popularOnly: document.getElementById('popularOnly')?.checked || false
     };
 }
 
 export function filterMatches(matches, state) {
+    const now = new Date();
+    // Date boundaries (local midnight)
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayEnd   = new Date(todayStart.getTime() + 86400000);
+    const tomorrowEnd = new Date(todayEnd.getTime() + 86400000);
+
+    const favIds = state.sport === 'favs' ? getFavorites() : null;
+
     return matches.filter(m => {
         if (!isValidMatch(m)) return false;
-        
+
+        // Favorites tab
+        if (favIds !== null) {
+            return favIds.includes(m.id);
+        }
+
         // Sport filter
         const mSport = getMatchSport(m);
-        if (state.sport !== 'all' && state.sport !== 'favs' && state.sport !== 'results' && mSport !== state.sport) return false;
-        
-        // Results tab
-        if (state.sport === 'results' && !m.score) return false;
-        if (state.sport !== 'results' && m.score) return false;
+        if (state.sport !== 'all' && state.sport !== 'results' && mSport !== state.sport) return false;
+
+        const start = parseMatchDateTime(m);
+        const diffMs = now - start;
+        const isOld = diffMs > (3 * 60 * 60 * 1000);
+
+        // Results tab — show only scored matches, skip remaining filters
+        if (state.sport === 'results') return !!m.score;
+
+        // Hide completed+old from main list
+        if (m.score && isOld) return false;
+
+        // Date filter
+        if (state.date !== 'all') {
+            const t = start.getTime();
+            if (state.date === 'today'    && (t < todayStart.getTime() || t >= todayEnd.getTime()))   return false;
+            if (state.date === 'tomorrow' && (t < todayEnd.getTime()   || t >= tomorrowEnd.getTime())) return false;
+            if (state.date === 'later'    &&  t < tomorrowEnd.getTime())                               return false;
+        }
 
         // League filter
         const mLeagueGroup = getMatchGame(m);
         if (state.league !== 'all' && mLeagueGroup !== state.league) return false;
-        
+
+        // Popular only — require both p1 and p2 odds to be set and > 1
+        if (state.popularOnly) {
+            const p1 = parseFloat(m.p1 || m.odds_home);
+            const p2 = parseFloat(m.p2 || m.odds_away);
+            if (!p1 || !p2 || p1 <= 1 || p2 <= 1) return false;
+        }
+
         // Search filter
         if (state.search) {
             const s = state.search.toLowerCase();
             const content = `${m.home_team || m.team1} ${m.away_team || m.team2} ${m.league} ${m.id}`.toLowerCase();
             if (!content.includes(s)) return false;
         }
-        
+
         return true;
     });
 }
@@ -105,29 +142,24 @@ export function getLeaguePriority(match) {
 export function sortMatches(matches, sortType) {
     const sorted = [...matches];
     const now = new Date();
-
+    
     function isPast(m) {
-        // Если есть счет — проверяем дату (чтобы не перепутать с будущими матчами)
-        if (m.score) {
-            const matchDate = parseMatchDateTime(m);
-            // Если матч уже прошёл (больше 15 минут назад) — считаем завершенным
-            return (now - matchDate) > (15 * 60 * 1000);
-        }
-        
-        // Если матч начался больше 2 часов назад — считаем завершенным
-        // (для хоккея/баскетбола матчи длятся 2-3 часа)
         const start = parseMatchDateTime(m);
-        return (now - start) > (2 * 60 * 60 * 1000);
+        const diffMs = now - start;
+        // Move to bottom if it has a score AND it's "old" (1h after completion)
+        // OR if it's just very old anyway
+        if (m.score && diffMs > (3 * 60 * 60 * 1000)) return true;
+        if (diffMs > (4 * 60 * 60 * 1000)) return true;
+        return false;
     }
 
     sorted.sort((a, b) => {
         const pastA = isPast(a);
         const pastB = isPast(b);
-
-        // ВСЕГДА перемещаем завершенные матчи вниз
+        
+        // Put past matches at the bottom
         if (pastA !== pastB) return pastA ? 1 : -1;
-
-        // Сортировка внутри групп (активные и завершенные)
+        
         if (sortType === 'time') {
             return parseMatchDateTime(a) - parseMatchDateTime(b);
         } else if (sortType === 'odds') {
@@ -138,9 +170,7 @@ export function sortMatches(matches, sortType) {
             if (pa !== pb) return pa - pb;
             return (a.league || "").localeCompare(b.league || "");
         }
-        
-        // По умолчанию: активные по времени, завершенные по времени завершения
-        return parseMatchDateTime(a) - parseMatchDateTime(b);
+        return 0;
     });
     return sorted;
 }
@@ -149,3 +179,4 @@ export function sortMatches(matches, sortType) {
 export function setSportFilter(val) { currentSportFilter = val; }
 export function setGameFilter(val) { currentGameFilter = val; }
 export function setSort(val) { currentSort = val; }
+export function setDateFilter(val) { currentDateFilter = val; }

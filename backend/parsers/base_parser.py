@@ -19,6 +19,27 @@ class BaseParser:
         self.matches = []
         self.proxy = None  # will be set from proxy_manager or config
     
+    @staticmethod
+    def _normalize_proxy_url(raw: str) -> str:
+        """Normalize proxy URL to scheme://user:pass@host:port format.
+
+        Accepts:
+          socks5://user:pass@host:port  → unchanged
+          http://user:pass@host:port    → unchanged
+          host:port:user:pass           → socks5://user:pass@host:port
+          host:port                     → socks5://host:port
+        """
+        if not raw:
+            return raw
+        if raw.startswith(('socks', 'http')):
+            return raw
+        parts = raw.split(':')
+        if len(parts) == 4:  # host:port:user:pass
+            return f"socks5://{parts[2]}:{parts[3]}@{parts[0]}:{parts[1]}"
+        if len(parts) == 2:  # host:port
+            return f"socks5://{parts[0]}:{parts[1]}"
+        return raw
+
     async def init_session(self):
         """Initialize HTTP session with optional proxy support."""
         if self.session is None:
@@ -26,10 +47,14 @@ class BaseParser:
             from backend.config import config
             proxy_url = None
             if config.PROXY_ENABLED and config.PROXY_URL:
-                proxy_url = config.PROXY_URL
+                proxy_url = self._normalize_proxy_url(config.PROXY_URL)
             elif config.PROXY_ENABLED:
                 await proxy_manager.refresh_if_needed()
                 proxy_url = proxy_manager.get_proxy()
+
+            if proxy_url:
+                masked = proxy_url.split('@')[-1] if '@' in proxy_url else proxy_url
+                print(f"[{self.name}] Using proxy: {proxy_url.split('://')[0]}://***@{masked}")
 
             self.proxy = proxy_url
 

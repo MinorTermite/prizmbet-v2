@@ -120,12 +120,22 @@ function wireFilters() {
         updateApp();
     });
 
-    // Sort buttons
-    document.querySelectorAll('.sort-btn').forEach(btn => {
+    // Sort buttons (only .sort-only, not date buttons)
+    document.querySelectorAll('.sort-only').forEach(btn => {
         btn.addEventListener('click', () => {
-            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.sort-only').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             filters.setSort(btn.dataset.sort);
+            updateApp();
+        });
+    });
+
+    // Date filter buttons
+    document.querySelectorAll('.date-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            filters.setDateFilter(btn.dataset.date);
             updateApp();
         });
     });
@@ -155,7 +165,21 @@ window.addEventListener('load', () => {
     }
 });
 
-// Service Worker (if implemented)
+// Service Worker
 if ('serviceWorker' in navigator) {
-    // navigator.serviceWorker.register('/sw.js').catch(() => {});
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js', { scope: './' })
+            .then(reg => {
+                // Если есть новая версия SW — обновляем тихо
+                reg.addEventListener('updatefound', () => {
+                    reg.installing?.addEventListener('statechange', e => {
+                        if (e.target.state === 'installed' && navigator.serviceWorker.controller) {
+                            // Новый SW готов — уведомим пользователя при желании
+                            console.log('[SW] Новая версия готова');
+                        }
+                    });
+                });
+            })
+            .catch(err => console.warn('[SW] Регистрация не удалась:', err));
+    });
 }

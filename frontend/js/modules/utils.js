@@ -8,9 +8,36 @@ export function escapeHtml(text) {
     return div.innerHTML;
 }
 
+const _RU_MON = { 'янв':0,'фев':1,'мар':2,'апр':3,'май':4,'июн':5,'июл':6,'авг':7,'сен':8,'окт':9,'ноя':10,'дек':11 };
+
 export function parseMatchDateTime(match) {
-    if (!match.match_time) return new Date(0);
-    return new Date(match.match_time);
+    // Priority 1: ISO match_time field
+    if (match.match_time) {
+        const d = new Date(match.match_time);
+        if (!isNaN(d)) return d;
+    }
+    // Priority 2: date + time string fields (e.g. "6 мар" + "15:30")
+    const dateStr = (match.date || '').trim();
+    const timeStr = (match.time || '').trim();
+    if (!dateStr) return new Date(0);
+
+    const parts = dateStr.split(/\s+/);
+    const day = parseInt(parts[0], 10);
+    if (!isNaN(day) && parts[1]) {
+        const mon = _RU_MON[parts[1].toLowerCase()];
+        if (mon !== undefined) {
+            const year = parts[2] ? parseInt(parts[2], 10) : new Date().getFullYear();
+            const [h = 0, m = 0] = timeStr.includes(':') ? timeStr.split(':').map(Number) : [];
+            return new Date(year, mon, day, h, m);
+        }
+    }
+    // Priority 3: "06.03.2026" format
+    const dot = dateStr.match(/^(\d{1,2})\.(\d{1,2})\.(\d{4})$/);
+    if (dot) {
+        const [h = 0, m = 0] = timeStr.includes(':') ? timeStr.split(':').map(Number) : [];
+        return new Date(+dot[3], +dot[2] - 1, +dot[1], h, m);
+    }
+    return new Date(0);
 }
 
 export function isMatchLive(match) {

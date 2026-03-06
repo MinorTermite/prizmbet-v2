@@ -1,111 +1,96 @@
 // ===== КОНФИГУРАЦИЯ =====
 const AUTO_REFRESH_MS = 5 * 60 * 1000;
-const DATA_STALE_HOURS = 48;
-const SITE_BASE = 'https://minortermite.github.io/betprizm';
-const NETLIFY_FN_URL = SITE_BASE + '/matches.json';
 const LS_CACHE_KEY = 'prizmbet_matches_cache';
 
-// ===== DATA LOADING & CACHING =====
-function getCachedMatches() {
-    try {
-        const raw = localStorage.getItem(LS_CACHE_KEY);
-        return raw ? JSON.parse(raw) : null;
-    } catch { return null; }
+// ===== CACHE HELPERS =====
+function _getLS(key) {
+    try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : null; }
+    catch { return null; }
 }
-
-function setCachedMatches(data) {
-    try { localStorage.setItem(LS_CACHE_KEY, JSON.stringify(data)); } catch { }
-}
-
-function isDataStale(ts) {
-    if (!ts) return true;
-    const d = new Date(ts);
-    return isNaN(d.getTime()) || (Date.now() - d.getTime()) > DATA_STALE_HOURS * 3600000;
+function _setLS(key, data) {
+    try { localStorage.setItem(key, JSON.stringify(data)); } catch { }
 }
 
 function fmtTime(ts) {
     if (!ts) return '—';
     const d = new Date(ts);
-    return isNaN(d.getTime()) ? ts : d.toLocaleString('ru-RU');
+    if (isNaN(d.getTime())) return ts;
+    return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
-function showStatus(ts, src) {
+function showStatus(ts, extra) {
     const el = document.getElementById('lastUpdate');
     if (!el) return;
-    const stale = isDataStale(ts);
-    el.innerHTML = `Обновлено: ${fmtTime(ts)}${src === 'live' ? ' (live)' : ''}`;
-}
-
-async function loadData() {
-    // 1. Сразу показываем кэш из localStorage (если есть) — мгновенно
-    const cached = getCachedMatches();
-    if (cached?.matches?.length) {
-        if (typeof renderMatches === 'function') renderMatches(cached.matches);
-        showStatus(cached.last_update, 'cache');
-    } else {
-        // Если кэша нет, показываем шиммер (скелетон)
-        showShimmer();
-    }
-
-    // Округляем до 10-минутного интервала — CDN и браузер могут кэшировать ответ
-    const cacheBust = Math.floor(Date.now() / 600000);
-
-    let data = null, source = 'static';
-    // 2. Пробуем статичный matches.json (основной источник на GitHub Pages)
-    try {
-        const r = await fetch('matches.json?v=' + cacheBust);
-        if (r.ok) data = await r.json();
-    } catch (e) { console.warn('static fail:', e.message); }
-    // 3. Fallback — пробуем абсолютный URL (GitHub Pages)
-    if (!data?.matches?.length) {
-        try {
-            const r = await fetch(NETLIFY_FN_URL + '?v=' + cacheBust);
-            if (r.ok) {
-                const live = await r.json();
-                if (live?.matches?.length) { data = live; source = 'live'; }
-            }
-        } catch (e) { console.warn('fallback fail:', e.message); }
-    }
-
-    if (data?.matches?.length) {
-        setCachedMatches(data); // сохраняем в кэш
-        if (typeof renderMatches === 'function') renderMatches(data.matches);
-        showStatus(data.last_update, source);
-    } else if (!cached?.matches?.length) {
-        const content = document.getElementById('content');
-        if (content) content.innerHTML = '<div class="section"><p style="text-align:center;color:var(--text-secondary);">Ошибка загрузки. Обновите страницу.</p></div>';
-        const lastUpdate = document.getElementById('lastUpdate');
-        if (lastUpdate) lastUpdate.textContent = 'Ошибка загрузки';
-    }
-}
-
-async function refreshData() {
-    const lastUpdate = document.getElementById('lastUpdate');
-    if (lastUpdate) lastUpdate.innerHTML = '<span class="loading"></span> Обновление...';
-
-    let data = null;
-    try {
-        const r = await fetch('matches.json?t=' + Date.now());
-        if (r.ok) data = await r.json();
-    } catch (e) { }
-
-    if (data?.matches?.length) {
-        setCachedMatches(data);
-        if (typeof renderMatches === 'function') renderMatches(data.matches);
-        showStatus(data.last_update, 'live');
-        if (typeof showToast === 'function') showToast('Линия обновлена!');
-    } else {
-        await loadData();
-        if (typeof showToast === 'function') showToast('Загружены кэшированные данные');
-    }
+    el.innerHTML = `Обновлено: ${fmtTime(ts)}${extra || ''}`;
 }
 
 function showShimmer() {
     const content = document.getElementById('content');
     if (!content) return;
     let html = '';
-    for (let i = 0; i < 5; i++) {
-        html += '<div class="skeleton-card shimmer"></div>';
-    }
+    for (let i = 0; i < 6; i++) html += '<div class="skeleton-card shimmer"></div>';
     content.innerHTML = html;
 }
+
+// ===== CACHE-BUST: round to 10-minute windows (CDN/browser cache friendly) =====
+function cacheBust() { return Math.floor(Date.now() / 600000); }
+
+// ===== FETCH HELPER =====
+async function _fetchJson(url) {
+    const r = await fetch(url);
+    if (!r.ok) throw new Error(`HTTP ${r.status}`);
+    return r.json();
+}
+
+// ===== MAIN LOAD =====
+async function loadData() {
+    // 1. Show cached data instantly
+    const cached = _getLS(LS_CACHE_KEY);
+    if (cached?.matches?.length) {
+        if (typeof renderMatches === 'function') renderMatches(cached.matches);
+        showStatus(cached.last_update, ' <span style="font-size:.75em;opacity:.6">(кэш)</span>');
+    } else {
+        showShimmer();
+    }
+
+    // 2. Fetch matches-today.json (today + tomorrow only, fast)
+    let todayData = null;
+    try {
+        todayData = await _fetchJson(`matches-today.json?v=${cacheBust()}`);
+    } catch (e) { console.warn('[api] today fetch:', e.message); }
+
+    if (todayData?.matches?.length) {
+        _setLS(LS_CACHE_KEY, todayData);
+        if (typeof renderMatches === 'function') renderMatches(todayData.matches);
+        if (todayData.total) {
+            const el = document.getElementById('totalMatches');
+            if (el) el.textContent = todayData.total;
+        }
+        showStatus(todayData.last_update, ' <span style="font-size:.75em;opacity:.6">(сегодня)</span>');
+    }
+}
+
+// ===== REFRESH (manual / auto) =====
+async function refreshData() {
+    const lastUpdate = document.getElementById('lastUpdate');
+    if (lastUpdate) lastUpdate.innerHTML = '<span class="loading"></span> Обновление...';
+
+    try {
+        // Bust cache with timestamp to force re-fetch
+        const data = await _fetchJson('matches.json?t=' + Date.now());
+        if (data?.matches?.length) {
+            _setLS(LS_CACHE_KEY, data);
+            _setLS(LS_FULL_KEY, data);
+            if (typeof renderMatches === 'function') renderMatches(data.matches);
+            showStatus(data.last_update);
+            if (typeof showToast === 'function') showToast('Линия обновлена!');
+            return;
+        }
+    } catch (e) { console.warn('[api] refresh fail:', e.message); }
+
+    await loadData();
+    if (typeof showToast === 'function') showToast('Загружены кэшированные данные');
+}
+
+// ===== AUTO-REFRESH =====
+setInterval(() => { if (document.visibilityState === 'visible') loadData(); }, AUTO_REFRESH_MS);
