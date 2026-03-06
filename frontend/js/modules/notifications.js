@@ -46,7 +46,7 @@ export function checkFinishedFavorites(allMatches) {
         if (favIds.includes(match.id) && match.score) {
             showNotification(
                 "Матч завершен! 🏆",
-                `${match.home_team} ${match.score} ${match.away_team}`
+                `${match.home_team || match.team1 || '?'} ${match.score} ${match.away_team || match.team2 || '?'}`
             );
             // Remove from details to not notify again
             delete details[match.id];

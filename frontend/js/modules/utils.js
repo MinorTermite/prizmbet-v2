@@ -84,7 +84,19 @@ export function initTabsHint() {
 
 export function shareMatch(id, showToast) {
     const url = `${window.location.origin}${window.location.pathname}#match-${id}`;
-    navigator.clipboard.writeText(url).then(() => {
+    const _fallback = () => {
+        const ta = document.createElement('textarea');
+        ta.value = url;
+        ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0';
+        document.body.appendChild(ta);
+        ta.focus(); ta.select();
+        try { document.execCommand('copy'); } catch (_) {}
+        document.body.removeChild(ta);
+    };
+    const p = (navigator.clipboard && navigator.clipboard.writeText)
+        ? navigator.clipboard.writeText(url).catch(_fallback)
+        : Promise.resolve(_fallback());
+    p.then(() => {
         if (showToast) showToast('Ссылка на матч скопирована!');
         const el = document.getElementById('match-' + id);
         if (el) {

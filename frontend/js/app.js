@@ -29,8 +29,9 @@ function updateApp(newMatches) {
     let filtered = filters.filterMatches(allMatches, state);
     filtered = filters.sortMatches(filtered, state.sort);
     
-    // 3. Render
-    ui.buildGameFilter(allMatches);
+    // 3. Render — league filter should only show leagues for the active sport
+    const sportFiltered = filters.filterMatches(allMatches, { ...state, league: 'all' });
+    ui.buildGameFilter(sportFiltered);
     ui.updateStats(filtered);
     ui.renderMatches(filtered);
 }
@@ -87,7 +88,7 @@ Object.assign(window, {
     copyWallet: (btn) => betSlip.copyWallet(btn),
 
     // Helpers
-    openImage: (src) => ui.openImage(src),
+    openImage: (src) => window.open(src, '_blank'),
 
     // History
     openHistory: historyUI.openHistory,

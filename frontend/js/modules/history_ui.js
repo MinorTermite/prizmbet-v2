@@ -17,7 +17,8 @@ export function openHistory() {
             const dt = new Date(h.timestamp).toLocaleString('ru-RU', {
                 day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit'
             });
-            const payoutText = h.payout > 0 ? `+${h.payout.toFixed(2)} PZM` : '—';
+            const payout = parseFloat(h.amount) * parseFloat(h.coef);
+            const payoutText = payout > 0 ? `+${payout.toFixed(2)} PZM` : '—';
             return `
                 <div class="history-item">
                     <div class="history-item-header">

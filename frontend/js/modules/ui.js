@@ -158,7 +158,7 @@ export function patchCardOdds(card, match, favorites) {
     card.querySelectorAll('[data-bet]').forEach(btn => {
         const betType = btn.getAttribute('data-bet');
         const newRaw = oddMap[betType] || '';
-        const unavail = !newRaw || newRaw === '—' || newRaw === '-' || newRaw === '0.00';
+        const unavail = !newRaw || newRaw === '—' || newRaw === '-' || newRaw === '0.00' || parseFloat(newRaw) < 1.01;
         const newVal = unavail ? '—' : newRaw;
         const valEl = btn.querySelector('.odd-value');
         if (!valEl) return;
@@ -254,11 +254,19 @@ export function renderMatches(matches) {
     _renderLeagueChunk(container, leagueOrder, matchesMap, favs);
 
     // After render: scroll to hash anchor if present (e.g. shared link #match-xxx)
+    // Retry up to 5 times (300ms apart) to handle lazy-loaded league chunks
     const hash = window.location.hash;
     if (hash && hash.startsWith('#match-')) {
-        requestAnimationFrame(() => {
-            const el = document.getElementById(hash.slice(1));
-            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        });
+        const matchId = hash.slice(1);
+        let attempts = 0;
+        const tryScroll = () => {
+            const el = document.getElementById(matchId);
+            if (el) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else if (attempts++ < 5) {
+                setTimeout(tryScroll, 300);
+            }
+        };
+        requestAnimationFrame(tryScroll);
     }
 }
