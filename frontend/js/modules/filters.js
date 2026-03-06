@@ -98,8 +98,11 @@ export function filterMatches(matches, state) {
         // Results tab — show only scored matches, skip remaining filters
         if (state.sport === 'results') return !!m.score;
 
-        // Hide completed+old from main list
-        if (m.score && isOld) return false;
+        // Hide ALL scored matches from main list (they belong in Results tab)
+        if (m.score) return false;
+
+        // Hide matches that are clearly over (no score but 4h+ old) — stale data
+        if (isOld && diffMs > (4 * 60 * 60 * 1000)) return false;
 
         // Date filter
         if (state.date !== 'all') {

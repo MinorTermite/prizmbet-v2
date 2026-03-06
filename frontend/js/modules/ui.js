@@ -28,7 +28,8 @@ export function buildGameFilter(matches) {
     const prev = sel.value || 'all';
     sel.innerHTML = '<option value="all">Все лиги</option>' +
         games.map(g => `<option value="${escapeHtml(g)}">${escapeHtml(g)}</option>`).join('');
-    if (games.includes(prev)) sel.value = prev;
+    // 'all' is hardcoded first option — not in games array, restore it explicitly
+    sel.value = (prev === 'all' || games.includes(prev)) ? prev : 'all';
 }
 
 export function createMatchCard(match, favorites) {
@@ -239,15 +240,10 @@ export function renderMatches(matches) {
 
     const favs = getFavorites();
 
-    // Completed matches (with score) go to the bottom
-    const active = matches.filter(m => !m.score);
-    const completed = matches.filter(m => !!m.score);
-    const sorted = [...active, ...completed];
-
-    // Group by league (preserve order)
+    // Group by league (preserve order; filterMatches already excludes scored matches from main list)
     const matchesMap = {};
     const leagueOrder = [];
-    sorted.forEach(m => {
+    matches.forEach(m => {
         if (!matchesMap[m.league]) { matchesMap[m.league] = []; leagueOrder.push(m.league); }
         matchesMap[m.league].push(m);
     });

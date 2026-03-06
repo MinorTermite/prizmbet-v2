@@ -97,7 +97,8 @@ Object.assign(window, {
     // Orchestrator
     renderMatches: updateApp,
     onSearchInput: updateApp,
-    refreshData: () => { if (window.loadData) window.loadData().then(updateApp); }
+    // Manual refresh always loads full matches.json to get fresh / all-dates data
+    refreshData: () => { if (window.loadData) window.loadData('full').then(updateApp); }
 });
 
 /**
@@ -136,7 +137,12 @@ function wireFilters() {
             document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
             btn.classList.add('active');
             filters.setDateFilter(btn.dataset.date);
-            updateApp();
+            // 'later' needs full data (matches-today.json only has today+tomorrow)
+            if (btn.dataset.date === 'later' && window.loadData) {
+                window.loadData('full').then(updateApp);
+            } else {
+                updateApp();
+            }
         });
     });
 

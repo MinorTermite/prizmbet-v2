@@ -1,6 +1,7 @@
 // ===== КОНФИГУРАЦИЯ =====
 const AUTO_REFRESH_MS = 5 * 60 * 1000;
 const LS_CACHE_KEY = 'prizmbet_matches_cache';
+const LS_FULL_KEY  = 'prizmbet_matches_full_cache';
 
 // ===== CACHE HELPERS =====
 function _getLS(key) {
@@ -43,9 +44,13 @@ async function _fetchJson(url) {
 }
 
 // ===== MAIN LOAD =====
-async function loadData() {
+// mode: 'fast' (default) = matches-today.json  |  'full' = matches.json
+async function loadData(mode) {
+    const isFull = mode === 'full';
+    const cacheKey = isFull ? LS_FULL_KEY : LS_CACHE_KEY;
+
     // 1. Show cached data instantly
-    const cached = _getLS(LS_CACHE_KEY);
+    const cached = _getLS(cacheKey) || _getLS(LS_CACHE_KEY);
     if (cached?.matches?.length) {
         if (typeof renderMatches === 'function') renderMatches(cached.matches);
         showStatus(cached.last_update, ' <span style="font-size:.75em;opacity:.6">(кэш)</span>');
@@ -53,43 +58,24 @@ async function loadData() {
         showShimmer();
     }
 
-    // 2. Fetch matches-today.json (today + tomorrow only, fast)
-    let todayData = null;
+    // 2. Fetch JSON
+    const file = isFull ? 'matches.json' : 'matches-today.json';
+    let data = null;
     try {
-        todayData = await _fetchJson(`matches-today.json?v=${cacheBust()}`);
-    } catch (e) { console.warn('[api] today fetch:', e.message); }
+        data = await _fetchJson(`${file}?v=${cacheBust()}`);
+    } catch (e) { console.warn(`[api] ${file} fetch:`, e.message); }
 
-    if (todayData?.matches?.length) {
-        _setLS(LS_CACHE_KEY, todayData);
-        if (typeof renderMatches === 'function') renderMatches(todayData.matches);
-        if (todayData.total) {
+    if (data?.matches?.length) {
+        _setLS(cacheKey, data);
+        if (typeof renderMatches === 'function') renderMatches(data.matches);
+        if (data.total) {
             const el = document.getElementById('totalMatches');
-            if (el) el.textContent = todayData.total;
+            if (el) el.textContent = data.total;
         }
-        showStatus(todayData.last_update, ' <span style="font-size:.75em;opacity:.6">(сегодня)</span>');
+        const label = isFull ? ' <span style="font-size:.75em;opacity:.6">(все)</span>'
+                              : ' <span style="font-size:.75em;opacity:.6">(сегодня)</span>';
+        showStatus(data.last_update, label);
     }
-}
-
-// ===== REFRESH (manual / auto) =====
-async function refreshData() {
-    const lastUpdate = document.getElementById('lastUpdate');
-    if (lastUpdate) lastUpdate.innerHTML = '<span class="loading"></span> Обновление...';
-
-    try {
-        // Bust cache with timestamp to force re-fetch
-        const data = await _fetchJson('matches.json?t=' + Date.now());
-        if (data?.matches?.length) {
-            _setLS(LS_CACHE_KEY, data);
-            _setLS(LS_FULL_KEY, data);
-            if (typeof renderMatches === 'function') renderMatches(data.matches);
-            showStatus(data.last_update);
-            if (typeof showToast === 'function') showToast('Линия обновлена!');
-            return;
-        }
-    } catch (e) { console.warn('[api] refresh fail:', e.message); }
-
-    await loadData();
-    if (typeof showToast === 'function') showToast('Загружены кэшированные данные');
 }
 
 // ===== AUTO-REFRESH =====

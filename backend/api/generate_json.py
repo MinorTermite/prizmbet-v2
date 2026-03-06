@@ -113,6 +113,8 @@ def to_frontend(match: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         "id":        match.get("external_id", ""),
         "date":      date_str,
         "time":      time_str,
+        # ISO timestamp in UTC — used by browser for timezone-correct parsing
+        "match_time": match_dt.isoformat() if match_dt else "",
         "team1":     match.get("home_team", ""),
         "team2":     match.get("away_team", ""),
         "match_url": match.get("match_url", ""),
