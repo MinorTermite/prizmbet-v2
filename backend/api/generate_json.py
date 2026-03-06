@@ -223,7 +223,7 @@ def _write_json(matches: List[Dict[str, Any]]) -> int:
     tomorrow_day = (now_msk + timedelta(days=1)).day
     today_matches = [
         m for m in matches
-        if _match_day(m) in (today_day, tomorrow_day)
+        if _match_day(m) in (today_day, tomorrow_day) or m.get("score")
     ]
     today_doc = {
         "last_update": final_doc["last_update"],

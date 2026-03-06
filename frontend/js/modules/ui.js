@@ -252,4 +252,13 @@ export function renderMatches(matches) {
     // Clear container, render first chunk immediately
     container.innerHTML = '';
     _renderLeagueChunk(container, leagueOrder, matchesMap, favs);
+
+    // After render: scroll to hash anchor if present (e.g. shared link #match-xxx)
+    const hash = window.location.hash;
+    if (hash && hash.startsWith('#match-')) {
+        requestAnimationFrame(() => {
+            const el = document.getElementById(hash.slice(1));
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        });
+    }
 }

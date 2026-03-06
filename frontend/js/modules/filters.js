@@ -89,7 +89,12 @@ export function filterMatches(matches, state) {
 
         // Sport filter
         const mSport = getMatchSport(m);
-        if (state.sport !== 'all' && state.sport !== 'results' && mSport !== state.sport) return false;
+        if (state.sport === 'totals') {
+            // Totals tab: show any sport match that has total odds
+            if (!m.total_over || m.total_over === '—' || m.total_over === '0.00') return false;
+        } else if (state.sport !== 'all' && state.sport !== 'results' && mSport !== state.sport) {
+            return false;
+        }
 
         const start = parseMatchDateTime(m);
         const diffMs = now - start;
