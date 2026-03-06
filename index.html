@@ -1817,11 +1817,43 @@
         }
 
         function copyBet(id, teams, betType, coef, datetime, league) {
-            const msg = `📋 Ставка PRIZMBET\n🏆 ${league}\n⚽ ${teams}\n📅 ${datetime}\n🎯 Ставка: ${betType}\n📊 Коэффициент: ${coef}\n🆔 ID события: ${id}`;
-            navigator.clipboard.writeText(msg).then(() => {
-                showToast(`${teams} — ${betType} @ ${coef}`);
+            const matchLink = `${window.location.origin}${window.location.pathname}#match-${id}`;
+            const msg = `${teams}, ${betType} @ ${coef}\n${datetime}\n${matchLink}`;
+            
+            // Try modern Clipboard API first
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(msg).then(() => {
+                    showToast(`✅ ${teams} — ${betType} @ ${coef}`);
+                    if (navigator.vibrate) navigator.vibrate(50);
+                }).catch(err => {
+                    console.warn('Clipboard API failed:', err);
+                    fallbackCopy(msg, teams, betType, coef);
+                });
+            } else {
+                // Fallback for older browsers
+                fallbackCopy(msg, teams, betType, coef);
+            }
+        }
+
+        function fallbackCopy(text, teams, betType, coef) {
+            // Create temporary textarea
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            try {
+                document.execCommand('copy');
+                showToast(`✅ ${teams} — ${betType} @ ${coef}`);
                 if (navigator.vibrate) navigator.vibrate(50);
-            });
+            } catch (err) {
+                console.error('Copy failed:', err);
+                showToast(`❌ Не удалось скопировать`);
+            }
+            
+            document.body.removeChild(textarea);
         }
 
         function copyWallet() {
