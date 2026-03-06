@@ -73,6 +73,9 @@ public class MainActivity extends AppCompatActivity {
         retryBtn.setOnClickListener(v -> retry());
 
         configureWebView();
+        // Сбрасываем HTTP-кэш WebView при каждом холодном старте.
+        // Это гарантирует, что старый SW-кэш или зависшие ресурсы не мешают загрузке.
+        webView.clearCache(true);
         webView.loadUrl(SITE_URL);
 
         // Back button: navigate WebView history first, then exit
@@ -118,11 +121,19 @@ public class MainActivity extends AppCompatActivity {
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
-        s.setCacheMode(WebSettings.LOAD_DEFAULT);
+        // LOAD_NO_CACHE: всегда идём в сеть/ServiceWorker, игнорируем HTTP-кэш WebView.
+        // CacheStorage ServiceWorker при этом работает нормально (это другой уровень).
+        s.setCacheMode(WebSettings.LOAD_NO_CACHE);
         s.setMediaPlaybackRequiresUserGesture(false);
         s.setDatabaseEnabled(true);
         s.setAllowFileAccess(false);
         s.setAllowContentAccess(false);
+
+        // Убираем маркер "wv" из User-Agent — некоторые CDN/сервисы блокируют WebView UA.
+        // Вместо "Mozilla/5.0 ... Chrome/XX.X (wv)" получается обычный Chrome UA.
+        String ua = s.getUserAgentString();
+        ua = ua.replace("; wv)", ")");
+        s.setUserAgentString(ua);
 
         // WebViewClient — domain allowlist + error handling
         webView.setWebViewClient(new WebViewClient() {

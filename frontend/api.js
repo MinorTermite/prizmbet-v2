@@ -33,14 +33,32 @@ function showShimmer() {
     content.innerHTML = html;
 }
 
+function _showLoadError() {
+    const content = document.getElementById('content');
+    if (!content || !content.querySelector('.shimmer')) return; // уже есть данные
+    content.innerHTML = `
+        <div style="text-align:center;padding:60px 20px;color:var(--text-tertiary,#888)">
+            <div style="font-size:2.5rem;margin-bottom:14px">📡</div>
+            <p style="margin-bottom:6px;font-size:1rem;color:var(--text-secondary,#ccc)">Не удалось загрузить матчи</p>
+            <p style="margin-bottom:22px;font-size:.85rem;opacity:.7">Проверьте подключение к интернету</p>
+            <button onclick="loadData()" style="background:#6366f1;color:#fff;border:none;padding:10px 28px;border-radius:8px;cursor:pointer;font-size:.95rem;font-weight:600;letter-spacing:.02em">🔄 Повторить</button>
+        </div>`;
+}
+
 // ===== CACHE-BUST: round to 10-minute windows (CDN/browser cache friendly) =====
 function cacheBust() { return Math.floor(Date.now() / 600000); }
 
-// ===== FETCH HELPER =====
-async function _fetchJson(url) {
-    const r = await fetch(url);
-    if (!r.ok) throw new Error(`HTTP ${r.status}`);
-    return r.json();
+// ===== FETCH HELPER с таймаутом 10 сек =====
+async function _fetchJson(url, timeoutMs = 10000) {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    try {
+        const r = await fetch(url, { signal: controller.signal });
+        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+    } finally {
+        clearTimeout(timer);
+    }
 }
 
 // ===== MAIN LOAD =====
@@ -49,21 +67,28 @@ async function loadData(mode) {
     const isFull = mode === 'full';
     const cacheKey = isFull ? LS_FULL_KEY : LS_CACHE_KEY;
 
-    // 1. Show cached data instantly
+    // 1. Показываем кэш мгновенно, или шиммер при первом запуске
     const cached = _getLS(cacheKey) || _getLS(LS_CACHE_KEY);
+    let shimmerTimer = null;
+
     if (cached?.matches?.length) {
         if (typeof renderMatches === 'function') renderMatches(cached.matches);
         showStatus(cached.last_update, ' <span style="font-size:.75em;opacity:.6">(кэш)</span>');
     } else {
         showShimmer();
+        // Fallback: если данные не пришли за 10 сек — показываем кнопку "Повторить"
+        shimmerTimer = setTimeout(_showLoadError, 10000);
     }
 
-    // 2. Fetch JSON
+    // 2. Запрашиваем свежий JSON
     const file = isFull ? 'matches.json' : 'matches-today.json';
     let data = null;
     try {
         data = await _fetchJson(`${file}?v=${cacheBust()}`);
     } catch (e) { console.warn(`[api] ${file} fetch:`, e.message); }
+
+    // Отменяем таймер шиммера — данные либо пришли, либо нет
+    if (shimmerTimer) clearTimeout(shimmerTimer);
 
     if (data?.matches?.length) {
         _setLS(cacheKey, data);
@@ -75,6 +100,9 @@ async function loadData(mode) {
         const label = isFull ? ' <span style="font-size:.75em;opacity:.6">(все)</span>'
                               : ' <span style="font-size:.75em;opacity:.6">(сегодня)</span>';
         showStatus(data.last_update, label);
+    } else if (!cached?.matches?.length) {
+        // Нет кэша И данные не пришли → показываем ошибку сразу
+        _showLoadError();
     }
 }
 
