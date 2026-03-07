@@ -5,14 +5,15 @@ import android.graphics.Bitmap;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
-import android.net.Uri;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.webkit.MimeTypeMap;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceError;
 import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
@@ -22,40 +23,44 @@ import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.webkit.WebViewAssetLoader;
+
+import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * PrizmBet Android wrapper.
- *
- * WebView loads the PWA hosted on GitHub Pages.
- * Features: loading indicator, error screen with retry, domain allowlist,
- * external links open in browser, immersive fullscreen, back navigation.
+ * - WebViewAssetLoader: serves static assets from APK (instant load, no network needed)
+ * - JSON match data always fetched from network (live data)
+ * - App Shortcuts: Football / Esports / Refresh
  */
 public class MainActivity extends AppCompatActivity {
 
-    // ── Configuration ────────────────────────────────────────────────────────────
     private static final String SITE_URL = "https://minortermite.github.io/prizmbet-v2/";
+    public  static final String EXTRA_SHORTCUT = "shortcut_action";
 
-    /** Domains allowed to load inside the WebView. Everything else opens externally. */
     private static final String[] ALLOWED_HOSTS = {
             "minortermite.github.io",
             "fonts.googleapis.com",
             "fonts.gstatic.com",
     };
 
-    // ── Views ────────────────────────────────────────────────────────────────────
-    private WebView webView;
-    private ProgressBar progressBar;
-    private View errorView;
+    private WebView       webView;
+    private ProgressBar   progressBar;
+    private View          errorView;
+    private WebViewAssetLoader assetLoader;
+
+    /** Action requested via App Shortcut; applied once after first page load. */
+    private String pendingShortcut = null;
 
     private boolean hasError = false;
 
-    // ── Lifecycle ────────────────────────────────────────────────────────────────
+    // ── Lifecycle ──────────────────────────────────────────────────────────────
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Fullscreen immersive — hide status bar and navigation bar
         requestWindowFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(
                 WindowManager.LayoutParams.FLAG_FULLSCREEN,
@@ -72,13 +77,15 @@ public class MainActivity extends AppCompatActivity {
         Button retryBtn = findViewById(R.id.retryButton);
         retryBtn.setOnClickListener(v -> retry());
 
+        buildAssetLoader();
         configureWebView();
-        // Сбрасываем HTTP-кэш WebView при каждом холодном старте.
-        // Это гарантирует, что старый SW-кэш или зависшие ресурсы не мешают загрузке.
+
+        // Read App Shortcut action (if launched via shortcut)
+        pendingShortcut = getIntent().getStringExtra(EXTRA_SHORTCUT);
+
         webView.clearCache(true);
         webView.loadUrl(SITE_URL);
 
-        // Back button: navigate WebView history first, then exit
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
@@ -91,6 +98,18 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    /** Called when app is already running and a shortcut is tapped. */
+    @Override
+    protected void onNewIntent(Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        String action = intent.getStringExtra(EXTRA_SHORTCUT);
+        if (action != null) {
+            pendingShortcut = action;
+            applyShortcut(action);   // page is already loaded → apply immediately
+        }
     }
 
     @Override
@@ -115,35 +134,74 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
-    // ── WebView setup ────────────────────────────────────────────────────────────
+    // ── Asset Loader ───────────────────────────────────────────────────────────
+
+    /**
+     * Builds a WebViewAssetLoader that intercepts requests to
+     * https://minortermite.github.io/prizmbet-v2/* and serves them from
+     * APK assets/prizmbet-v2/ — except live JSON data files which always
+     * come from the network.
+     */
+    private void buildAssetLoader() {
+        assetLoader = new WebViewAssetLoader.Builder()
+                .setDomain("minortermite.github.io")
+                .addPathHandler("/prizmbet-v2/", path -> {
+                    // Live match data — always fetch from network
+                    if (path.endsWith("matches.json") || path.endsWith("matches-today.json")) {
+                        return null;
+                    }
+                    try {
+                        InputStream is = getAssets().open("prizmbet-v2/" + path);
+                        String ext = path.contains(".")
+                                ? path.substring(path.lastIndexOf('.') + 1).toLowerCase()
+                                : "";
+                        String mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
+                        if (mime == null) mime = "application/octet-stream";
+                        // JS & CSS need charset for proper rendering
+                        String charset = (mime.contains("javascript") || mime.contains("css")
+                                || mime.contains("html") || mime.contains("json"))
+                                ? "UTF-8" : null;
+                        return new WebResourceResponse(mime, charset, is);
+                    } catch (IOException e) {
+                        return null; // Not in assets — fall through to network
+                    }
+                })
+                .build();
+    }
+
+    // ── WebView Configuration ──────────────────────────────────────────────────
 
     private void configureWebView() {
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
-        // LOAD_NO_CACHE: всегда идём в сеть/ServiceWorker, игнорируем HTTP-кэш WebView.
-        // CacheStorage ServiceWorker при этом работает нормально (это другой уровень).
-        s.setCacheMode(WebSettings.LOAD_NO_CACHE);
-        s.setMediaPlaybackRequiresUserGesture(false);
         s.setDatabaseEnabled(true);
-        s.setAllowFileAccess(false);
-        s.setAllowContentAccess(false);
+        s.setCacheMode(WebSettings.LOAD_DEFAULT); // Используем стандартный кэш для стабильности
+        s.setMediaPlaybackRequiresUserGesture(false);
 
-        // Убираем маркер "wv" из User-Agent — некоторые CDN/сервисы блокируют WebView UA.
-        // Вместо "Mozilla/5.0 ... Chrome/XX.X (wv)" получается обычный Chrome UA.
+        // Позволяем загрузку контента
+        s.setAllowFileAccess(true);
+        s.setAllowContentAccess(true);
+
+        // Remove "wv" WebView marker so site treats us like Chrome
         String ua = s.getUserAgentString();
         ua = ua.replace("; wv)", ")");
         s.setUserAgentString(ua);
 
-        // WebViewClient — domain allowlist + error handling
         webView.setWebViewClient(new WebViewClient() {
+
+            /** Intercept static assets → serve from APK. JSON data → network. */
+            @Override
+            public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                return assetLoader.shouldInterceptRequest(request.getUrl());
+            }
+
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String host = request.getUrl().getHost();
                 if (host != null && isAllowedHost(host)) {
-                    return false; // load inside WebView
+                    return false;
                 }
-                // External link — open in browser
                 try {
                     Intent intent = new Intent(Intent.ACTION_VIEW, request.getUrl());
                     startActivity(intent);
@@ -155,6 +213,19 @@ public class MainActivity extends AppCompatActivity {
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 hasError = false;
                 progressBar.setVisibility(View.VISIBLE);
+
+                // Внедряем заглушку для Notification API, чтобы JS не падал
+                view.evaluateJavascript(
+                    "(function() {" +
+                    "  if (typeof Notification === 'undefined') {" +
+                    "    window.Notification = {" +
+                    "      permission: 'denied'," +
+                    "      requestPermission: function() { return Promise.resolve('denied'); }," +
+                    "      show: function() {}" +
+                    "    };" +
+                    "    console.log('Notification API polyfill injected');" +
+                    "  }" +
+                    "})();", null);
             }
 
             @Override
@@ -163,19 +234,22 @@ public class MainActivity extends AppCompatActivity {
                 if (!hasError) {
                     showWebView();
                 }
+                // Apply any pending shortcut action after page fully loads
+                if (pendingShortcut != null) {
+                    applyShortcut(pendingShortcut);
+                    pendingShortcut = null;
+                }
             }
 
             @Override
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
-                // Only show error screen for main frame navigation failures
                 if (request.isForMainFrame()) {
                     hasError = true;
-                    showError(getString(R.string.error_no_connection));
+                    showError("Ошибка загрузки. Проверьте соединение.");
                 }
             }
         });
 
-        // WebChromeClient — progress bar
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
@@ -187,7 +261,31 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    // ── Helpers ──────────────────────────────────────────────────────────────────
+    // ── App Shortcuts ──────────────────────────────────────────────────────────
+
+    /**
+     * Applies the requested shortcut via JavaScript injection.
+     * Runs after onPageFinished to ensure DOM is ready.
+     */
+    private void applyShortcut(String action) {
+        String js;
+        switch (action) {
+            case "football":
+                js = "(function(){ var t = document.querySelector('.tab[data-sport=\"football\"]'); if(t) t.click(); })();";
+                break;
+            case "esports":
+                js = "(function(){ var t = document.querySelector('.tab[data-sport=\"esports\"]'); if(t) t.click(); })();";
+                break;
+            case "refresh":
+                js = "(function(){ if(window.refreshData) window.refreshData(); })();";
+                break;
+            default:
+                return;
+        }
+        webView.evaluateJavascript(js, null);
+    }
+
+    // ── Helpers ────────────────────────────────────────────────────────────────
 
     private boolean isAllowedHost(String host) {
         for (String allowed : ALLOWED_HOSTS) {
@@ -202,7 +300,6 @@ public class MainActivity extends AppCompatActivity {
         webView.setVisibility(View.GONE);
         errorView.setVisibility(View.VISIBLE);
         progressBar.setVisibility(View.GONE);
-
         TextView errorMsg = findViewById(R.id.errorMessage);
         if (errorMsg != null) errorMsg.setText(message);
     }
@@ -213,10 +310,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void retry() {
-        if (!isOnline()) {
-            showError(getString(R.string.error_no_connection));
-            return;
-        }
+        if (!isOnline()) return;
         showWebView();
         webView.loadUrl(SITE_URL);
     }
