@@ -16,7 +16,7 @@ function fmtTime(ts) {
     if (!ts) return '—';
     const d = new Date(ts);
     if (isNaN(d.getTime())) return ts;
-    return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+    return d.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
 function showStatus(ts, extra) {

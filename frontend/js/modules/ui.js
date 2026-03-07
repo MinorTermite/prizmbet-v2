@@ -64,8 +64,8 @@ export function createMatchCard(match, favorites) {
         card.id = `match-${eid}`;
         card.className = 'match-result-card' + (isFav ? ' favorited' : '');
         
-        const dateStr = match.date || (match.match_time ? new Date(match.match_time).toLocaleDateString('ru-RU') : '');
-        const timeStr = match.time || (match.match_time ? new Date(match.match_time).toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'}) : '');
+        const dateStr = match.date || (match.match_time ? new Date(match.match_time).toLocaleDateString('ru-RU', {timeZone: 'Europe/Moscow'}) : '');
+        const timeStr = match.time || (match.match_time ? new Date(match.match_time).toLocaleTimeString('ru-RU', {timeZone: 'Europe/Moscow', hour: '2-digit', minute:'2-digit'}) : '');
         const headerText = `${escapeHtml(match.league || '')}, ${escapeHtml(dateStr)} ${escapeHtml(timeStr)}`;
         
         card.innerHTML = `
@@ -92,8 +92,8 @@ export function createMatchCard(match, favorites) {
     }
 
     // Активный матч
-    const dateStr = match.date || (match.match_time ? new Date(match.match_time).toLocaleDateString('ru-RU', {day: 'numeric', month: 'short'}) : 'Сегодня');
-    const timeStr = match.time || (match.match_time ? new Date(match.match_time).toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'}) : '');
+    const dateStr = match.date || (match.match_time ? new Date(match.match_time).toLocaleDateString('ru-RU', {timeZone: 'Europe/Moscow', day: 'numeric', month: 'short'}) : 'Сегодня');
+    const timeStr = match.time || (match.match_time ? new Date(match.match_time).toLocaleTimeString('ru-RU', {timeZone: 'Europe/Moscow', hour: '2-digit', minute:'2-digit'}) : '');
     const dt = escapeHtml(`${dateStr} ${timeStr}`);
     
     function oddBtn(label, value) {

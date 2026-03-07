@@ -22,8 +22,8 @@
     <style name="Theme.Prizmbet.Starting" parent="Theme.SplashScreen">
         <!-- Dark background matching the app -->
         <item name="windowSplashScreenBackground">@color/bg_primary</item>
-        <!-- Lightning bolt icon (same colour background so no circle border) -->
-        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
+        <!-- PrizmBet logo (из frontend/prizmbet-logo.webp) -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash_logo</item>
         <item name="windowSplashScreenIconBackgroundColor">@color/bg_primary</item>
         <!-- Theme applied after splash exits -->
         <item name="postSplashScreenTheme">@style/Theme.Prizmbet</item>

@@ -22,6 +22,9 @@ if _repo_root not in sys.path:
 MONTHS_RU = ["янв", "фев", "мар", "апр", "май", "июн",
              "июл", "авг", "сен", "окт", "ноя", "дек"]
 
+# Все времена матчей — по Москве (UTC+3)
+MSK = timezone(timedelta(hours=3))
+
 OUT_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "frontend", "matches.json")
 
 
@@ -79,9 +82,9 @@ def to_frontend(match: Dict[str, Any]) -> Optional[Dict[str, Any]]:
     if raw_time:
         try:
             dt = datetime.fromisoformat(str(raw_time).replace("Z", "+00:00"))
-            match_dt = dt.astimezone(timezone.utc)
+            match_dt = dt.astimezone(MSK)
             # Filter: Skip matches more than 3 days ahead
-            now = datetime.now(timezone.utc)
+            now = datetime.now(MSK)
             if (match_dt - now).days > 3:
                 return None
             
@@ -115,7 +118,7 @@ def to_frontend(match: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         "id":        match.get("external_id", ""),
         "date":      date_str,
         "time":      time_str,
-        # ISO timestamp in UTC — used by browser for timezone-correct parsing
+        # ISO timestamp в МСК (UTC+3)
         "match_time": match_dt.isoformat() if match_dt else "",
         "team1":     match.get("home_team", ""),
         "team2":     match.get("away_team", ""),
@@ -171,7 +174,7 @@ def _write_json(matches: List[Dict[str, Any]]) -> int:
         "янв": 1, "фев": 2, "мар": 3, "апр": 4, "май": 5, "июн": 6,
         "июл": 7, "авг": 8, "сен": 9, "окт": 10, "ноя": 11, "дек": 12,
     }
-    now = datetime.now(tz=timezone.utc)
+    now = datetime.now(tz=MSK)
     carried = 0
     for old_m in scored_old:
         if old_m.get("id") in new_ids:
@@ -192,7 +195,7 @@ def _write_json(matches: List[Dict[str, Any]]) -> int:
                 if month:
                     year = now.year
                     h, mn = (int(x) for x in ts.split(":")) if ":" in ts else (0, 0)
-                    match_dt = datetime(year, month, day, h, mn, tzinfo=timezone.utc)
+                    match_dt = datetime(year, month, day, h, mn, tzinfo=MSK)
                     hours_ago = (now - match_dt).total_seconds() / 3600
                     if hours_ago <= 24:
                         matches.append(old_m)
@@ -205,7 +208,7 @@ def _write_json(matches: List[Dict[str, Any]]) -> int:
         print(f"[generate_json] Carried over {carried} finished matches with scores (24h retention)")
     
     final_doc = {
-        "last_update": datetime.now(tz=timezone(timedelta(hours=3))).isoformat(timespec='seconds'),
+        "last_update": datetime.now(tz=MSK).isoformat(timespec='seconds'),
         "source": "multi-parser",
         "total": len(matches),
         "matches": matches
@@ -218,7 +221,7 @@ def _write_json(matches: List[Dict[str, Any]]) -> int:
     print(f"[generate_json] Wrote {len(matches)} matches -> {out}")
 
     # Write matches-today.json — only today + tomorrow (fast first load on frontend)
-    now_msk = datetime.now(tz=timezone(timedelta(hours=3)))
+    now_msk = datetime.now(tz=MSK)
     today_day = now_msk.day
     tomorrow_day = (now_msk + timedelta(days=1)).day
     today_matches = [
