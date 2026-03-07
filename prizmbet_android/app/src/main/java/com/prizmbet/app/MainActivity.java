@@ -23,7 +23,6 @@ import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.splashscreen.SplashScreen;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.webkit.WebViewAssetLoader;
 
@@ -34,12 +33,12 @@ import java.io.InputStream;
  * PrizmBet Android wrapper.
  *
  * Features implemented:
- *  - SplashScreen (core-splashscreen): фиолетовая молния, исчезает после загрузки страницы
  *  - SwipeRefreshLayout: свайп вниз → обновляет данные матчей
  *  - WebViewAssetLoader: статика из APK assets/, JSON с сети
  *  - App Shortcuts: Football / Esports / Refresh
  *  - UA fix: убирает "wv" маркер (сайт видит обычный Chrome)
  *  - Offline error screen с кнопкой Повторить
+ *  - Фон WebView = #06060e (единый с SplashActivity — нет цветовой вспышки)
  */
 public class MainActivity extends AppCompatActivity {
 
@@ -60,8 +59,6 @@ public class MainActivity extends AppCompatActivity {
 
     // ── State ──────────────────────────────────────────────────────────────────
     private WebViewAssetLoader assetLoader;
-    /** true после первого onPageFinished — снимает splash-экран. */
-    private volatile boolean isPageLoaded   = false;
     /** Pending shortcut action applied via JS once page is ready. */
     private String pendingShortcut = null;
     private boolean hasError = false;
@@ -70,9 +67,6 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        // ① Splash screen — должен быть ДО super.onCreate()
-        SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
-
         super.onCreate(savedInstanceState);
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -80,12 +74,11 @@ public class MainActivity extends AppCompatActivity {
                 WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN
         );
+        // Фон окна = #06060e, совпадает с SplashActivity → нет цветовой вспышки
+        getWindow().setBackgroundDrawableResource(R.color.bg_primary);
         enterImmersiveMode();
 
         setContentView(R.layout.activity_main);
-
-        // ② Держать сплэш пока страница не загрузится (≤ ~200 мс с WebViewAssetLoader)
-        splashScreen.setKeepOnScreenCondition(() -> !isPageLoaded);
 
         // Refs
         progressBar  = findViewById(R.id.progressBar);
@@ -219,6 +212,9 @@ public class MainActivity extends AppCompatActivity {
     // ── WebView Configuration ──────────────────────────────────────────────────
 
     private void configureWebView() {
+        // Фон совпадает с SplashActivity (#06060e) — нет белой/чёрной вспышки при загрузке
+        webView.setBackgroundColor(0xFF06060E);
+
         WebSettings s = webView.getSettings();
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
@@ -270,7 +266,6 @@ public class MainActivity extends AppCompatActivity {
             public void onPageFinished(WebView view, String url) {
                 progressBar.setVisibility(View.GONE);
                 swipeRefresh.setRefreshing(false);  // сброс pull-to-refresh спиннера
-                isPageLoaded = true;                // снимает splash
 
                 if (!hasError) {
                     showWebView();
@@ -286,7 +281,6 @@ public class MainActivity extends AppCompatActivity {
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 if (request.isForMainFrame()) {
                     hasError = true;
-                    isPageLoaded = true; // тоже снимаем splash (показываем error screen)
                     swipeRefresh.setRefreshing(false);
                     showError("Ошибка загрузки. Проверьте соединение.");
                 }

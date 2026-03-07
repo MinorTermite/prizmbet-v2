@@ -58,4 +58,7 @@ dependencies {
 
     // Native Splash Screen (Android 12+ и backward-compat до API 23)
     implementation 'androidx.core:core-splashscreen:1.0.1'
+
+    // GIF-заставка (воспроизводит prizmbet-logo.gif нативно)
+    implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.28'
 }

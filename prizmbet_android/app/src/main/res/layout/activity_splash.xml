@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Splash экран с GIF-логотипом.
+    Фон #06060e — тот же что в приложении и WebView → ни одной вспышки цвета.
+-->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg_primary">
+
+    <!--
+        GIF занимает весь экран, scaleType=fitCenter сохраняет пропорции.
+        Если GIF прозрачный — фон #06060e проявляется сквозь него.
+    -->
+    <pl.droidsonroids.gif.GifImageView
+        android:id="@+id/splashGif"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center"
+        android:scaleType="fitCenter"
+        android:adjustViewBounds="true"
+        android:background="@color/bg_primary" />
+
+</FrameLayout>
