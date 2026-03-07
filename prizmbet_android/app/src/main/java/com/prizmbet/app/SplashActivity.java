@@ -53,8 +53,8 @@ public class SplashActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_splash);
 
-        NeonPulseView neonPulse = findViewById(R.id.neonPulse);
-        GifImageView  gifView   = findViewById(R.id.splashGif);
+        ParticleView particleView = findViewById(R.id.particleView);
+        GifImageView gifView      = findViewById(R.id.splashGif);
 
         try {
             GifDrawable drawable = new GifDrawable(getResources(), R.raw.prizmbet_logo);
@@ -62,20 +62,20 @@ public class SplashActivity extends AppCompatActivity {
             gifView.setImageDrawable(drawable);
 
             // ── Входная анимация: scale 0.82→1.0 + alpha 0→1 ──────────────────
-            // Логотип "вырастает" из центра; неоновые кольца проявляются вместе с ним.
+            // Логотип "вырастает" из центра; частицы проявляются на полный экран.
             gifView.setScaleX(0.82f);
             gifView.setScaleY(0.82f);
             gifView.setAlpha(0f);
-            // neonPulse уже alpha=0 из XML
+            // particleView уже alpha=0 из XML
 
             AnimatorSet enterAnim = new AnimatorSet();
             enterAnim.playTogether(
-                    ObjectAnimator.ofFloat(gifView,   "scaleX", 0.82f, 1.0f),
-                    ObjectAnimator.ofFloat(gifView,   "scaleY", 0.82f, 1.0f),
-                    ObjectAnimator.ofFloat(gifView,   "alpha",  0f,    1.0f),
-                    ObjectAnimator.ofFloat(neonPulse, "alpha",  0f,    1.0f)
+                    ObjectAnimator.ofFloat(gifView,       "scaleX", 0.82f, 1.0f),
+                    ObjectAnimator.ofFloat(gifView,       "scaleY", 0.82f, 1.0f),
+                    ObjectAnimator.ofFloat(gifView,       "alpha",  0f,    1.0f),
+                    ObjectAnimator.ofFloat(particleView,  "alpha",  0f,    1.0f)
             );
-            enterAnim.setDuration(750);
+            enterAnim.setDuration(800);
             enterAnim.setInterpolator(new DecelerateInterpolator(2.0f));
             enterAnim.start();
             // ──────────────────────────────────────────────────────────────────
