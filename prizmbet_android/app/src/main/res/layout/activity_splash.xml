@@ -1,24 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Splash экран с GIF-логотипом.
-    Фон #06060e — тот же что в приложении и WebView → ни одной вспышки цвета.
+    Splash layout — премиум-заставка с неоновым свечением.
+
+    Слои (снизу вверх):
+      1. FrameLayout  → единый фон #06060e (нет чёрных рамок)
+      2. NeonPulseView → три пульсирующих кольца + дышащее ядро
+      3. GifImageView → логотип PRIZMBET (воспроизводится 1 раз)
+
+    GIF центрирован по ширине/высоте — убраны чёрные полосы.
+    Оба слоя (neon + gif) появляются через scale+fade анимацию в SplashActivity.
 -->
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bg_primary">
 
+    <!-- Неоновые пульсации: изначально невидимы, fade-in при старте -->
+    <com.prizmbet.app.NeonPulseView
+        android:id="@+id/neonPulse"
+        android:layout_width="340dp"
+        android:layout_height="340dp"
+        android:layout_gravity="center"
+        android:alpha="0" />
+
     <!--
-        GIF занимает весь экран, scaleType=fitCenter сохраняет пропорции.
-        Если GIF прозрачный — фон #06060e проявляется сквозь него.
+        Логотип GIF: фиксированный размер 280×280dp, центрирован.
+        Убирает letterbox-полосы если GIF шире/выше экрана.
+        scaleType=fitCenter сохраняет пропорции анимации.
     -->
     <pl.droidsonroids.gif.GifImageView
         android:id="@+id/splashGif"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="280dp"
+        android:layout_height="280dp"
         android:layout_gravity="center"
         android:scaleType="fitCenter"
-        android:adjustViewBounds="true"
         android:background="@color/bg_primary" />
 
 </FrameLayout>

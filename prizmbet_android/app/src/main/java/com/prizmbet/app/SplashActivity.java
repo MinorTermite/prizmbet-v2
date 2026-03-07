@@ -1,10 +1,13 @@
 package com.prizmbet.app;
 
+import android.animation.AnimatorSet;
+import android.animation.ObjectAnimator;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.animation.DecelerateInterpolator;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.splashscreen.SplashScreen;
@@ -16,13 +19,12 @@ import pl.droidsonroids.gif.GifDrawable;
 import pl.droidsonroids.gif.GifImageView;
 
 /**
- * Видео-заставка: воспроизводит prizmbet-logo.gif один раз,
- * затем плавно переходит в MainActivity.
+ * Премиум-заставка: неоновые кольца + GIF-логотип, затем плавный переход в MainActivity.
  *
- * Фон и transition — единый #06060e на всём пути:
- *   OS splash (Theme.Prizmbet.Starting) → SplashActivity (#06060e + GIF)
- *   → fade → MainActivity (#06060e + WebView)  → контент
- * Пользователь не видит ни одной белой/чёрной вспышки.
+ * Визуальная цепочка (без единой цветовой вспышки):
+ *   OS splash (Theme.Prizmbet.Starting)
+ *   → SplashActivity: #06060e + NeonPulseView + GIF (scale+fade входная анимация)
+ *   → fade transition → MainActivity (#06060e + WebView)
  */
 public class SplashActivity extends AppCompatActivity {
 
@@ -51,12 +53,32 @@ public class SplashActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_splash);
 
-        GifImageView gifView = findViewById(R.id.splashGif);
+        NeonPulseView neonPulse = findViewById(R.id.neonPulse);
+        GifImageView  gifView   = findViewById(R.id.splashGif);
 
         try {
             GifDrawable drawable = new GifDrawable(getResources(), R.raw.prizmbet_logo);
             drawable.setLoopCount(1);  // Один раз — как в премиум-приложениях
             gifView.setImageDrawable(drawable);
+
+            // ── Входная анимация: scale 0.82→1.0 + alpha 0→1 ──────────────────
+            // Логотип "вырастает" из центра; неоновые кольца проявляются вместе с ним.
+            gifView.setScaleX(0.82f);
+            gifView.setScaleY(0.82f);
+            gifView.setAlpha(0f);
+            // neonPulse уже alpha=0 из XML
+
+            AnimatorSet enterAnim = new AnimatorSet();
+            enterAnim.playTogether(
+                    ObjectAnimator.ofFloat(gifView,   "scaleX", 0.82f, 1.0f),
+                    ObjectAnimator.ofFloat(gifView,   "scaleY", 0.82f, 1.0f),
+                    ObjectAnimator.ofFloat(gifView,   "alpha",  0f,    1.0f),
+                    ObjectAnimator.ofFloat(neonPulse, "alpha",  0f,    1.0f)
+            );
+            enterAnim.setDuration(750);
+            enterAnim.setInterpolator(new DecelerateInterpolator(2.0f));
+            enterAnim.start();
+            // ──────────────────────────────────────────────────────────────────
 
             // Переходим когда GIF завершил воспроизведение
             drawable.addAnimationListener(loopNumber -> runOnUiThread(this::launchMain));
