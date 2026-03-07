@@ -51,4 +51,10 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.7.0'
     implementation 'androidx.activity:activity:1.9.3'
     implementation 'androidx.webkit:webkit:1.12.1'
+
+    // Pull-to-refresh
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+
+    // Native Splash Screen (Android 12+ и backward-compat до API 23)
+    implementation 'androidx.core:core-splashscreen:1.0.1'
 }

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+
+    <!-- ── Main app theme ──────────────────────────────────────────────── -->
     <!-- Dark theme matching the site (#06060e background) -->
     <style name="Theme.Prizmbet" parent="Theme.AppCompat.NoActionBar">
         <item name="android:windowBackground">#06060e</item>
@@ -9,4 +11,22 @@
         <item name="colorPrimaryDark">#06060e</item>
         <item name="colorAccent">#818cf8</item>
     </style>
+
+    <!-- ── Splash Screen theme (core-splashscreen, backward-compat) ────── -->
+    <!--
+        Activity is launched with this theme so the OS renders the splash
+        immediately — no black flash.  Once installSplashScreen() detects
+        that the page has loaded (isPageLoaded = true), Android transitions
+        to postSplashScreenTheme (Theme.Prizmbet) automatically.
+    -->
+    <style name="Theme.Prizmbet.Starting" parent="Theme.SplashScreen">
+        <!-- Dark background matching the app -->
+        <item name="windowSplashScreenBackground">@color/bg_primary</item>
+        <!-- Lightning bolt icon (same colour background so no circle border) -->
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
+        <item name="windowSplashScreenIconBackgroundColor">@color/bg_primary</item>
+        <!-- Theme applied after splash exits -->
+        <item name="postSplashScreenTheme">@style/Theme.Prizmbet</item>
+    </style>
+
 </resources>

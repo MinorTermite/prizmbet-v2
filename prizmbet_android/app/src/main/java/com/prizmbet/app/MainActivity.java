@@ -23,6 +23,8 @@ import android.widget.TextView;
 
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.splashscreen.SplashScreen;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 import androidx.webkit.WebViewAssetLoader;
 
 import java.io.IOException;
@@ -30,13 +32,18 @@ import java.io.InputStream;
 
 /**
  * PrizmBet Android wrapper.
- * - WebViewAssetLoader: serves static assets from APK (instant load, no network needed)
- * - JSON match data always fetched from network (live data)
- * - App Shortcuts: Football / Esports / Refresh
+ *
+ * Features implemented:
+ *  - SplashScreen (core-splashscreen): фиолетовая молния, исчезает после загрузки страницы
+ *  - SwipeRefreshLayout: свайп вниз → обновляет данные матчей
+ *  - WebViewAssetLoader: статика из APK assets/, JSON с сети
+ *  - App Shortcuts: Football / Esports / Refresh
+ *  - UA fix: убирает "wv" маркер (сайт видит обычный Chrome)
+ *  - Offline error screen с кнопкой Повторить
  */
 public class MainActivity extends AppCompatActivity {
 
-    private static final String SITE_URL = "https://minortermite.github.io/prizmbet-v2/";
+    private static final String SITE_URL     = "https://minortermite.github.io/prizmbet-v2/";
     public  static final String EXTRA_SHORTCUT = "shortcut_action";
 
     private static final String[] ALLOWED_HOSTS = {
@@ -45,20 +52,27 @@ public class MainActivity extends AppCompatActivity {
             "fonts.gstatic.com",
     };
 
-    private WebView       webView;
-    private ProgressBar   progressBar;
-    private View          errorView;
+    // ── Views ──────────────────────────────────────────────────────────────────
+    private WebView             webView;
+    private ProgressBar         progressBar;
+    private View                errorView;
+    private SwipeRefreshLayout  swipeRefresh;
+
+    // ── State ──────────────────────────────────────────────────────────────────
     private WebViewAssetLoader assetLoader;
-
-    /** Action requested via App Shortcut; applied once after first page load. */
+    /** true после первого onPageFinished — снимает splash-экран. */
+    private volatile boolean isPageLoaded   = false;
+    /** Pending shortcut action applied via JS once page is ready. */
     private String pendingShortcut = null;
-
     private boolean hasError = false;
 
     // ── Lifecycle ──────────────────────────────────────────────────────────────
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // ① Splash screen — должен быть ДО super.onCreate()
+        SplashScreen splashScreen = SplashScreen.installSplashScreen(this);
+
         super.onCreate(savedInstanceState);
 
         requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -70,17 +84,26 @@ public class MainActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_main);
 
-        progressBar = findViewById(R.id.progressBar);
-        errorView   = findViewById(R.id.errorView);
-        webView     = findViewById(R.id.webView);
+        // ② Держать сплэш пока страница не загрузится (≤ ~200 мс с WebViewAssetLoader)
+        splashScreen.setKeepOnScreenCondition(() -> !isPageLoaded);
+
+        // Refs
+        progressBar  = findViewById(R.id.progressBar);
+        errorView    = findViewById(R.id.errorView);
+        webView      = findViewById(R.id.webView);
+        swipeRefresh = findViewById(R.id.swipeRefresh);
 
         Button retryBtn = findViewById(R.id.retryButton);
         retryBtn.setOnClickListener(v -> retry());
 
+        // ③ Pull-to-refresh
+        configurePullToRefresh();
+
+        // ④ WebViewAssetLoader
         buildAssetLoader();
         configureWebView();
 
-        // Read App Shortcut action (if launched via shortcut)
+        // App Shortcut intent
         pendingShortcut = getIntent().getStringExtra(EXTRA_SHORTCUT);
 
         webView.clearCache(true);
@@ -100,7 +123,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /** Called when app is already running and a shortcut is tapped. */
+    /** Called when app already runs and a shortcut is tapped. */
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
@@ -108,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
         String action = intent.getStringExtra(EXTRA_SHORTCUT);
         if (action != null) {
             pendingShortcut = action;
-            applyShortcut(action);   // page is already loaded → apply immediately
+            applyShortcut(action);
         }
     }
 
@@ -134,21 +157,46 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
     }
 
+    // ── Pull-to-refresh ────────────────────────────────────────────────────────
+
+    private void configurePullToRefresh() {
+        // Цветовая схема в стиле бренда
+        swipeRefresh.setColorSchemeColors(0xFF6366F1, 0xFF818CF8);
+        swipeRefresh.setProgressBackgroundColorSchemeColor(0xFF1A1A2E);
+
+        // Только при прокрутке до самого верха WebView срабатывает свайп
+        swipeRefresh.setOnChildScrollUpCallback(
+                (parent, child) -> webView.canScrollVertically(-1)
+        );
+
+        swipeRefresh.setOnRefreshListener(() -> {
+            if (hasError) {
+                // Страница с ошибкой — полная перезагрузка; spinner скроется в onPageFinished
+                retry();
+                return;
+            }
+            // Обновляем только данные матчей через JS, страницу не перезагружаем
+            webView.evaluateJavascript(
+                    "(function(){ if(window.refreshData) window.refreshData(); })();",
+                    null
+            );
+            // Скрываем индикатор через ~2.5 сек (время сетевого запроса)
+            swipeRefresh.postDelayed(() -> swipeRefresh.setRefreshing(false), 2500);
+        });
+    }
+
     // ── Asset Loader ───────────────────────────────────────────────────────────
 
     /**
-     * Builds a WebViewAssetLoader that intercepts requests to
-     * https://minortermite.github.io/prizmbet-v2/* and serves them from
-     * APK assets/prizmbet-v2/ — except live JSON data files which always
-     * come from the network.
+     * Статические файлы (HTML/JS/CSS/картинки) отдаются из APK assets/prizmbet-v2/.
+     * matches.json и matches-today.json — всегда с сети (живые данные).
      */
     private void buildAssetLoader() {
         assetLoader = new WebViewAssetLoader.Builder()
                 .setDomain("minortermite.github.io")
                 .addPathHandler("/prizmbet-v2/", path -> {
-                    // Live match data — always fetch from network
                     if (path.endsWith("matches.json") || path.endsWith("matches-today.json")) {
-                        return null;
+                        return null; // → network
                     }
                     try {
                         InputStream is = getAssets().open("prizmbet-v2/" + path);
@@ -157,13 +205,12 @@ public class MainActivity extends AppCompatActivity {
                                 : "";
                         String mime = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
                         if (mime == null) mime = "application/octet-stream";
-                        // JS & CSS need charset for proper rendering
                         String charset = (mime.contains("javascript") || mime.contains("css")
                                 || mime.contains("html") || mime.contains("json"))
                                 ? "UTF-8" : null;
                         return new WebResourceResponse(mime, charset, is);
                     } catch (IOException e) {
-                        return null; // Not in assets — fall through to network
+                        return null; // не нашли в assets — идёт в сеть
                     }
                 })
                 .build();
@@ -176,21 +223,18 @@ public class MainActivity extends AppCompatActivity {
         s.setJavaScriptEnabled(true);
         s.setDomStorageEnabled(true);
         s.setDatabaseEnabled(true);
-        s.setCacheMode(WebSettings.LOAD_DEFAULT); // Используем стандартный кэш для стабильности
+        s.setCacheMode(WebSettings.LOAD_DEFAULT); // стандартный кэш для стабильности
         s.setMediaPlaybackRequiresUserGesture(false);
-
-        // Позволяем загрузку контента
         s.setAllowFileAccess(true);
         s.setAllowContentAccess(true);
 
-        // Remove "wv" WebView marker so site treats us like Chrome
+        // Убираем "wv" маркер — сайт видит обычный Chrome
         String ua = s.getUserAgentString();
         ua = ua.replace("; wv)", ")");
         s.setUserAgentString(ua);
 
         webView.setWebViewClient(new WebViewClient() {
 
-            /** Intercept static assets → serve from APK. JSON data → network. */
             @Override
             public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
                 return assetLoader.shouldInterceptRequest(request.getUrl());
@@ -199,12 +243,9 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
                 String host = request.getUrl().getHost();
-                if (host != null && isAllowedHost(host)) {
-                    return false;
-                }
+                if (host != null && isAllowedHost(host)) return false;
                 try {
-                    Intent intent = new Intent(Intent.ACTION_VIEW, request.getUrl());
-                    startActivity(intent);
+                    startActivity(new Intent(Intent.ACTION_VIEW, request.getUrl()));
                 } catch (Exception ignored) { }
                 return true;
             }
@@ -214,27 +255,27 @@ public class MainActivity extends AppCompatActivity {
                 hasError = false;
                 progressBar.setVisibility(View.VISIBLE);
 
-                // Внедряем заглушку для Notification API, чтобы JS не падал
+                // Заглушка Notification API чтобы JS не падал
                 view.evaluateJavascript(
-                    "(function() {" +
-                    "  if (typeof Notification === 'undefined') {" +
-                    "    window.Notification = {" +
-                    "      permission: 'denied'," +
-                    "      requestPermission: function() { return Promise.resolve('denied'); }," +
-                    "      show: function() {}" +
-                    "    };" +
-                    "    console.log('Notification API polyfill injected');" +
-                    "  }" +
-                    "})();", null);
+                        "(function(){" +
+                        "  if(typeof Notification==='undefined'){" +
+                        "    window.Notification={permission:'denied'," +
+                        "      requestPermission:function(){return Promise.resolve('denied');}," +
+                        "      show:function(){}};" +
+                        "  }" +
+                        "})();", null);
             }
 
             @Override
             public void onPageFinished(WebView view, String url) {
                 progressBar.setVisibility(View.GONE);
+                swipeRefresh.setRefreshing(false);  // сброс pull-to-refresh спиннера
+                isPageLoaded = true;                // снимает splash
+
                 if (!hasError) {
                     showWebView();
                 }
-                // Apply any pending shortcut action after page fully loads
+                // Применяем shortcut после загрузки DOM
                 if (pendingShortcut != null) {
                     applyShortcut(pendingShortcut);
                     pendingShortcut = null;
@@ -245,6 +286,8 @@ public class MainActivity extends AppCompatActivity {
             public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
                 if (request.isForMainFrame()) {
                     hasError = true;
+                    isPageLoaded = true; // тоже снимаем splash (показываем error screen)
+                    swipeRefresh.setRefreshing(false);
                     showError("Ошибка загрузки. Проверьте соединение.");
                 }
             }
@@ -254,27 +297,21 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
                 progressBar.setProgress(newProgress);
-                if (newProgress >= 100) {
-                    progressBar.setVisibility(View.GONE);
-                }
+                if (newProgress >= 100) progressBar.setVisibility(View.GONE);
             }
         });
     }
 
     // ── App Shortcuts ──────────────────────────────────────────────────────────
 
-    /**
-     * Applies the requested shortcut via JavaScript injection.
-     * Runs after onPageFinished to ensure DOM is ready.
-     */
     private void applyShortcut(String action) {
         String js;
         switch (action) {
             case "football":
-                js = "(function(){ var t = document.querySelector('.tab[data-sport=\"football\"]'); if(t) t.click(); })();";
+                js = "(function(){ var t=document.querySelector('.tab[data-sport=\"football\"]'); if(t) t.click(); })();";
                 break;
             case "esports":
-                js = "(function(){ var t = document.querySelector('.tab[data-sport=\"esports\"]'); if(t) t.click(); })();";
+                js = "(function(){ var t=document.querySelector('.tab[data-sport=\"esports\"]'); if(t) t.click(); })();";
                 break;
             case "refresh":
                 js = "(function(){ if(window.refreshData) window.refreshData(); })();";
@@ -288,29 +325,29 @@ public class MainActivity extends AppCompatActivity {
     // ── Helpers ────────────────────────────────────────────────────────────────
 
     private boolean isAllowedHost(String host) {
-        for (String allowed : ALLOWED_HOSTS) {
-            if (host.equals(allowed) || host.endsWith("." + allowed)) {
-                return true;
-            }
+        for (String a : ALLOWED_HOSTS) {
+            if (host.equals(a) || host.endsWith("." + a)) return true;
         }
         return false;
     }
 
     private void showError(String message) {
         webView.setVisibility(View.GONE);
+        swipeRefresh.setVisibility(View.GONE);
         errorView.setVisibility(View.VISIBLE);
         progressBar.setVisibility(View.GONE);
-        TextView errorMsg = findViewById(R.id.errorMessage);
-        if (errorMsg != null) errorMsg.setText(message);
+        TextView tv = findViewById(R.id.errorMessage);
+        if (tv != null) tv.setText(message);
     }
 
     private void showWebView() {
         errorView.setVisibility(View.GONE);
+        swipeRefresh.setVisibility(View.VISIBLE);
         webView.setVisibility(View.VISIBLE);
     }
 
     private void retry() {
-        if (!isOnline()) return;
+        swipeRefresh.setVisibility(View.VISIBLE);
         showWebView();
         webView.loadUrl(SITE_URL);
     }
