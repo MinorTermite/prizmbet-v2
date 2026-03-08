@@ -2,13 +2,9 @@ name: Update Matches & Deploy to GitHub Pages
 
 on:
   schedule:
-    # Optimized schedule for free API limits:
-    # 09:00 MSK - morning update (European leagues)
-    - cron: "0 6 * * *"
-    # 17:00 MSK - evening update (more matches)
-    - cron: "0 14 * * *"
-    # 22:00 MSK - night update (catch late matches)
-    - cron: "0 19 * * *"
+    # Every 2 hours — keeps data fresh so matches don't disappear between updates.
+    # Leonbets has no rate limit; ApiFootball/OddsAPI.io are cheap enough for 12x/day.
+    - cron: "0 */2 * * *"
   workflow_dispatch:
   push:
     branches: [main]
