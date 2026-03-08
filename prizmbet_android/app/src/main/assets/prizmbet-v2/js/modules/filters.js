@@ -98,7 +98,6 @@ export function filterMatches(matches, state) {
 
         const start = parseMatchDateTime(m);
         const diffMs = now - start;
-        const isOld = diffMs > (3 * 60 * 60 * 1000);
 
         // Results tab — show only scored matches, skip remaining filters
         if (state.sport === 'results') return !!m.score;
@@ -106,8 +105,10 @@ export function filterMatches(matches, state) {
         // Hide ALL scored matches from main list (they belong in Results tab)
         if (m.score) return false;
 
-        // Hide matches that are clearly over (no score but 4h+ old) — stale data
-        if (isOld && diffMs > (4 * 60 * 60 * 1000)) return false;
+        // Hide matches without score that started more than 8h ago.
+        // 8h threshold matches the workflow update interval (3x/day ≈ every 8h),
+        // so matches don't disappear between scheduled data refreshes.
+        if (diffMs > (8 * 60 * 60 * 1000)) return false;
 
         // Date filter
         if (state.date !== 'all') {
@@ -154,10 +155,8 @@ export function sortMatches(matches, sortType) {
     function isPast(m) {
         const start = parseMatchDateTime(m);
         const diffMs = now - start;
-        // Move to bottom if it has a score AND it's "old" (1h after completion)
-        // OR if it's just very old anyway
         if (m.score && diffMs > (3 * 60 * 60 * 1000)) return true;
-        if (diffMs > (4 * 60 * 60 * 1000)) return true;
+        if (diffMs > (8 * 60 * 60 * 1000)) return true;
         return false;
     }
 
