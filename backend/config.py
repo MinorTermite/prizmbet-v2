@@ -36,4 +36,8 @@ class Config:
     # GitHub
     GITHUB_TOKEN = os.getenv('GITHUB_TOKEN', '')
 
+    # Betting / Tx Listener
+    MIN_BET = float(os.getenv('MIN_BET', '10'))
+    PRIZM_EPOCH = int(os.getenv('PRIZM_EPOCH', '1385294400'))
+
 config = Config()

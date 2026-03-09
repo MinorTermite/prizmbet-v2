@@ -10,3 +10,7 @@ logs/
 .pytest_cache/  
 .coverage  
 node_modules/ 
+
+# Android build artifacts
+mobile/android/.gradle/
+prizmbet_android/.gradle/

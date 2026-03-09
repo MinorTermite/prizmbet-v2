@@ -1,123 +1,48 @@
-# PrizmBet v2 - Crypto Betting Platform
+# PrizmBet v2
 
-## Features v2
+PrizmBet is a crypto sports betting product for the PRIZM ecosystem.
+This repository contains the static frontend, backend data ingestion/parsing services, and the foundation for DB-backed bet intake.
 
-### New Features
-- ✅ **Totals (Over/Under)** support for all sports
-- ✅ **Handicaps (Spreads)** support for all sports
-- ✅ **The Odds API v4** integration (official aggregator)
-- ✅ **1xBet JSON API** with gzip decompression
-- ✅ **Leonbets JSON API** with dynamic markets parsing
-- ✅ Automatic fallback between parsers
-- ✅ API quota monitoring
+## Repository at a glance
 
-### Scalability & Reliability
-- PostgreSQL (Supabase) - Free DB up to 500MB
-- Redis (Upstash) - 10,000 commands/day
-- Async parsers - Fast parallel loading
-- Rate Limiting - Protection from blocks
-- Proxy Rotation - Bypass bookmaker blocks
+- Frontend: `frontend/`
+- Backend: `backend/`
+- Database migrations: `supabase/migrations/`
+- Android client: `mobile/android/`
+- Documentation: `docs/`
+- Helper scripts: `scripts/`
 
-### Security
-- User-Agent rotation
-- Exponential backoff on errors
-- Automatic retries
+See full map: [`docs/REPO_STRUCTURE.md`](docs/REPO_STRUCTURE.md)
 
-### Monitoring
-- Health check script
-- Telegram error notifications
-- Parser execution logs
+## Current architecture docs
 
-### UI/UX
-- PWA (Progressive Web App)
-- Dark theme
-- Client-side filtering
-- Live odds updates
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md)
+- [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)
+- [`docs/DEVELOPMENT.md`](docs/DEVELOPMENT.md)
 
-## Quick Start
+## Quick start
 
-### 1. Clone
 ```bash
-git clone https://github.com/YOUR_USERNAME/prizmbet-v2.git
-cd prizmbet-v2
-```
-
-### 2. Setup Environment
-```bash
-copy .env.example .env
-```
-
-Fill `.env`:
-```
-SUPABASE_URL=your_supabase_url
-SUPABASE_KEY=your_supabase_key
-UPSTASH_REDIS_URL=your_upstash_url
-UPSTASH_REDIS_TOKEN=your_upstash_token
-TELEGRAM_BOT_TOKEN=your_bot_token
-TELEGRAM_CHAT_ID=your_chat_id
-```
-
-### 3. Install Dependencies
-```bash
+cp .env.example .env
 pip install -r requirements.txt
+python -m backend.run_parsers
+python3 -m http.server 8000 -d frontend
 ```
 
-### 4. Run
+## Main service entrypoints
+
 ```bash
-# Run parsers
+# Parser pipeline
 python -m backend.run_parsers
 
-# Health check
-python -m backend.health_check
+# Bet Intent API
+python -m backend.api.bet_intents_api
+
+# PRIZM Tx listener
+python -m backend.bot.tx_listener
 ```
 
-### Docker
-```bash
-docker-compose up -d
-docker-compose logs -f parser
-```
+## Notes
 
-## Setup Services
-
-### Supabase
-1. https://supabase.com - New Project
-2. SQL Editor - run config/supabase_schema.sql
-3. Settings - API - copy URL and Key
-
-### Upstash Redis
-1. https://upstash.com - Create Database
-2. Copy URL and Token
-
-### Telegram Bot
-1. Message @BotFather on Telegram
-2. Create bot with /newbot
-3. Copy token to .env
-
-## Project Structure
-```
-prizmbet-v2/
-├── backend/
-│   ├── parsers/
-│   ├── db/
-│   ├── utils/
-│   ├── api/
-│   └── config.py
-├── frontend/
-│   ├── css/
-│   │   └── base.min.css      # Minified styles
-│   ├── js/
-│   │   ├── app.js            # Main application logic
-│   │   └── api.js            # API logic
-│   └── pwa/
-├── config/
-├── .github/workflows/
-├── Dockerfile
-└── docker-compose.yml
-```
-
-## Frontend Deployment
-The frontend is built purely with HTML/CSS/JS - no bundlers required.
-- **Styling**: All CSS is extracted and minified into `frontend/css/base.min.css` for optimal loading.
-- **Logic**: Main logic lives in `frontend/js/app.js` with `defer` loading.
-- **Assets**: Images and videos use modern formats (WebP, WebM) with lazy loading and responsive tags.
-- **Hosting**: Pre-configured for Netlify via `netlify.toml` which outlines advanced caching and security (CSP) headers.
+- Legacy operational notes are archived in `docs/legacy/`.
+- Current docs intentionally keep sensitive operational details at a high level.

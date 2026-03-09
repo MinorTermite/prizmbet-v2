@@ -4,7 +4,7 @@
   "description": "PRIZMBET - Криптобукмекер на монетах PRIZM",
   "scripts": {
     "build": "echo 'Static site - no build needed'",
-    "start": "python3 -m http.server 8000",
+    "start": "python3 -m http.server 8000 -d frontend",
     "parse": "python3 -m backend.run_parsers"
   },
   "keywords": [
