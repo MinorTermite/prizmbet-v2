@@ -1,5 +1,4 @@
-# PrizmBet v2 - Crypto Betting Platform
-
+# PrizmBet v2 - 
 ## Features v2
 
 ### New Features
