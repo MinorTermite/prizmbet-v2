@@ -1,14 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Splash layout — премиум-заставка с плавающими частицами.
-
-    Слои (снизу вверх):
-      1. FrameLayout      — единый фон #06060e
-      2. ParticleView     — 45 светящихся частиц, полный экран (match_parent)
-      3. GifImageView     — логотип PRIZMBET, 280dp, по центру
-
-    Оба верхних слоя появляются через scale+fade анимацию в SplashActivity.
-    Частицы видны вокруг логотипа на весь экран — эффект крипто/финтех приложений.
+    Premium crypto splash — всё рисуется на Canvas внутри PremiumSplashView.
+    Никакого GIF, никакой непрозрачной рамки — чистый тёмный фон + анимация.
 -->
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
@@ -16,19 +9,9 @@
     android:layout_height="match_parent"
     android:background="@color/bg_primary">
 
-    <!-- Светящиеся частицы — весь экран, изначально невидимы, проявляются вместе с логотипом -->
-    <com.prizmbet.app.ParticleView
-        android:id="@+id/particleView"
+    <com.prizmbet.app.PremiumSplashView
+        android:id="@+id/premiumSplash"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:alpha="0" />
-
-    <!-- Логотип GIF: фиксированный размер 280×280dp, центрирован -->
-    <pl.droidsonroids.gif.GifImageView
-        android:id="@+id/splashGif"
-        android:layout_width="280dp"
-        android:layout_height="280dp"
-        android:layout_gravity="center"
-        android:scaleType="fitCenter" />
+        android:layout_height="match_parent" />
 
 </FrameLayout>
